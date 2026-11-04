@@ -1,0 +1,8 @@
+{
+  "name": "SpaceMoni",
+  "description": "AI-powered space station biometric and operations console monitoring astronaut health metrics in real time and managing mission-critical objectives.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
