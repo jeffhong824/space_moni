@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import http from 'http';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,6 +7,11 @@ import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 
 dotenv.config();
+
+// Ensure HMR is disabled in AI Studio preview to prevent WebSocket proxy disconnect errors
+if (process.env.DISABLE_HMR === undefined) {
+  process.env.DISABLE_HMR = 'true';
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,11 +23,12 @@ app.use(express.json());
 
 // Initialize Gemini SDK with User-Agent header as required
 const getGeminiClient = () => {
-  if (!process.env.GEMINI_API_KEY) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || !apiKey.trim()) {
     return null;
   }
   return new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey,
     httpOptions: {
       headers: {
         'User-Agent': 'aistudio-build',
@@ -101,7 +108,11 @@ Tone & Style:
     const prompt = `Astronaut Message: "${message || 'Run a quick biometrics check and advise on today schedule.'}"
 Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
 
-    const response = await ai.models.generateContent({
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('AI generation timed out after 8s')), 8000)
+    );
+
+    const generatePromise = ai.models.generateContent({
       model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
@@ -158,6 +169,7 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
       },
     });
 
+    const response = (await Promise.race([generatePromise, timeoutPromise])) as any;
     const parsed = JSON.parse(response.text || '{}');
     return res.json(parsed);
   } catch (error: any) {
@@ -197,10 +209,20 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
 // Setup Vite or static serving
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
+  const httpServer = http.createServer(app);
 
   if (!isProd) {
+    const isHmrDisabled = process.env.DISABLE_HMR === 'true';
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        ws: false,
+        hmr: isHmrDisabled
+          ? false
+          : {
+              server: httpServer,
+            },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -212,8 +234,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`OrbitalBio Telemetry server listening on port ${PORT}`);
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`SpaceMoni server listening on port ${PORT}`);
   });
 }
 

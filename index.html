@@ -1,6 +1,76 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function() {
+        // AI Studio preview iframe: HMR is disabled by design.
+        // Mock the Vite HMR WebSocket so @vite/client establishes an instant open connection without network errors.
+        const RealWebSocket = window.WebSocket;
+        if (typeof RealWebSocket !== 'undefined') {
+          function ViteHmrMockSocket(url, protocols) {
+            if (
+              protocols === 'vite-hmr' ||
+              protocols === 'vite-ping' ||
+              (typeof url === 'string' && (url.includes('token=') || url.includes('24678') || url.includes('vite-hmr')))
+            ) {
+              const target = new EventTarget();
+              target.CONNECTING = 0;
+              target.OPEN = 1;
+              target.CLOSING = 2;
+              target.CLOSED = 3;
+              target.readyState = 1; // OPEN
+              target.url = url;
+              target.protocol = Array.isArray(protocols) ? protocols[0] : (protocols || '');
+              target.extensions = '';
+              target.bufferedAmount = 0;
+              target.binaryType = 'blob';
+              target.send = function() {};
+              target.close = function() { target.readyState = 3; };
+              return target;
+            }
+            return new RealWebSocket(url, protocols);
+          }
+          ViteHmrMockSocket.prototype = RealWebSocket.prototype;
+          ViteHmrMockSocket.CONNECTING = 0;
+          ViteHmrMockSocket.OPEN = 1;
+          ViteHmrMockSocket.CLOSING = 2;
+          ViteHmrMockSocket.CLOSED = 3;
+          window.WebSocket = ViteHmrMockSocket;
+        }
+
+        // Suppress any residual WebSocket error alerts from bubbling to AI Studio error banner
+        window.addEventListener('unhandledrejection', function(event) {
+          if (event && event.reason) {
+            const msg = String(event.reason.message || event.reason);
+            const stack = String(event.reason.stack || '');
+            if (msg.includes('WebSocket') || stack.includes('@vite/client')) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          if (event) {
+            const msg = String(event.message || '');
+            const filename = String(event.filename || '');
+            if (msg.includes('WebSocket') || filename.includes('@vite/client')) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          }
+        }, true);
+
+        // Filter [vite] failed to connect console error log
+        const rawConsoleError = console.error;
+        console.error = function(...args) {
+          if (typeof args[0] === 'string' && args[0].includes('[vite] failed to connect to websocket')) {
+            return;
+          }
+          return rawConsoleError.apply(console, args);
+        };
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SpaceMoni</title>
