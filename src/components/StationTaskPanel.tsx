@@ -117,9 +117,6 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                     Space Station Objectives
                   </h2>
                 </div>
-                <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-                  Station-wide mission-critical operations & experiments
-                </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
