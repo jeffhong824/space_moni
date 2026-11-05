@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Wind, Gauge, Thermometer, ShieldAlert, Users, ChevronDown, Check, Zap, Eye, ShieldCheck, Heart } from 'lucide-react';
 import { AstronautProfile, EnvironmentalMetrics, UserRole } from '../types';
+import { getStationClockDate, calculateMissionDuration } from '../utils/dateUtils';
 
 interface AstronautSidebarProps {
   currentAstronaut: AstronautProfile;
@@ -20,6 +21,21 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   currentUserRole,
 }) => {
   const [showRoster, setShowRoster] = useState(false);
+
+  // Synchronize Today with the live station clock (UTC)
+  const [stationDate, setStationDate] = useState<string>(() => getStationClockDate());
+
+  useEffect(() => {
+    const updateDate = () => {
+      setStationDate(getStationClockDate());
+    };
+    updateDate();
+    const interval = setInterval(updateDate, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Dynamically calculate duration based on astronaut launch start date and station today date
+  const calculatedDuration = calculateMissionDuration(currentAstronaut.missionStartDate, stationDate);
 
   // Oxygen nominal: 19.5 - 23.1 %, CO2 nominal: < 0.50 %
   const isO2Nominal = envMetrics.oxygenPercent >= 20.0 && envMetrics.oxygenPercent <= 22.5;
@@ -123,7 +139,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                   {/* Active Indicator details if selected */}
                   {isSelected && (
                     <div className="mt-2.5 pt-2 border-t border-sky-200/60 flex items-center justify-between text-[10px] font-mono text-sky-900">
-                      <span>DURATION: {astro.missionDuration}</span>
+                      <span>DURATION: {calculateMissionDuration(astro.missionStartDate, stationDate).durationText}</span>
                       <span className="font-semibold text-sky-700 flex items-center gap-1">
                         <Eye className="w-3 h-3" /> Viewing Records
                       </span>
@@ -168,13 +184,20 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
               <span className="text-slate-600">Start:</span>
               <span className="font-semibold text-slate-900 tabular-nums">{currentAstronaut.missionStartDate}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-600">Today:</span>
-              <span className="font-semibold text-slate-900 tabular-nums">{currentAstronaut.missionCurrentDate}</span>
+            <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md hover:bg-sky-100/50 transition-colors">
+              <span className="text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Live Station Clock Sync" />
+                Today:
+              </span>
+              <span className="font-semibold text-slate-900 tabular-nums bg-white/75 px-2 py-0.5 rounded border border-sky-200/60 shadow-2xs">
+                {stationDate}
+              </span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-600">Duration:</span>
-              <span className="font-semibold text-sky-900">{currentAstronaut.missionDuration}</span>
+            <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md bg-white/60 border border-sky-200/70 shadow-2xs">
+              <span className="text-slate-600 font-medium">Duration:</span>
+              <span className="font-bold text-sky-950 font-mono tracking-tight">
+                {calculatedDuration.durationText}
+              </span>
             </div>
           </div>
 

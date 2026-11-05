@@ -16,11 +16,20 @@ export const TopNav: React.FC<TopNavProps> = ({
   onLogout,
 }) => {
   const [utcTime, setUtcTime] = useState<string>('');
+  const [metString, setMetString] = useState<string>('T+289D:01H:00M');
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       setUtcTime(now.toUTCString().slice(17, 25) + ' UTC');
+
+      // Calculate MET from mission launch date 2026/01/21
+      const launch = new Date(Date.UTC(2026, 0, 21, 0, 0, 0));
+      const diffMs = Math.max(0, now.getTime() - launch.getTime());
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const mins = String(now.getUTCMinutes()).padStart(2, '0');
+      setMetString(`T+${days}D:${hours}H:${mins}M`);
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
@@ -59,7 +68,7 @@ export const TopNav: React.FC<TopNavProps> = ({
       <div className="hidden lg:flex items-center gap-6 text-xs text-slate-600 font-mono">
         <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200/60 rounded-md">
           <span className="text-slate-400">MET:</span>
-          <span className="font-semibold text-slate-800">T+305D:14H:22M</span>
+          <span className="font-semibold text-slate-800 tabular-nums">{metString}</span>
         </div>
 
         <div className="flex items-center gap-2">
