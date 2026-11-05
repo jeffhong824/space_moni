@@ -45,6 +45,7 @@ export default function App() {
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState<boolean>(false);
   const [activityModalDate, setActivityModalDate] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState<boolean>(false);
 
   const handleOpenAiCall = (prompt?: string) => {
     setAiCallInitialPrompt(prompt || '');
@@ -217,6 +218,8 @@ export default function App() {
         onOpenAiCall={() => handleOpenAiCall()}
         currentUser={currentUser}
         onLogout={handleLogout}
+        isRightPanelCollapsed={isRightPanelCollapsed}
+        onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
       />
 
       {/* Main 3-Column Responsive Workstation Layout (Matching wireframe) */}
@@ -241,6 +244,8 @@ export default function App() {
           onSelectDate={setSelectedDate}
           currentUserRole={currentUser.role}
           currentAstronaut={selectedAstronaut}
+          isRightPanelCollapsed={isRightPanelCollapsed}
+          onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
         />
 
         {/* Right Panel: Whole Space Station Task Objectives */}
@@ -249,6 +254,8 @@ export default function App() {
           onToggleTaskStatus={handleToggleTaskStatus}
           onUpdateTaskProgress={handleUpdateTaskProgress}
           onOpenNewTaskModal={() => setIsNewTaskModalOpen(true)}
+          isCollapsed={isRightPanelCollapsed}
+          onToggleCollapse={() => setIsRightPanelCollapsed((prev) => !prev)}
         />
       </div>
 

@@ -28,8 +28,12 @@ import {
   Lock,
   Shield,
   ShieldX,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react';
 import { DailyHealthRecord, DailyActivityItem, HourlyVitalPoint, UserRole, AstronautProfile } from '../types';
+import { ConditioningDetailCard } from './ConditioningDetailCard';
+import { ConditioningCategory } from '../data/conditioningData';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
@@ -40,6 +44,8 @@ interface DailyRecordsPanelProps {
   onSelectDate: (date: string) => void;
   currentUserRole: UserRole;
   currentAstronaut: AstronautProfile;
+  isRightPanelCollapsed?: boolean;
+  onToggleRightPanel?: () => void;
 }
 
 export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
@@ -51,6 +57,8 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   onSelectDate,
   currentUserRole,
   currentAstronaut,
+  isRightPanelCollapsed = false,
+  onToggleRightPanel,
 }) => {
   // If focusedDate is set, other days are hidden and only this day's full 24-hour detail is displayed
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -63,6 +71,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({
     '2026/11/22': true,
   });
+
+  // Active conditioning inspected in multi-day list view
+  const [multiDayConditioning, setMultiDayConditioning] = useState<{
+    date: string;
+    category: ConditioningCategory;
+  } | null>(null);
 
   const toggleExpand = (date: string) => {
     setExpandedDates((prev) => ({
@@ -141,7 +155,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               <button
                 disabled={!prevRecord}
                 onClick={() => prevRecord && setFocusedDate(prevRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors"
+                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors cursor-pointer"
                 title="View previous day"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -149,12 +163,33 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               <button
                 disabled={!nextRecord}
                 onClick={() => nextRecord && setFocusedDate(nextRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors border-l border-slate-200"
+                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors border-l border-slate-200 cursor-pointer"
                 title="View next day"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Toggle Right Station Objectives Panel */}
+            {onToggleRightPanel && (
+              <button
+                onClick={onToggleRightPanel}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+                title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for maximum viewing of 24h health diagrams"}
+              >
+                {isRightPanelCollapsed ? (
+                  <>
+                    <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
+                    <span>Show Objectives</span>
+                  </>
+                ) : (
+                  <>
+                    <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="hidden sm:inline">Maximize View</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -453,87 +488,40 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             </div>
           </div>
 
-          {/* 5. Conditioning & Daily Research Activities */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Conditioning Overview */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2 flex items-center justify-between">
-                <span>Daily Conditioning Averages</span>
-                <Activity className="w-4 h-4 text-sky-600" />
-              </h3>
-
-              <div className="space-y-2.5 text-xs font-mono">
-                <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    <Moon className="w-3.5 h-3.5 text-indigo-500" />
-                    Sleep Duration:
-                  </span>
-                  <span className="font-bold text-slate-900 tabular-nums">
-                    {currentRecord.avgSleepMinutes} min (~{(currentRecord.avgSleepMinutes / 60).toFixed(1)} hrs)
-                  </span>
+          {/* 5. Activities List (2nd) & Daily Conditioning with Details (3rd) */}
+          <div className="space-y-6">
+            {/* 2nd: Daily Experiment & Activity Checklist */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-sky-600" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    2. Daily Experiment & Activity Checklist
+                  </h3>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    <Dumbbell className="w-3.5 h-3.5 text-emerald-600" />
-                    Exercise Countermeasure:
-                  </span>
-                  <span className="font-bold text-slate-900 tabular-nums">
-                    {currentRecord.avgExerciseMinutes} min
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    <Brain className="w-3.5 h-3.5 text-purple-600" />
-                    Cognitive & Mental State:
-                  </span>
-                  <span className="font-bold text-slate-900">{currentRecord.mentalStatus}</span>
-                </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    <Bone className="w-3.5 h-3.5 text-amber-600" />
-                    Musculoskeletal Resilience:
-                  </span>
-                  <span className="font-bold text-slate-900">{currentRecord.musculoskeletalStatus}</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-slate-500 flex items-center gap-2">
-                    <Apple className="w-3.5 h-3.5 text-rose-500" />
-                    Nutrition & Caloric Intake:
-                  </span>
-                  <span className="font-bold text-slate-900">{currentRecord.nutritionStatus}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Daily Activities Checklist */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                  Daily Experiment & Activity Checklist
-                </h3>
                 <button
                   onClick={() => onOpenAddActivity(currentRecord.date)}
-                  className="text-xs text-sky-700 hover:text-sky-900 font-semibold flex items-center gap-1 px-2 py-0.5 rounded hover:bg-sky-50 transition-colors"
+                  className="text-xs text-sky-700 hover:text-sky-900 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Activity</span>
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {currentRecord.dailyActivities.map((act, index) => (
                   <div
                     key={act.id}
                     onClick={() => onToggleActivity(currentRecord.date, act.id)}
-                    className={`flex items-start gap-2.5 p-2.5 rounded-xl cursor-pointer transition-colors border ${
+                    className={`flex items-start gap-2.5 p-3 rounded-xl cursor-pointer transition-all border ${
                       act.completed
                         ? 'bg-slate-50/80 border-slate-200 text-slate-500'
-                        : 'bg-white border-slate-200 text-slate-900 font-medium hover:border-sky-300'
+                        : 'bg-white border-slate-200 text-slate-900 font-medium hover:border-sky-300 hover:shadow-2xs'
                     }`}
                   >
                     <span className="text-xs font-mono text-slate-400 mt-0.5">{index + 1}.</span>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-xs ${act.completed ? 'line-through text-slate-400' : 'text-slate-900 font-medium'}`}>
+                      <div className={`text-xs ${act.completed ? 'line-through text-slate-400' : 'text-slate-900 font-semibold'}`}>
                         {act.title}
                       </div>
                       {act.timeSlot && (
@@ -550,6 +538,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* 3rd: Daily Conditioning Overview with Clickable Past Data Inspection */}
+            <div>
+              <ConditioningDetailCard
+                currentRecord={currentRecord}
+                onAskAi={(prompt) => onOpenAiCall(prompt)}
+              />
             </div>
           </div>
         </div>
@@ -601,9 +597,35 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               Subject: <strong className="text-slate-800">{currentAstronaut.name}</strong> ({currentAstronaut.role}) · Station Module: {currentAstronaut.stationModule}
             </p>
           </div>
-          <div className="text-xs font-mono text-slate-500 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Sensor Stream Active</span>
+          <div className="text-xs font-mono text-slate-500 flex items-center gap-3">
+            <div className="items-center gap-1.5 hidden sm:flex">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Sensor Stream Active</span>
+            </div>
+
+            {onToggleRightPanel && (
+              <button
+                onClick={onToggleRightPanel}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+                  isRightPanelCollapsed
+                    ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-300 shadow-2xs font-semibold'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200 shadow-2xs'
+                }`}
+                title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for maximum viewing of health & activities"}
+              >
+                {isRightPanelCollapsed ? (
+                  <>
+                    <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
+                    <span>Show Objectives</span>
+                  </>
+                ) : (
+                  <>
+                    <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="hidden sm:inline">Maximize View</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -752,67 +774,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Column 2: Averages & Systemic State (Targeted in CSS Selector 2) */}
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
-                      <span>Averages & Conditioning</span>
-                      <Activity className="w-3.5 h-3.5 text-sky-600" />
-                    </h3>
-
-                    <div className="space-y-2 text-xs font-mono">
-                      <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600 flex items-center gap-1.5">
-                          <Moon className="w-3 h-3 text-indigo-500" />
-                          Avg. Sleep:
-                        </span>
-                        <span className="font-semibold text-slate-900 tabular-nums">
-                          {record.avgSleepMinutes} minutes
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600 flex items-center gap-1.5">
-                          <Dumbbell className="w-3 h-3 text-emerald-600" />
-                          Avg. Exercise:
-                        </span>
-                        <span className="font-semibold text-slate-900 tabular-nums">
-                          {record.avgExerciseMinutes} minutes
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600 flex items-center gap-1.5">
-                          <Brain className="w-3 h-3 text-purple-600" />
-                          Avg. Mental:
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          {record.mentalStatus}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600 flex items-center gap-1.5">
-                          <Bone className="w-3 h-3 text-amber-600" />
-                          Avg. Musculoskeletal:
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          {record.musculoskeletalStatus}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600 flex items-center gap-1.5">
-                          <Apple className="w-3 h-3 text-rose-500" />
-                          Avg. Nutrition:
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          {record.nutritionStatus}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 3: Daily Activity */}
+                  {/* Column 2: Daily Activity (Activities list at the 2nd) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-300/60 pb-1.5">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
@@ -864,7 +826,158 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       ))}
                     </div>
                   </div>
+
+                  {/* Column 3: Averages & Systemic Conditioning (Daily conditioning at the 3rd) */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
+                      <span>Averages & Conditioning</span>
+                      <Activity className="w-3.5 h-3.5 text-sky-600" />
+                    </h3>
+
+                    <div className="space-y-1.5 text-xs font-mono">
+                      {/* Sleep (Hibernation Pod) */}
+                      <button
+                        onClick={() =>
+                          setMultiDayConditioning((prev) =>
+                            prev?.date === record.date && prev?.category === 'sleep'
+                              ? null
+                              : { date: record.date, category: 'sleep' }
+                          )
+                        }
+                        className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          multiDayConditioning?.date === record.date && multiDayConditioning?.category === 'sleep'
+                            ? 'bg-indigo-50/90 border-indigo-300 text-indigo-950 font-semibold shadow-2xs ring-1 ring-indigo-200'
+                            : 'bg-white/60 hover:bg-slate-50 border-slate-200/60 text-slate-700'
+                        }`}
+                        title="Click to view Hibernation Pod telemetry & past sleep records"
+                      >
+                        <span className="flex items-center gap-1.5 truncate mr-1">
+                          <Moon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span>Avg. Sleep</span>
+                          <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Pod #04)</span>
+                        </span>
+                        <span className="font-semibold text-slate-900 tabular-nums shrink-0">
+                          {record.avgSleepMinutes} min
+                        </span>
+                      </button>
+
+                      {/* Exercise (T2 & ARED Equipment) */}
+                      <button
+                        onClick={() =>
+                          setMultiDayConditioning((prev) =>
+                            prev?.date === record.date && prev?.category === 'exercise'
+                              ? null
+                              : { date: record.date, category: 'exercise' }
+                          )
+                        }
+                        className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          multiDayConditioning?.date === record.date && multiDayConditioning?.category === 'exercise'
+                            ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950 font-semibold shadow-2xs ring-1 ring-emerald-200'
+                            : 'bg-white/60 hover:bg-slate-50 border-slate-200/60 text-slate-700'
+                        }`}
+                        title="Click to view T2 Colbert & ARED past exercise equipment records"
+                      >
+                        <span className="flex items-center gap-1.5 truncate mr-1">
+                          <Dumbbell className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Avg. Exercise</span>
+                          <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(T2/ARED)</span>
+                        </span>
+                        <span className="font-semibold text-slate-900 tabular-nums shrink-0">
+                          {record.avgExerciseMinutes} min
+                        </span>
+                      </button>
+
+                      {/* Mental (Station AI Conversations) */}
+                      <button
+                        onClick={() =>
+                          setMultiDayConditioning((prev) =>
+                            prev?.date === record.date && prev?.category === 'mental'
+                              ? null
+                              : { date: record.date, category: 'mental' }
+                          )
+                        }
+                        className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          multiDayConditioning?.date === record.date && multiDayConditioning?.category === 'mental'
+                            ? 'bg-purple-50/90 border-purple-300 text-purple-950 font-semibold shadow-2xs ring-1 ring-purple-200'
+                            : 'bg-white/60 hover:bg-slate-50 border-slate-200/60 text-slate-700'
+                        }`}
+                        title="Click to view Station AI Voice Biometrics & linguistic past logs"
+                      >
+                        <span className="flex items-center gap-1.5 truncate mr-1">
+                          <Brain className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                          <span>Avg. Mental</span>
+                          <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(AURA AI)</span>
+                        </span>
+                        <span className="font-semibold text-slate-800 shrink-0">
+                          {record.mentalStatus}
+                        </span>
+                      </button>
+
+                      {/* Musculoskeletal (Equipment Strain Sensors) */}
+                      <button
+                        onClick={() =>
+                          setMultiDayConditioning((prev) =>
+                            prev?.date === record.date && prev?.category === 'musculoskeletal'
+                              ? null
+                              : { date: record.date, category: 'musculoskeletal' }
+                          )
+                        }
+                        className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          multiDayConditioning?.date === record.date && multiDayConditioning?.category === 'musculoskeletal'
+                            ? 'bg-amber-50/90 border-amber-300 text-amber-950 font-semibold shadow-2xs ring-1 ring-amber-200'
+                            : 'bg-white/60 hover:bg-slate-50 border-slate-200/60 text-slate-700'
+                        }`}
+                        title="Click to view ARED strain & bio-impedance past telemetry"
+                      >
+                        <span className="flex items-center gap-1.5 truncate mr-1">
+                          <Bone className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>Musculoskeletal</span>
+                          <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Strain/Bio)</span>
+                        </span>
+                        <span className="font-semibold text-slate-800 shrink-0">
+                          {record.musculoskeletalStatus}
+                        </span>
+                      </button>
+
+                      {/* Nutrition (Galley Daily Meal Records) */}
+                      <button
+                        onClick={() =>
+                          setMultiDayConditioning((prev) =>
+                            prev?.date === record.date && prev?.category === 'nutrition'
+                              ? null
+                              : { date: record.date, category: 'nutrition' }
+                          )
+                        }
+                        className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          multiDayConditioning?.date === record.date && multiDayConditioning?.category === 'nutrition'
+                            ? 'bg-rose-50/90 border-rose-300 text-rose-950 font-semibold shadow-2xs ring-1 ring-rose-200'
+                            : 'bg-white/60 hover:bg-slate-50 border-slate-200/60 text-slate-700'
+                        }`}
+                        title="Click to view Galley meal records & caloric past data"
+                      >
+                        <span className="flex items-center gap-1.5 truncate mr-1">
+                          <Apple className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>Nutrition</span>
+                          <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Galley Logs)</span>
+                        </span>
+                        <span className="font-semibold text-slate-800 shrink-0">
+                          {record.nutritionStatus}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Expandable Conditioning Telemetry Details for this card */}
+                {multiDayConditioning?.date === record.date && (
+                  <div className="mt-4 pt-3 border-t border-slate-200/80 animate-in fade-in duration-200">
+                    <ConditioningDetailCard
+                      currentRecord={record}
+                      initialCategory={multiDayConditioning.category}
+                      onAskAi={(prompt) => onOpenAiCall(prompt)}
+                    />
+                  </div>
+                )}
 
                 {/* Footer bar with quick detail-below button */}
                 <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, Radio, Satellite, HeartPulse, LogOut, User, Shield } from 'lucide-react';
+import { Activity, ShieldCheck, Radio, Satellite, HeartPulse, LogOut, User, Shield, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { EnvironmentalMetrics, AuthUser } from '../types';
 
 interface TopNavProps {
@@ -7,6 +7,8 @@ interface TopNavProps {
   onOpenAiCall: () => void;
   currentUser: AuthUser | null;
   onLogout: () => void;
+  isRightPanelCollapsed?: boolean;
+  onToggleRightPanel?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -14,6 +16,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   onOpenAiCall,
   currentUser,
   onLogout,
+  isRightPanelCollapsed = false,
+  onToggleRightPanel,
 }) => {
   const [utcTime, setUtcTime] = useState<string>('');
   const [metString, setMetString] = useState<string>('T+289D:01H:00M');
@@ -97,6 +101,30 @@ export const TopNav: React.FC<TopNavProps> = ({
               {currentUser.name}
             </span>
           </div>
+        )}
+
+        {onToggleRightPanel && (
+          <button
+            onClick={onToggleRightPanel}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all shadow-2xs active:scale-98 cursor-pointer ${
+              isRightPanelCollapsed
+                ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-300'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+            }`}
+            title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for better viewing of health & activities"}
+          >
+            {isRightPanelCollapsed ? (
+              <>
+                <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
+                <span className="hidden md:inline">Show Objectives</span>
+              </>
+            ) : (
+              <>
+                <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden md:inline">Hide Objectives</span>
+              </>
+            )}
+          </button>
         )}
 
         <button
