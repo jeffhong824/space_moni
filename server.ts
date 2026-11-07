@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import http from 'http';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
