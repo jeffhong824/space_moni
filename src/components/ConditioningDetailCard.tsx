@@ -86,11 +86,11 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
   };
 
   const categories: { id: ConditioningCategory; label: string; systemTag: string }[] = [
-    { id: 'sleep', label: 'Sleep Duration', systemTag: 'Hibernation Pod Telemetry' },
-    { id: 'exercise', label: 'Exercise Countermeasure', systemTag: 'T2 & ARED Exercise Equipment' },
-    { id: 'mental', label: 'Cognitive & Mental State', systemTag: 'Station AI Voice Conversation Log' },
-    { id: 'musculoskeletal', label: 'Musculoskeletal Resilience', systemTag: 'Exercise Sensors & Bio-Impedance' },
-    { id: 'nutrition', label: 'Nutrition & Caloric Intake', systemTag: 'Station Galley Daily Meal Records' },
+    { id: 'sleep', label: '睡眠時數', systemTag: 'Hibernation Pod（示範遙測）' },
+    { id: 'exercise', label: '運動對策', systemTag: 'T2 與 ARED（示範）' },
+    { id: 'mental', label: '認知與心理', systemTag: 'AURA 語音檢核日誌（示範）' },
+    { id: 'musculoskeletal', label: '肌肉骨骼韌性', systemTag: '應變與生物阻抗（示範）' },
+    { id: 'nutrition', label: '營養與熱量', systemTag: '廚房條碼紀錄（示範）' },
   ];
 
   return (
@@ -101,16 +101,16 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-sky-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              Daily Conditioning & Equipment Telemetry
+              每日體能對策與設備遙測
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-            Click any conditioning metric below to inspect connected station systems and past data records
+            點選指標可檢視示範硬體管線與近五日紀錄（非即時飛行硬體）
           </p>
         </div>
 
         <span className="text-[10px] font-mono px-2 py-0.5 bg-sky-50 text-sky-700 font-semibold rounded border border-sky-200">
-          5 Systems Online
+          5 套示範系統
         </span>
       </div>
 

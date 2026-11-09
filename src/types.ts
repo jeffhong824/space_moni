@@ -81,6 +81,25 @@ export interface StationTask {
   description: string;
 }
 
+export interface MetricAnalysis {
+  metric: string;
+  value: string;
+  status: 'Normal' | 'Attention' | 'Critical';
+  analysis: string;
+  recommendations: string[];
+  unit?: string;
+  threshold?: string;
+  source?: string;
+}
+
+export interface SystemAnalysis {
+  system: 'Cardiovascular' | 'Respiratory' | 'Sleep' | 'Exercise' | 'Mental' | 'Musculoskeletal' | 'Nutrition';
+  status: 'Normal' | 'Attention' | 'Critical';
+  summary: string;
+  concerns: string[];
+  recommendations: string[];
+}
+
 export interface AiMessage {
   id: string;
   sender: 'astronaut' | 'aura';
@@ -91,11 +110,21 @@ export interface AiMessage {
     id: string;
     label: string;
     type: 'ADD_TASK' | 'LOG_ANOMALY' | 'UPDATE_VITALS' | 'NOTIFY_MISSION_CONTROL';
-    payload?: any;
+    payload?: Record<string, string>;
     executed?: boolean;
   }[];
   healthAssessment?: {
     status: 'Nominal' | 'Attention Required' | 'Critical';
     summary: string;
+  };
+  detailedAnalysis?: {
+    metrics: MetricAnalysis[];
+    systems: SystemAnalysis[];
+  };
+  analysisMode?: 'live_gemini' | 'offline_fallback';
+  dataQuality?: {
+    telemetry: string;
+    cabin: string;
+    spaceEnvironment: string;
   };
 }

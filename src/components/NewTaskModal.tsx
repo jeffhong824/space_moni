@@ -60,7 +60,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
           <div className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-sky-600" />
             <h3 className="text-base font-bold text-slate-900">
-              New Space Station Objective
+              新增太空站目標
             </h3>
           </div>
           <button
@@ -74,7 +74,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Objective / Task Title
+              目標／任務名稱
             </label>
             <input
               type="text"
@@ -89,7 +89,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                Station Module
+                站上模組
               </label>
               <select
                 value={module}
@@ -106,24 +106,24 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
 
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                Priority Level
+                優先等級
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Routine">Routine</option>
+                <option value="Critical">危急</option>
+                <option value="High">高</option>
+                <option value="Medium">中</option>
+                <option value="Routine">例行</option>
               </select>
             </div>
           </div>
 
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Assigned Crew Member
+              指派組員
             </label>
             <select
               value={assignedAstroName}
@@ -140,7 +140,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
 
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Description & Protocol Notes
+              說明與程序註記
             </label>
             <textarea
               rows={3}
@@ -157,13 +157,13 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium shadow-2xs"
             >
-              Deploy Objective
+              建立目標
             </button>
           </div>
         </form>

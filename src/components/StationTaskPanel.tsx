@@ -99,7 +99,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 className="text-[11px] font-bold uppercase tracking-widest text-slate-600 font-mono select-none mt-3"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
-                Objectives
+                站務目標
               </div>
             </div>
             <div className="pb-3 text-slate-400 hover:text-slate-800 transition-colors flex flex-col items-center gap-1">
@@ -114,7 +114,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 <div className="flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-emerald-600" />
                   <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    Space Station Objectives
+                    太空站目標
                   </h2>
                 </div>
               </div>
@@ -125,7 +125,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   title="Create new station task"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>New Task</span>
+                  <span>新增任務</span>
                 </button>
                 <button
                   onClick={toggleCollapse}
@@ -133,7 +133,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   title="Hide right-side panel for better viewing of health & activities"
                 >
                   <PanelRightClose className="w-3.5 h-3.5 text-slate-500 group-hover:text-rose-600 transition-colors" />
-                  <span>Hide Panel</span>
+                  <span>隱藏面板</span>
                 </button>
               </div>
             </div>
@@ -142,27 +142,34 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
             <div className="flex items-center justify-between text-[11px] font-mono px-2.5 py-1.5 bg-sky-50/80 border border-sky-200/60 rounded-lg text-sky-900 shadow-2xs">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                <span>Objectives Panel</span>
+                <span>目標面板</span>
               </span>
               <button
                 onClick={toggleCollapse}
                 className="text-sky-700 hover:text-sky-950 font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>Hide panel to expand health view</span> &rarr;
+                <span>隱藏面板以放大健康視圖</span> →
               </button>
             </div>
 
             {/* Priority Filter segmented tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs font-medium">
-              {(['ALL', 'Critical', 'High', 'Medium', 'Routine'] as const).map((p) => (
+              {([
+                ['ALL', '全部'],
+                ['Critical', '危急'],
+                ['High', '高'],
+                ['Medium', '中'],
+                ['Routine', '例行'],
+              ] as const).map(([p, label]) => (
                 <button
                   key={p}
+                  type="button"
                   onClick={() => setPriorityFilter(p)}
-                  className={`flex-1 py-1 text-[11px] rounded-md transition-colors cursor-pointer ${
+                  className={`flex-1 py-1 text-[11px] rounded-md transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-sky-600 ${
                     priorityFilter === p ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {p}
+                  {label}
                 </button>
               ))}
             </div>
@@ -170,21 +177,21 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
             {/* Status filter tabs */}
             <div className="flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono">Status:</span>
+                <span className="text-[11px] font-mono">狀態：</span>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer"
                 >
-                  <option value="ALL">All Statuses</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Pending Review">Pending Review</option>
+                  <option value="ALL">全部狀態</option>
+                  <option value="In Progress">進行中</option>
+                  <option value="Scheduled">已排程</option>
+                  <option value="Completed">已完成</option>
+                  <option value="Pending Review">待審</option>
                 </select>
               </div>
               <span className="text-[11px] font-mono tabular-nums">
-                {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
+                {filteredTasks.length} 項任務
               </span>
             </div>
           </>
@@ -196,7 +203,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 px-4 bg-white rounded-xl border border-dashed border-slate-200">
             <CheckSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs font-medium text-slate-600">No station objectives match filters</p>
+            <p className="text-xs font-medium text-slate-600">沒有符合篩選的站務目標</p>
             <button
               onClick={() => {
                 setPriorityFilter('ALL');
@@ -205,7 +212,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
               }}
               className="mt-2 text-xs text-sky-600 hover:underline font-mono"
             >
-              Reset filters
+              重設篩選
             </button>
           </div>
         ) : (
@@ -248,7 +255,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 {/* Progress Bar & Status Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-[11px] font-mono">
-                    <span className="text-slate-500">Progress:</span>
+                    <span className="text-slate-500">進度</span>
                     <span className="font-semibold text-slate-800 tabular-nums">{task.progress}%</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -319,7 +326,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-white border border-dashed border-slate-300 transition-colors shadow-2xs cursor-pointer"
             >
               <PanelRightClose className="w-3.5 h-3.5" />
-              <span>Hide panel for wide-screen health viewing</span>
+              <span>隱藏面板以寬螢幕檢視健康</span>
             </button>
           </div>
         )}

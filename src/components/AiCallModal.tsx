@@ -19,7 +19,10 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, StationTask, AiMessage } from '../types';
-import { DetailedHealthAnalysis, type MetricAnalysis, type SystemAnalysis } from './DetailedHealthAnalysis';
+import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
+import { callAiDoctor } from '../api/aiDoctor';
+import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
+import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -28,8 +31,9 @@ interface AiCallModalProps {
   todayRecord: DailyHealthRecord;
   envMetrics: EnvironmentalMetrics;
   tasks: StationTask[];
-  onExecuteAction: (action: any) => void;
+  onExecuteAction: (action: { type: string; label: string; payload?: Record<string, string> }) => void;
   initialPrompt?: string;
+  spaceEnvironment?: SpaceEnvironmentPayload | null;
 }
 
 export const AiCallModal: React.FC<AiCallModalProps> = ({
@@ -41,40 +45,56 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   tasks,
   onExecuteAction,
   initialPrompt,
+  spaceEnvironment = null,
 }) => {
-  const [messages, setMessages] = useState<AiMessage[]>([
-    {
+  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment);
+  const buildGreeting = (): AiMessage => ({
       id: 'msg-init',
       sender: 'aura',
-      timestamp: '07:46 UTC',
-      text: `AURA 飛行外科醫師上線，植物學家 ${astronaut.name.split(' ')[0]}。我正在監測您任務第 ${astronaut.missionDaysElapsed} 天的遙測數據。注意到您的靜息心率升高至 ${todayRecord.restingHR} bpm，HRV 降至 ${todayRecord.hrv} ms。您現在感覺如何？`,
-      healthAssessment: {
-        status: todayRecord.restingHR > 100 ? 'Attention Required' : 'Nominal',
-        summary: `靜息心率 ${todayRecord.restingHR} bpm 需要在實驗週期中持續監測心血管狀態。`,
+      timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+      text: `AURA 上線，${astronaut.name}。任務第 ${astronaut.missionDaysElapsed} 日。${packed.overall.summary} 靜息心率 ${todayRecord.restingHR} bpm、HRV ${todayRecord.hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？`,
+      healthAssessment: packed.overall,
+      detailedAnalysis: { metrics: packed.metrics, systems: packed.systems },
+      analysisMode: 'offline_fallback',
+      dataQuality: {
+        telemetry: packed.source.labelZh,
+        cabin: packed.cabinEnvironment?.source.labelZh || '未提供',
+        spaceEnvironment: packed.spaceEnvironment
+          ? `官方饋送 ${packed.spaceEnvironment.overallStatus}`
+          : '尚未載入空間天氣',
       },
-      suggestedActions: [
-        {
-          id: 'sug-1',
-          label: '安排 20 分鐘補液與電解質對策',
-          type: 'ADD_TASK',
-          payload: {
-            title: '等滲補液與心血管方案',
-            module: 'Tranquility ECLSS',
-            priority: 'High',
-            description: '口服 0.9% 生理食鹽水電解質以對抗微重力頭部體液轉移。',
-          },
-        },
-        {
-          id: 'sug-2',
-          label: '在每日健康紀錄標記心搏過速異常',
-          type: 'LOG_ANOMALY',
-          payload: {
-            note: `觀測到心搏過速：靜息心率 ${todayRecord.restingHR} bpm，HRV ${todayRecord.hrv} ms。已建議口服補液。`,
-          },
-        },
-      ],
-    } as any,
-  ]);
+      suggestedActions: packed.overall.status === 'Nominal'
+        ? [
+            {
+              id: 'sug-ack',
+              label: '記錄例行健康檢核完成',
+              type: 'LOG_ANOMALY',
+              payload: { note: `${astronaut.name} 例行檢核：${packed.overall.status}` },
+            },
+          ]
+        : [
+            {
+              id: 'sug-1',
+              label: '安排補液與電解質對策',
+              type: 'ADD_TASK',
+              payload: {
+                title: '等滲補液與心血管方案',
+                module: 'Tranquility ECLSS',
+                priority: 'High',
+              },
+            },
+            {
+              id: 'sug-2',
+              label: '記錄心血管觀測',
+              type: 'LOG_ANOMALY',
+              payload: {
+                note: `${astronaut.name}：靜息心率 ${todayRecord.restingHR} bpm，HRV ${todayRecord.hrv} ms。`,
+              },
+            },
+          ],
+  });
+
+  const [messages, setMessages] = useState<AiMessage[]>([buildGreeting()]);
 
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -85,6 +105,16 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const greetingKeyRef = useRef(`${astronaut.id}-${todayRecord.date}`);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const key = `${astronaut.id}-${todayRecord.date}`;
+    if (greetingKeyRef.current === key && messages.length > 0) return;
+    greetingKeyRef.current = key;
+    setMessages([buildGreeting()]);
+    setExpandedAnalysisId(null);
+  }, [isOpen, astronaut.id, todayRecord.date]);
 
   // Initialize Speech Recognition if supported in browser
   useEffect(() => {
@@ -95,7 +125,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = 'zh-TW';
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -146,13 +176,12 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
     utterance.rate = 1.05;
     utterance.pitch = 1.0;
 
-    // Pick an English voice
+    utterance.lang = 'zh-TW';
     const voices = window.speechSynthesis.getVoices();
-    const enVoice = voices.find(
-      (v) => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('David'))
-    ) || voices.find((v) => v.lang.startsWith('en'));
-
-    if (enVoice) utterance.voice = enVoice;
+    const zhVoice =
+      voices.find((v) => v.lang.toLowerCase().startsWith('zh-tw') || v.lang.toLowerCase().startsWith('zh-hant')) ||
+      voices.find((v) => v.lang.toLowerCase().startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
 
     utterance.onstart = () => setActiveSpeakingId(msgId);
     utterance.onend = () => setActiveSpeakingId(null);
@@ -209,59 +238,47 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
     setIsProcessing(true);
 
     try {
-      const response = await fetch('/api/ai-doctor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          astronaut,
-          telemetry: todayRecord,
-          envMetrics,
-          currentTasks: tasks.map((t) => ({ id: t.id, title: t.title, priority: t.priority, status: t.status })),
-          history: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
-        }),
+      const data = await callAiDoctor({
+        message: text,
+        astronaut,
+        telemetry: todayRecord,
+        envMetrics,
+        spaceEnvironment,
+        tasks,
+        history: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
       });
-
-      const data = await response.json();
-      const aiReply = data.replyText || data.fallback?.replyText || '遙測收訊完成。待命中。';
-      const suggestedActions = data.suggestedActions || data.fallback?.suggestedActions || [];
-      const healthAssessment = data.healthAssessment || data.fallback?.healthAssessment;
-      const detailedAnalysis = data.detailedAnalysis;
 
       const auraMessage: AiMessage = {
         id: 'aura-' + Date.now(),
         sender: 'aura',
-        timestamp: new Date().toUTCString().slice(17, 22) + ' UTC',
-        text: aiReply,
-        suggestedActions,
-        healthAssessment,
-        ...(detailedAnalysis && { detailedAnalysis }),
-      } as any;
+        timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+        text: data.replyText || '遙測收訊完成。待命中。',
+        suggestedActions: data.suggestedActions,
+        healthAssessment: data.healthAssessment,
+        detailedAnalysis: data.detailedAnalysis,
+        analysisMode: data.analysisMode,
+        dataQuality: data.dataQuality,
+      };
 
       setMessages((prev) => [...prev, auraMessage]);
 
       if (speechSynthesisEnabled) {
-        speakText(aiReply, auraMessage.id);
+        speakText(auraMessage.text, auraMessage.id);
       }
     } catch (err) {
       console.error('Error contacting AI doctor:', err);
+      const fallbackPacked = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment);
+      const fallback = buildOfflineTwoLevelAnalysis(text, fallbackPacked);
       const fallbackMsg: AiMessage = {
         id: 'aura-err-' + Date.now(),
         sender: 'aura',
-        timestamp: new Date().toUTCString().slice(17, 22) + ' UTC',
-        text: `遙測中繼收訊：「${text}」。根據您的靜息心率 103 bpm 及 HRV 14 ms，建議在執行太空植物催化劑實驗前，先完成預定的補液對策。`,
-        suggestedActions: [
-          {
-            id: 'err-act-1',
-            label: '新增 20 分鐘休息與補液對策',
-            type: 'ADD_TASK',
-            payload: {
-              title: '強制心血管休息週期',
-              module: 'Tranquility ECLSS',
-              priority: 'High',
-            },
-          },
-        ],
+        timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+        text: fallback.replyText,
+        suggestedActions: fallback.suggestedActions,
+        healthAssessment: fallback.healthAssessment,
+        detailedAnalysis: fallback.detailedAnalysis,
+        analysisMode: fallback.analysisMode,
+        dataQuality: fallback.dataQuality,
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
@@ -306,8 +323,13 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl h-[85vh] max-h-[720px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/55 backdrop-blur-[2px]" role="presentation">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="aura-dialog-title"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl h-[85vh] max-h-[720px] flex flex-col overflow-hidden"
+      >
         {/* Header */}
         <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -316,7 +338,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                <h3 id="aura-dialog-title" className="text-sm font-bold text-slate-900 tracking-tight">
                   AURA · 站務 AI 醫療與任務官
                 </h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -433,28 +455,30 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                     </div>
                   )}
 
-                  {/* Detailed Analysis - Collapsible */}
-                  {(msg as any).detailedAnalysis && (
+                  {msg.detailedAnalysis && (
                     <div className="pt-2 border-t border-slate-100">
                       <button
+                        type="button"
                         onClick={() => setExpandedAnalysisId(expandedAnalysisId === msg.id ? null : msg.id)}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors focus-visible:outline-2 focus-visible:outline-sky-600"
+                        aria-expanded={expandedAnalysisId === msg.id}
                       >
-                        <span>詳細健康分析</span>
+                        <span>詳細健康分析（整體＋逐項）</span>
                         {expandedAnalysisId === msg.id ? (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp className="w-4 h-4" aria-hidden />
                         ) : (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-4 h-4" aria-hidden />
                         )}
                       </button>
-                      
                       {expandedAnalysisId === msg.id && (
-                        <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="mt-2">
                           <DetailedHealthAnalysis
-                            metrics={(msg as any).detailedAnalysis.metrics}
-                            systems={(msg as any).detailedAnalysis.systems}
+                            metrics={msg.detailedAnalysis.metrics}
+                            systems={msg.detailedAnalysis.systems}
                             overallStatus={msg.healthAssessment?.status || 'Nominal'}
                             overallSummary={msg.healthAssessment?.summary || ''}
+                            dataQuality={msg.dataQuality}
+                            analysisMode={msg.analysisMode}
                           />
                         </div>
                       )}

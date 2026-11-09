@@ -90,7 +90,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // Helper to trigger AI with pre-filled question based on abnormal metrics of that day
   const handleDirectAskAi = (record: DailyHealthRecord) => {
     const abnormalHours = record.hourlyTimeline?.filter((p) => p.isAbnormal) || [];
-    const prompt = `AURA, please analyze my 24-hour biomedical telemetry for ${record.date}. Resting heart rate is abnormal at ${record.restingHR} bpm, HRV is critically low at ${record.hrv} ms, with ${abnormalHours.length} elevated tachycardic episodes logged (peak at 14:00 UTC). What immediate microgravity countermeasures and task adjustments do you recommend?`;
+    const prompt = `請分析 ${record.date} 的 24 小時生理遙測。靜息心率 ${record.restingHR} bpm、HRV ${record.hrv} ms，共 ${abnormalHours.length} 筆異常時段。請依示範門檻給出整體與逐項建議，並對照官方空間天氣（勿編造 NASA 數字）。`;
     onOpenAiCall(prompt);
   };
 
@@ -114,7 +114,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 text-slate-600" />
-              <span>Back to All Days</span>
+              <span>返回所有日期</span>
             </button>
 
             <div className="h-5 w-px bg-slate-200" />
@@ -125,13 +125,13 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </span>
               {currentRecord.isToday && (
                 <span className="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-md border border-sky-200 font-mono">
-                  TODAY
+                  今日
                 </span>
               )}
               {hasElevatedHR && (
                 <span className="px-2.5 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 rounded-md border border-rose-300 font-mono flex items-center gap-1 animate-pulse">
                   <AlertTriangle className="w-3 h-3 text-rose-600" />
-                  ABNORMAL TAUGHT
+                  異常心搏過速
                 </span>
               )}
             </div>
@@ -146,7 +146,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               title="Direct-Ask AI for Health Suggestions on this day's abnormal telemetry"
             >
               <Sparkles className="w-4 h-4 text-sky-200 animate-spin" />
-              <span>Direct-Ask AI for Health Suggestions</span>
+              <span>直接詢問 AI 健康建議</span>
               <Mic className="w-3.5 h-3.5 text-white/90" />
             </button>
 
@@ -180,12 +180,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 {isRightPanelCollapsed ? (
                   <>
                     <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Show Objectives</span>
+                    <span>顯示目標</span>
                   </>
                 ) : (
                   <>
                     <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden sm:inline">Maximize View</span>
+                    <span className="hidden sm:inline">放大檢視</span>
                   </>
                 )}
               </button>
@@ -205,14 +205,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                      CRITICAL BIOMETRIC ALERT: RESTING TACHYCARDIA & AUTONOMIC STRAIN
+                      生理警示：靜息心搏過速與自主神經負荷
                     </h3>
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-200 text-rose-900 uppercase">
-                      Action Required
+                      需處置
                     </span>
                   </div>
                   <p className="text-xs text-rose-800 mt-1 leading-relaxed">
-                    Resting heart rate reached <strong>103 bpm</strong> (normal ceiling: 85 bpm) with peak spike at <strong>114 bpm</strong> during the 14:00 UTC resistive exercise block. Heart Rate Variability (HRV) is critically suppressed to <strong>14 ms</strong>.
+                    當日靜息心率 <strong>{currentRecord.restingHR} bpm</strong>（示範危急門檻 &gt;100），HRV <strong>{currentRecord.hrv} ms</strong>。數值來自示範遙測，請一併對照官方空間天氣。
                   </p>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 className="shrink-0 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all active:scale-98 cursor-pointer"
               >
                 <Mic className="w-3.5 h-3.5" />
-                <span>Ask AI Medical Officer</span>
+                <span>詢問 AI 醫療官</span>
               </button>
             </div>
           )}
@@ -240,7 +240,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             >
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className={hasElevatedHR ? 'text-rose-700 font-bold' : 'text-slate-500'}>
-                  RESTING HEART RATE
+                  靜息心率
                 </span>
                 <Heart className={`w-4 h-4 ${hasElevatedHR ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
               </div>
@@ -252,9 +252,9 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
                 <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {hasElevatedHR ? '▲ +28 bpm vs Norm' : '● Nominal range'}
+                  {hasElevatedHR ? '▲ 超過示範正常上限' : '● 示範正常區間'}
                 </span>
-                <span className="text-slate-400">Ceiling: 85</span>
+                <span className="text-slate-400">注意門檻 90 · 危急 &gt;100</span>
               </div>
             </div>
 
@@ -268,7 +268,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             >
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className={currentRecord.hrv < 20 ? 'text-rose-700 font-bold' : 'text-slate-500'}>
-                  HRV (AUTONOMIC TONE)
+                  HRV（自主神經）
                 </span>
                 <Activity className={`w-4 h-4 ${currentRecord.hrv < 20 ? 'text-rose-600' : 'text-slate-400'}`} />
               </div>
@@ -280,16 +280,16 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
                 <span className={currentRecord.hrv < 20 ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {currentRecord.hrv < 20 ? '▼ Severe Suppression' : '● Normal variability'}
+                  {currentRecord.hrv < 20 ? '▼ 嚴重抑制' : '● 變異性正常'}
                 </span>
-                <span className="text-slate-400">Target: &gt;25</span>
+                <span className="text-slate-400">目標 ≥25 ms</span>
               </div>
             </div>
 
             {/* VO2 Max */}
             <div className="rounded-2xl p-4 border bg-white border-slate-200 text-slate-800">
               <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-                <span>VO2 MAX</span>
+                <span>VO₂ max</span>
                 <TrendingUp className="w-4 h-4 text-sky-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
@@ -299,7 +299,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <span className="text-xs font-mono font-medium text-slate-500">mL/kg/min</span>
               </div>
               <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                <span className="text-emerald-600 font-medium">● Aerobic Baseline</span>
+                <span className="text-emerald-600 font-medium">● 有氧基線</span>
                 <span className="text-slate-400">Ref: 20.5</span>
               </div>
             </div>
@@ -307,7 +307,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             {/* SpO2 */}
             <div className="rounded-2xl p-4 border bg-white border-slate-200 text-slate-800">
               <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-                <span>BLOOD OXYGEN (SPO2)</span>
+                <span>血氧（SpO₂）</span>
                 <Activity className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
@@ -317,7 +317,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <span className="text-xs font-mono font-medium text-slate-500">%</span>
               </div>
               <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                <span className="text-emerald-600 font-medium">● Stable Saturation</span>
+                <span className="text-emerald-600 font-medium">● 飽和穩定</span>
                 <span className="text-slate-400">Min: 94%</span>
               </div>
             </div>
@@ -328,13 +328,13 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>24-Hour Continuous Heart Rate & Tachycardia Diagram</span>
+                  <span>24 小時心率與心搏過速圖</span>
                   <span className="text-xs font-mono text-slate-400 font-normal">
-                    (Continuous sensor stream from 00:00 to 23:59 UTC)
+                    （00:00–23:59 UTC 示範感測串流）
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 font-mono mt-0.5">
-                  Points exceeding 100 bpm are highlighted in red as abnormal tachycardic episodes
+                  超過 100 bpm 的時段以紅色標示為異常心搏過速
                 </p>
               </div>
 
@@ -342,11 +342,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               <div className="flex items-center gap-4 text-xs font-mono">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-rose-600 inline-block"></span>
-                  <span className="font-semibold text-rose-700">Abnormal / Critical (&gt;100 bpm)</span>
+                  <span className="font-semibold text-rose-700">異常／危急（&gt;100 bpm）</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-sky-400 inline-block"></span>
-                  <span className="text-slate-600">Nominal (&le;100 bpm)</span>
+                  <span className="text-slate-600">標稱（≤100 bpm）</span>
                 </div>
               </div>
             </div>
@@ -360,7 +360,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   style={{ top: '35%' }}
                 >
                   <span className="bg-rose-100 text-rose-800 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold shadow-2xs">
-                    ABNORMAL CEILING: 100 BPM
+                    異常上限：100 BPM
                   </span>
                 </div>
 
@@ -370,7 +370,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   style={{ top: '80%' }}
                 >
                   <span className="bg-slate-200 text-slate-600 text-[10px] font-mono px-1.5 py-0.5 rounded">
-                    RESTING BASELINE: 60 BPM
+                    靜息基線：60 BPM
                   </span>
                 </div>
 
@@ -504,7 +504,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   className="text-xs text-sky-700 hover:text-sky-900 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Activity</span>
+                  <span>新增活動</span>
                 </button>
               </div>
 
@@ -559,7 +559,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             <div className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
               <Mic className="w-3.5 h-3.5" />
             </div>
-            <span className="tracking-wide">Ask AI About {currentRecord.date} Abnormalities</span>
+            <span className="tracking-wide">詢問 AI：{currentRecord.date} 異常</span>
             <Sparkles className="w-4 h-4 text-sky-200 animate-pulse" />
           </button>
         </div>
@@ -571,7 +571,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // MULTI-DAY STACK VIEW (DEFAULT LIST)
   // ==========================================
   return (
-    <section className="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
+    <section id="main-records" className="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 pb-24">
         {/* Header bar */}
@@ -579,28 +579,28 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-                24-Hour Daily Health & Activity Records
+                24 小時健康與活動紀錄
               </h1>
               {isNASA && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  NASA FLIGHT SURGEON · 24H ACCESS UNLOCKED
+                  NASA 飛行外科醫師 · 已解鎖 24 小時
                 </span>
               )}
               {isCommander && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
                   <Lock className="w-3 h-3 text-amber-700" />
-                  COMMANDER DUTY LOG (24H DETAIL RESTRICTED)
+                  指揮官勤務日誌（24 小時細節受限）
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 font-mono mt-0.5">
-              Subject: <strong className="text-slate-800">{currentAstronaut.name}</strong> ({currentAstronaut.role}) · Station Module: {currentAstronaut.stationModule}
+              對象：<strong className="text-slate-800">{currentAstronaut.name}</strong>（{currentAstronaut.role}）· 模組：{currentAstronaut.stationModule}
             </p>
           </div>
           <div className="text-xs font-mono text-slate-500 flex items-center gap-3">
             <div className="items-center gap-1.5 hidden sm:flex">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Sensor Stream Active</span>
+              <span>示範感測串流</span>
             </div>
 
             {onToggleRightPanel && (
@@ -616,12 +616,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 {isRightPanelCollapsed ? (
                   <>
                     <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Show Objectives</span>
+                    <span>顯示目標</span>
                   </>
                 ) : (
                   <>
                     <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden sm:inline">Maximize View</span>
+                    <span className="hidden sm:inline">放大檢視</span>
                   </>
                 )}
               </button>
@@ -658,20 +658,20 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </span>
                   {isToday && (
                     <span className="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-md border border-sky-200">
-                      TODAY
+                      今日
                     </span>
                   )}
                   {hasElevatedHR && (
                     <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold bg-rose-100 text-rose-800 rounded-md border border-rose-300">
                       <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      Elevated HR (103 bpm)
+                      心率偏高（{record.restingHR} bpm）
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
                   <span className={hasElevatedHR ? 'text-rose-700 font-bold' : ''}>
-                    Resting HR: {record.restingHR} bpm
+                    靜息心率：{record.restingHR} bpm
                   </span>
                   <span aria-hidden="true">·</span>
                   <span>SpO2: {record.spo2}%</span>
@@ -688,7 +688,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       title="24-hour details are restricted to NASA"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>NASA Only</span>
+                      <span>僅 NASA</span>
                     </button>
                   ) : (
                     <button
@@ -701,7 +701,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       title="Hide other days and inspect full 24h diagrams and abnormal telemetry"
                     >
                       <Maximize2 className="w-3.5 h-3.5 text-sky-600" />
-                      <span>View 24h Details</span>
+                      <span>檢視 24 小時細節</span>
                     </button>
                   )}
 
@@ -729,13 +729,13 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   {/* Column 1: Daily Health Situation */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
-                      <span>Daily Health Situation</span>
+                      <span>當日健康狀況</span>
                       <Heart className="w-3.5 h-3.5 text-rose-500" />
                     </h3>
 
                     <div className="space-y-2 text-xs font-mono">
                       <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600">Resting HR:</span>
+                        <span className="text-slate-600">靜息心率</span>
                         <div className="flex items-center gap-1.5">
                           <span
                             className={`font-bold tabular-nums text-sm ${
@@ -778,7 +778,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-300/60 pb-1.5">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                        Daily Activity
+                        當日活動
                       </h3>
                       <button
                         onClick={(e) => {
@@ -789,7 +789,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         title="Add activity"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Add</span>
+                        <span>新增</span>
                       </button>
                     </div>
 
@@ -830,7 +830,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   {/* Column 3: Averages & Systemic Conditioning (Daily conditioning at the 3rd) */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
-                      <span>Averages & Conditioning</span>
+                      <span>平均與體能對策</span>
                       <Activity className="w-3.5 h-3.5 text-sky-600" />
                     </h3>
 
@@ -853,7 +853,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Moon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                          <span>Avg. Sleep</span>
+                          <span>平均睡眠</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Pod #04)</span>
                         </span>
                         <span className="font-semibold text-slate-900 tabular-nums shrink-0">
@@ -879,7 +879,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Dumbbell className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>Avg. Exercise</span>
+                          <span>平均運動</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(T2/ARED)</span>
                         </span>
                         <span className="font-semibold text-slate-900 tabular-nums shrink-0">
@@ -905,7 +905,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Brain className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                          <span>Avg. Mental</span>
+                          <span>心理狀態</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(AURA AI)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
@@ -931,7 +931,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Bone className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>Musculoskeletal</span>
+                          <span>肌肉骨骼</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Strain/Bio)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
@@ -957,7 +957,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Apple className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                          <span>Nutrition</span>
+                          <span>營養</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Galley Logs)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
@@ -982,10 +982,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 {/* Footer bar with quick detail-below button */}
                 <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
-                    <span>24h Vital Points: {record.hourlyTimeline.length}</span>
+                    <span>24 小時測點：{record.hourlyTimeline.length}</span>
                     <span aria-hidden="true">·</span>
                     <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-emerald-600'}>
-                      {hasElevatedHR ? '⚠ Contains Abnormal Spikes' : '● All Points Nominal'}
+                      {hasElevatedHR ? '⚠ 含異常尖峰' : '● 測點標稱'}
                     </span>
                   </div>
 
@@ -995,14 +995,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium text-xs border border-amber-300 transition-all cursor-pointer"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>24h Raw Telemetry Restricted to NASA</span>
+                      <span>24 小時原始遙測僅限 NASA</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => setFocusedDate(record.date)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs shadow-2xs transition-all active:scale-98 cursor-pointer"
                     >
-                      <span>View Full 24h Diagrams & Red Highlights</span>
+                      <span>檢視完整 24 小時圖與紅色標示</span>
                       <Maximize2 className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -1022,7 +1022,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
           <div className="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xs">
             <Mic className="w-3.5 h-3.5" />
           </div>
-          <span className="tracking-wide">Call with AI</span>
+          <span className="tracking-wide">與 AI 通話</span>
           <Sparkles className="w-4 h-4 text-sky-600 animate-pulse" />
         </button>
       </div>
@@ -1036,21 +1036,21 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <Lock className="w-5 h-5 text-amber-700" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">NASA Flight Surgeon Clearance Required</h3>
-                <p className="text-[11px] font-mono text-slate-500 uppercase">Mission Bio-Ethics & Medical Privacy Protocol</p>
+                <h3 className="text-base font-bold text-slate-900">需 NASA 飛行外科醫師權限</h3>
+                <p className="text-[11px] font-mono text-slate-500">任務生命倫理與醫療隱私協議</p>
               </div>
             </div>
             <div className="text-xs text-slate-600 space-y-2.5 leading-relaxed">
               <p>
-                Continuous 24-hour raw physiological diagrams, continuous ECG waveforms, and diagnostic deep-dive telemetry are strictly <strong>restricted to NASA Ground Flight Surgeons</strong> to protect astronaut medical privacy.
+                連續 24 小時原始生理圖、ECG 波形與深度診斷遙測，為保護太空人醫療隱私，<strong>僅限 NASA 地面飛行外科醫師</strong>。
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-[11px] space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-amber-800">
                   <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  Commander Operational Scope
+                  指揮官作業範圍
                 </div>
                 <p className="text-amber-800">
-                  As <strong>Station Commander</strong>, you have access to daily duty readiness ratings, conditioning aggregates, and mission activity logs for all crew members. Detailed 24h raw telemetry requires logging in as <strong>NASA</strong>.
+                  作為<strong>站指揮官</strong>，您可檢視全體組員的勤務適航、體能彙總與活動日誌。詳細 24 小時原始遙測請改以 <strong>NASA</strong> 角色登入。
                 </p>
               </div>
             </div>
@@ -1059,7 +1059,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 onClick={() => setShowCommanderModal(false)}
                 className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
               >
-                Acknowledge Access Policy
+                了解存取政策
               </button>
             </div>
           </div>

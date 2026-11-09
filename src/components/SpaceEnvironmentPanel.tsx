@@ -1,225 +1,299 @@
-import React, { useState, useEffect } from 'react';
-import { Sun, Radio, AlertTriangle, TrendingUp, RefreshCw, Zap, Activity } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Activity, ExternalLink, RefreshCw, Sun, Wind, Zap } from 'lucide-react';
+import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import { EmptyBlock, ErrorBlock, LoadingBlock } from '../ui/DataState';
+import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 
-interface SpaceEnvironmentData {
-  timestamp: string;
-  solarFlares: Array<{
-    flrID?: string;
-    beginTime?: string;
-    peakTime?: string;
-    classType?: string;
-    sourceLocation?: string;
-  }>;
-  geomagneticStorms: Array<{
-    gstID?: string;
-    startTime?: string;
-    kpIndex?: number;
-  }>;
-  coronalMassEjections: Array<{
-    activityID?: string;
-    startTime?: string;
-    note?: string;
-  }>;
-  summary: {
-    totalEvents: number;
-    highestSolarFlareClass: string;
-    maxKpIndex: number;
-    radiationRisk: string;
-  };
+function fmtTime(iso?: string | null) {
+  if (!iso) return '—';
+  const d = new Date(iso.endsWith('Z') || iso.includes('T') ? iso : iso.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('zh-TW', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  });
 }
 
-interface SpaceEnvironmentPanelProps {
-  isCollapsed?: boolean;
+function riskLabel(risk: string) {
+  switch (risk) {
+    case 'Severe':
+      return '嚴重';
+    case 'High':
+      return '高';
+    case 'Moderate':
+      return '中等';
+    case 'Low':
+      return '低';
+    default:
+      return '未知';
+  }
 }
 
-export const SpaceEnvironmentPanel: React.FC<SpaceEnvironmentPanelProps> = ({ isCollapsed }) => {
-  const [data, setData] = useState<SpaceEnvironmentData | null>(null);
+function sourceStatusZh(status: string) {
+  switch (status) {
+    case 'ok':
+      return '已連線';
+    case 'empty':
+      return '空窗';
+    case 'timeout':
+      return '逾時';
+    case 'error':
+      return '失敗';
+    default:
+      return status;
+  }
+}
+
+export const SpaceEnvironmentPanel: React.FC = () => {
+  const [data, setData] = useState<SpaceEnvironmentPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  const fetchSpaceEnvironment = async () => {
+  const load = useCallback(async (refresh = false) => {
     setLoading(true);
     setError(null);
-    
     try {
-      const response = await fetch('/api/nasa/space-environment');
-      if (!response.ok) {
-        throw new Error('無法連接 NASA DONKI 空間天氣資料庫');
+      const response = await fetch(`/api/nasa/space-environment${refresh ? '?refresh=1' : ''}`);
+      const json = (await response.json()) as SpaceEnvironmentPayload & { error?: string };
+      if (!response.ok && json.overallStatus === 'unavailable') {
+        setData(json);
+        setError(json.error || '官方饋送無法使用');
+        return;
       }
-      
-      const envData = await response.json();
-      setData(envData);
-      setLastUpdate(new Date());
-    } catch (err: any) {
-      console.error('Space environment fetch error:', err);
-      setError(err.message || '資料載入失敗');
+      setData(json);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '無法連接空間天氣服務');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSpaceEnvironment();
-    // Refresh every 30 minutes
-    const interval = setInterval(fetchSpaceEnvironment, 30 * 60 * 1000);
-    return () => clearInterval(interval);
   }, []);
 
-  if (isCollapsed) {
-    return null;
-  }
+  useEffect(() => {
+    void load(false);
+    const id = window.setInterval(() => void load(false), 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [load]);
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'Severe': return 'text-rose-600 bg-rose-50 border-rose-200';
-      case 'High': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'Moderate': return 'text-amber-600 bg-amber-50 border-amber-200';
-      default: return 'text-emerald-600 bg-emerald-50 border-emerald-200';
-    }
-  };
-
-  const getRiskLabel = (risk: string) => {
-    switch (risk) {
-      case 'Severe': return '嚴重';
-      case 'High': return '高';
-      case 'Moderate': return '中等';
-      case 'Low': return '低';
-      default: return '未知';
-    }
-  };
+  const obs = data?.observations;
+  const demoKey = data?.nasaKeyMode === 'demo_key';
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-sky-50 to-indigo-50 border-b border-slate-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center">
-            <Sun className="w-5 h-5" />
+    <section
+      aria-labelledby="space-env-heading"
+      className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden"
+    >
+      <header className="px-4 py-3 bg-gradient-to-r from-sky-50 to-indigo-50 border-b border-slate-200/80 flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0">
+            <Sun className="w-4 h-4" aria-hidden />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">太空環境監測</h3>
-            <p className="text-xs text-slate-500 font-mono">NASA DONKI 空間天氣資料</p>
+          <div className="min-w-0">
+            <h3 id="space-env-heading" className="text-sm font-bold text-slate-900 leading-tight">
+              官方空間環境
+            </h3>
+            <p className="text-[11px] text-slate-500 leading-snug mt-0.5">
+              NOAA SWPC／GOES 即時觀測 · NASA DONKI 事件目錄
+            </p>
           </div>
         </div>
-        
         <button
-          onClick={fetchSpaceEnvironment}
+          type="button"
+          onClick={() => void load(true)}
           disabled={loading}
-          className="p-1.5 rounded-lg hover:bg-white/60 text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
-          title="重新整理資料"
+          className="p-1.5 rounded-lg text-slate-600 hover:bg-white/80 hover:text-slate-900 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-sky-600"
+          aria-label="重新整理空間環境資料"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden />
         </button>
-      </div>
+      </header>
 
-      {/* Content */}
       <div className="p-4 space-y-3">
-        {loading && !data && (
-          <div className="text-center py-8 text-slate-400 text-xs">
-            <Radio className="w-6 h-6 mx-auto mb-2 animate-pulse" />
-            <p>正在連接 NASA 資料源...</p>
-          </div>
+        {loading && !data && <LoadingBlock label="正在向 NOAA SWPC 與 NASA DONKI 擷取…" />}
+
+        {error && !data && (
+          <ErrorBlock title="空間環境饋送失敗" detail={error} onRetry={() => void load(true)} />
         )}
 
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-xs">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-rose-900">資料源連線失敗</p>
-                <p className="text-rose-700 mt-1">{error}</p>
-                <p className="text-rose-600 mt-2 text-[11px]">
-                  NASA DONKI API 可能暫時無法使用。系統將使用艙內感測器資料作為備援。
-                </p>
-              </div>
-            </div>
-          </div>
+        {demoKey && data && (
+          <p className="text-[11px] leading-relaxed rounded-lg border border-amber-200 bg-amber-50 text-amber-950 px-2.5 py-2">
+            非營運金鑰：NASA DONKI 使用公開 DEMO_KEY。設定 <span className="font-mono">NASA_API_KEY</span> 後可改用申請金鑰。即時觀測不依賴此金鑰。
+          </p>
         )}
 
         {data && (
           <>
-            {/* Summary Cards */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <StatusPill tone={toneFromStatus(data.overallStatus)}>
+                饋送 {data.overallStatus === 'ok' ? '完整' : data.overallStatus === 'partial' ? '部分' : '中斷'}
+              </StatusPill>
+              <StatusPill tone={toneFromStatus(data.scales.radiationRisk)}>
+                輻射風險 {riskLabel(data.scales.radiationRisk)}
+              </StatusPill>
+              <StatusPill tone="info">
+                {data.scales.gScale} · {data.scales.rScale} · {data.scales.sScale}
+              </StatusPill>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">太陽閃焰等級</span>
-                </div>
-                <p className="text-lg font-bold text-slate-900 font-mono">
-                  {data.summary.highestSolarFlareClass}
-                </p>
-              </div>
-
-              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Activity className="w-3.5 h-3.5 text-indigo-600" />
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">地磁 Kp 指數</span>
-                </div>
-                <p className="text-lg font-bold text-slate-900 font-mono">
-                  {data.summary.maxKpIndex > 0 ? data.summary.maxKpIndex.toFixed(1) : 'N/A'}
-                </p>
-              </div>
+              <MetricTile
+                icon={<Activity className="w-3.5 h-3.5 text-indigo-600" aria-hidden />}
+                label="行星 Kp"
+                value={obs?.kp ? obs.kp.value.toFixed(2) : '—'}
+                unit="Kp"
+                time={obs?.kp?.observedAt}
+              />
+              <MetricTile
+                icon={<Zap className="w-3.5 h-3.5 text-amber-600" aria-hidden />}
+                label="GOES X 射線"
+                value={obs?.goesXray?.goesClass ?? '—'}
+                unit={obs?.goesXray ? obs.goesXray.fluxUnit : ''}
+                time={obs?.goesXray?.observedAt}
+                sub={obs?.goesXray ? `${obs.goesXray.satellite} · ${obs.goesXray.energyBand}` : undefined}
+              />
+              <MetricTile
+                icon={<Wind className="w-3.5 h-3.5 text-sky-600" aria-hidden />}
+                label="太陽風速"
+                value={obs?.solarWind ? String(Math.round(obs.solarWind.speed)) : '—'}
+                unit="km/s"
+                time={obs?.solarWind?.observedAt}
+              />
+              <MetricTile
+                icon={<Sun className="w-3.5 h-3.5 text-rose-600" aria-hidden />}
+                label="≥10 MeV 質子"
+                value={obs?.protons ? obs.protons.flux.toExponential(2) : '—'}
+                unit="pfu"
+                time={obs?.protons?.observedAt}
+                sub={obs?.protons?.satellite}
+              />
             </div>
 
-            {/* Radiation Risk Banner */}
-            <div className={`rounded-lg px-3 py-2 border ${getRiskColor(data.summary.radiationRisk)}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-xs font-semibold">輻射風險等級</span>
-                </div>
-                <span className="text-sm font-bold font-mono">
-                  {getRiskLabel(data.summary.radiationRisk)}
-                </span>
-              </div>
-            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">{data.scales.basisZh}</p>
 
-            {/* Event Count */}
-            <div className="flex items-center justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
-              <span className="flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                過去 7 天事件總數
-              </span>
-              <span className="font-bold font-mono">{data.summary.totalEvents}</span>
-            </div>
+            {data.notices.map((note) => (
+              <p
+                key={note}
+                className="text-[11px] leading-relaxed rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-slate-700"
+              >
+                {note}
+              </p>
+            ))}
 
-            {/* Recent Events */}
-            {data.solarFlares.length > 0 && (
-              <div className="border-t border-slate-100 pt-3">
-                <h4 className="text-[10px] font-mono uppercase text-slate-500 mb-2">最近太陽閃焰</h4>
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                  {data.solarFlares.slice(0, 5).map((flare, idx) => (
-                    <div key={idx} className="bg-amber-50 rounded px-2 py-1.5 text-[11px] border border-amber-100">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-amber-900 font-mono">{flare.classType || 'N/A'}</span>
-                        <span className="text-amber-700">
-                          {flare.peakTime ? new Date(flare.peakTime).toLocaleString('zh-TW', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          }) : 'N/A'}
-                        </span>
+            {data.events.swpcAlerts.length > 0 && (
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  NOAA 警報（原文）
+                </h4>
+                <ul className="space-y-1.5">
+                  {data.events.swpcAlerts.slice(0, 3).map((alert) => (
+                    <li
+                      key={`${alert.productId}-${alert.issueDatetime}`}
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-slate-500">
+                        <span>{alert.productId || 'ALERT'}</span>
+                        <time dateTime={alert.issueDatetime}>{fmtTime(alert.issueDatetime)}</time>
                       </div>
-                      {flare.sourceLocation && (
-                        <p className="text-amber-600 mt-0.5">來源：{flare.sourceLocation}</p>
-                      )}
-                    </div>
+                      <p className="text-[11px] text-slate-800 mt-1 leading-relaxed">{alert.headline}</p>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 
-            {/* Last Update */}
-            {lastUpdate && (
-              <div className="text-[10px] text-slate-400 text-center font-mono pt-2 border-t border-slate-100">
-                最後更新：{lastUpdate.toLocaleTimeString('zh-TW')}
-              </div>
-            )}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                NASA DONKI 7 日事件
+              </h4>
+              {data.events.solarFlares.length === 0 &&
+              data.events.geomagneticStorms.length === 0 &&
+              data.events.coronalMassEjections.length === 0 ? (
+                <EmptyBlock
+                  title="目錄無事件或無法連線"
+                  detail="未填補閃焰／CME。若來源為空窗，代表該視窗確實沒有 DONKI 紀錄。"
+                />
+              ) : (
+                <ul className="space-y-1.5 max-h-28 overflow-y-auto">
+                  {data.events.solarFlares.slice(0, 5).map((flare) => (
+                    <li key={flare.flrID} className="rounded-lg bg-amber-50 border border-amber-100 px-2 py-1.5 text-[11px]">
+                      <div className="flex justify-between font-mono">
+                        <span className="font-bold text-amber-950">{flare.classType}</span>
+                        <span className="text-amber-800">{fmtTime(flare.peakTime)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <details className="rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-2">
+              <summary className="text-[11px] font-semibold text-slate-700 cursor-pointer">資料出處與延遲</summary>
+              <ul className="mt-2 space-y-1.5">
+                {data.sources.map((src) => (
+                  <li key={src.id} className="text-[11px] text-slate-600 leading-snug">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-slate-800">{src.agency} · {src.name}</span>
+                      <StatusPill tone={src.status === 'ok' ? 'ok' : src.status === 'empty' ? 'info' : 'warn'}>
+                        {sourceStatusZh(src.status)} · {src.latencyMs} ms
+                      </StatusPill>
+                    </div>
+                    <p>{src.noteZh}{src.observedAt ? ` · 觀測 ${fmtTime(src.observedAt)}` : ''}</p>
+                    <a
+                      href={src.docsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-0.5 text-sky-700 hover:underline"
+                    >
+                      文件 <ExternalLink className="w-3 h-3" aria-hidden />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+
+            <p className="text-[10px] font-mono text-slate-400 text-center">
+              擷取 {fmtTime(data.fetchedAt)}
+              {data.cache.hit ? ` · 快取 ${data.cache.ttlSeconds}s` : ''}
+            </p>
           </>
         )}
       </div>
-    </div>
+    </section>
   );
 };
+
+function MetricTile({
+  icon,
+  label,
+  value,
+  unit,
+  time,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  unit: string;
+  time?: string | null;
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+        {icon}
+        <span className="truncate">{label}</span>
+      </div>
+      <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums leading-none truncate" title={value}>
+        {value}
+        {unit ? <span className="text-[10px] font-medium text-slate-500 ml-1">{unit}</span> : null}
+      </p>
+      <p className="mt-1 text-[10px] text-slate-500 font-mono truncate">
+        {sub ? `${sub} · ` : ''}
+        {time ? fmtTime(time) : '無觀測'}
+      </p>
+    </div>
+  );
+}

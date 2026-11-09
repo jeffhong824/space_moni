@@ -17,6 +17,7 @@ import {
 } from './data/mockData';
 import { AstronautProfile, EnvironmentalMetrics, DailyHealthRecord, StationTask, DailyActivityItem, AuthUser } from './types';
 import { CheckCircle2 } from 'lucide-react';
+import type { SpaceEnvironmentPayload } from './domain/spaceWeather';
 
 export default function App() {
   // Login State - Default to null so Log-in page is displayed first by default
@@ -47,6 +48,7 @@ export default function App() {
   const [activityModalDate, setActivityModalDate] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState<boolean>(false);
+  const [spaceEnvironment, setSpaceEnvironment] = useState<SpaceEnvironmentPayload | null>(null);
 
   const handleOpenAiCall = (prompt?: string) => {
     setAiCallInitialPrompt(prompt || '');
@@ -71,7 +73,8 @@ export default function App() {
       // NASA starts by monitoring Alice Smith
       handleSelectAstronaut(astronauts[0]);
     }
-    showToast(`Logged in as ${user.name} (${user.role})`);
+    const roleZh = user.role === 'NASA' ? 'NASA 飛行外科醫師' : user.role === 'Commander' ? '指揮官' : '太空人';
+    showToast(`已登入：${user.name}（${roleZh}）`);
   };
 
   const handleLogout = () => {
@@ -121,7 +124,7 @@ export default function App() {
         return rec;
       })
     );
-    showToast(`Activity added to ${date}`);
+    showToast(`已新增活動至 ${date}`);
   };
 
   // Station Task toggles & updates
@@ -158,7 +161,7 @@ export default function App() {
 
   const handleAddTask = (newTask: StationTask) => {
     setStationTasks((prev) => [newTask, ...prev]);
-    showToast(`New task added: "${newTask.title}"`);
+    showToast(`已新增任務：「${newTask.title}」`);
   };
 
   // Action execution from Call with AI
@@ -183,7 +186,7 @@ export default function App() {
         description: payload.description || `Auto-scheduled by AURA Flight Surgeon: ${action.label}`,
       };
       setStationTasks((prev) => [newTask, ...prev]);
-      showToast(`AURA scheduled task: "${newTask.title}"`);
+      showToast(`AURA 已排程任務：「${newTask.title}」`);
     } else if (action.type === 'LOG_ANOMALY') {
       const note = action.payload?.note || action.label;
       setDailyRecords((prev) =>
@@ -199,7 +202,7 @@ export default function App() {
           return rec;
         })
       );
-      showToast(`Clinical anomaly logged to today's medical record`);
+      showToast('已將臨床註記寫入今日健康紀錄');
     }
   };
 
@@ -211,8 +214,34 @@ export default function App() {
   const todayRecord =
     dailyRecords.find((r) => r.isToday || r.date === '2026/11/22') || dailyRecords[0];
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadWx = async () => {
+      try {
+        const res = await fetch('/api/nasa/space-environment');
+        if (!res.ok) return;
+        const json = (await res.json()) as SpaceEnvironmentPayload;
+        if (!cancelled) setSpaceEnvironment(json);
+      } catch {
+        /* panel handles its own error state; AI still runs without snapshot */
+      }
+    };
+    void loadWx();
+    const id = window.setInterval(() => void loadWx(), 60 * 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans select-none">
+    <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
+      <a
+        href="#main-records"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:px-3 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold focus:shadow"
+      >
+        跳到健康紀錄
+      </a>
       {/* Top Telemetry Header */}
       <TopNav
         envMetrics={envMetrics}
@@ -226,7 +255,7 @@ export default function App() {
       {/* Main 3-Column Responsive Workstation Layout (Matching wireframe) */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         {/* Left Sidebar: Astronaut Personal Info & Env Metrics (Different for Commander/NASA) */}
-        <div className="flex flex-col w-full lg:w-80 shrink-0 overflow-y-auto bg-slate-50 border-r border-slate-200">
+        <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto bg-slate-50/90 border-r border-slate-200/90">
           <AstronautSidebar
             currentAstronaut={selectedAstronaut}
             allAstronauts={astronauts}
@@ -235,12 +264,10 @@ export default function App() {
             onUpdateEnvMetrics={(updated) => setEnvMetrics((prev) => ({ ...prev, ...updated }))}
             currentUserRole={currentUser.role}
           />
-          
-          {/* NASA Space Environment Panel */}
-          <div className="p-4 border-t border-slate-200">
+          <div className="px-4 pb-5">
             <SpaceEnvironmentPanel />
           </div>
-        </div>
+        </aside>
 
         {/* Center Panel: 24-Hour Daily Records & Activities + Call with AI button */}
         <DailyRecordsPanel
@@ -280,6 +307,7 @@ export default function App() {
         tasks={stationTasks}
         onExecuteAction={handleExecuteAiAction}
         initialPrompt={aiCallInitialPrompt}
+        spaceEnvironment={spaceEnvironment}
       />
 
       {/* New Station Task Modal */}

@@ -6,29 +6,42 @@
 **Team: OGTech AI**  
 **Challenge: "Create Health Monitoring Software for Astronauts on Space Missions"**
 
-This is a working MVP demonstrating:
-- Real NASA space environment data integration (DONKI Space Weather API)
-- Two-level AI health analysis (overall + per-metric/system)
+This is a product-grade demo console:
+- Official space-environment observations from NOAA SWPC / GOES, plus NASA DONKI when reachable
+- Two-level AI health analysis (overall + per-metric/system) with documented thresholds
 - Traditional Chinese (zh-Hant-TW) user interface
-- Clean architectural separation (API/data, domain, UI layers)
+- Clear provenance: live official feeds vs simulated crew telemetry — nothing is silently faked
 
 ---
 
 ## 🛰️ Key Features (新增功能標記 ⭐)
 
-### 1. ⭐ NASA 太空環境即時監測 (NEW)
-- **Real NASA DONKI Space Weather Data**: Displays live solar flares, geomagnetic storms, and coronal mass ejections from NASA's public Space Weather Database of Notifications, Knowledge, Information (DONKI)
-- **Radiation Risk Assessment**: Automatically calculates crew radiation risk levels (Low/Moderate/High/Severe) based on solar activity and geomagnetic indices
-- **7-Day Event Window**: Tracks recent space weather events to correlate with crew health telemetry
-- **Auto-Refresh**: Updates every 30 minutes; manual refresh available
-- **Fallback Mode**: Gracefully degrades with clear error messages if NASA API is unavailable
+### 1. 官方空間環境監測（不編造即時資料）
+作業台顯示**有出處、有時間戳、有單位**的空間天氣，供組員／臨床人員把健康遙測對照外部環境。
 
-**Data Source**: 
-- API: `https://api.nasa.gov/DONKI` (FLR, GST, CME endpoints)
-- Free public access with DEMO_KEY (no registration required)
-- Rate limit: ~1000 requests/hour
+**即時觀測（無需金鑰）— NOAA Space Weather Prediction Center / GOES**
+NASA 任務作業實際使用的官方美國空間天氣來源。本環境中 NASA DONKI 常逾時，因此即時 Kp、X 射線通量、太陽風與質子通量以 SWPC／GOES 為準。
 
-### 2. ⭐ 雙層級 AI 健康分析 (NEW)
+| 資料 | 端點 | 單位 |
+| --- | --- | --- |
+| 行星 Kp（1 分鐘） | `https://services.swpc.noaa.gov/json/planetary_k_index_1m.json` | Kp |
+| GOES X 射線（0.1–0.8 nm） | `https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json` | W/m² → GOES class |
+| 太陽風速 | `https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json` | km/s |
+| GOES ≥10 MeV 積分質子 | `https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json` | pfu |
+| SWPC 警報 | `https://services.swpc.noaa.gov/products/alerts.json` | 原文標題 |
+
+文件：<https://www.swpc.noaa.gov/> 、NOAA Scales <https://www.swpc.noaa.gov/noaa-scales-explanation>
+
+**事件目錄（可選 NASA 金鑰）— NASA DONKI**
+- `https://api.nasa.gov/DONKI/FLR|GST|CME`
+- 環境變數 `NASA_API_KEY`；未設定則使用公開 `DEMO_KEY`，UI 顯示**非營運金鑰**提示
+- 逾時、HTTP 錯誤或 7 日空窗會明白標示；**不會填補閃焰／CME**
+
+伺服器端點：`GET /api/nasa/space-environment`（60 秒記憶體快取；`?refresh=1` 強制重抓）
+
+輻射風險由觀測推估 NOAA G／R／S 尺度，並在 UI 寫明依據。艙內 O₂／CO₂／氣壓為**示範 ECLSS**，與官方空間天氣分開標示。
+
+### 2. 雙層級 AI 健康分析（打包＋固定門檻）
 The AURA AI Flight Surgeon now provides comprehensive two-level health analysis:
 
 **Overall Assessment**:
@@ -54,7 +67,9 @@ The AURA AI Flight Surgeon now provides comprehensive two-level health analysis:
 
 **Traditional Chinese (zh-Hant-TW)**: All user-facing text and AI responses are now in Traditional Chinese for the Taipei local event.
 
-**Offline Fallback**: When GEMINI_API_KEY is not set or API calls fail, an intelligent offline AURA mode provides the same two-level analysis structure with pre-computed medical logic.
+**Offline Fallback**: When `GEMINI_API_KEY` is unset or Gemini fails, the same packed two-level structure is produced by `src/domain/healthPacking.ts`.
+
+**Documented demo thresholds** (`src/domain/healthThresholds.ts`): 靜息心率 50–90 bpm 正常、>100 危急；HRV ≥25 ms 正常、<20 危急；SpO₂ ≥96% 正常、<94 危急；睡眠 ≥420 min 正常。這是示範臨床政策，不是 NASA 認證協議。生理來源一律標示為模擬機組遙測。
 
 ### 3. Role-Based Authentication & Access Control
 - **Roles Supported**:
@@ -106,8 +121,8 @@ Clicking any conditioning metric reveals the operational pipeline and past 5-day
 - **Frontend**: React 19, TypeScript, Tailwind CSS v4, Lucide React icons, Motion
 - **Backend / Server**: Node.js, Express, TSX, Vite middlewares
 - **AI Integration**: Google Gemini API (`@google/genai`) via server-side `/api/ai-doctor` endpoint (model: `gemini-3.8-flash`)
-- **NASA Data**: NASA DONKI Space Weather API (public, no key required beyond DEMO_KEY)
-- **Layout / UX**: Clean clinical space-lab light aesthetic, responsive grid and collapsible sidebars, Traditional Chinese UI
+- **Space environment**: NOAA SWPC / GOES live observations + NASA DONKI catalog (optional `NASA_API_KEY`)
+- **Layout / UX**: Clinical space-lab light identity, Noto Sans TC, focus rings, empty/loading/error states, Traditional Chinese UI
 
 ### ⭐ New Architecture (coco-demo MVP)
 
@@ -115,9 +130,15 @@ The codebase has been reorganized into clear layers:
 
 ```
 src/
-├── api/                    # API integration layer
-│   ├── nasa.ts            # NASA DONKI Space Weather API client
-│   └── aiDoctor.ts        # AI Doctor API service with offline fallback
+├── domain/                # Thresholds, packing, space-weather types
+│   ├── healthThresholds.ts
+│   ├── healthPacking.ts
+│   └── spaceWeather.ts
+├── server/                # Server-only official feed client
+│   └── fetchSpaceEnvironment.ts
+├── api/                   # Browser API clients
+│   └── aiDoctor.ts
+├── ui/                    # Shared status / empty / error primitives
 ├── components/            # UI components (zh-Hant-TW)
 │   ├── SpaceEnvironmentPanel.tsx    # NEW: NASA space environment data display
 │   ├── DetailedHealthAnalysis.tsx   # NEW: Two-level health analysis display
@@ -143,13 +164,13 @@ server.ts                  # UPDATED: Added /api/nasa/space-environment endpoint
 ```
 
 **Key API Endpoints**:
-- `POST /api/ai-doctor` - AI health analysis with structured JSON response (overall + detailed metrics/systems)
-- `GET /api/nasa/space-environment` - Real-time NASA space weather data (solar flares, geomagnetic storms, CMEs)
+- `POST /api/ai-doctor` — packed telemetry + optional space-weather snapshot; returns overall + per-metric/system analysis
+- `GET /api/nasa/space-environment` — NOAA SWPC/GOES observations + NASA DONKI catalog with provenance
 
-**Hardware Telemetry Simulation**:
-The README previously referenced hardware telemetry (Hibernation Pod, T2 Colbert, ARED). These are simulated via:
-- Mock data in `src/data/mockData.ts` and `src/data/conditioningData.ts`
-- No actual hardware sensors are connected (this is a demo/MVP)
+**What is live vs simulated**
+- **Live / official**: NOAA SWPC Kp, GOES X-rays, solar wind, protons, SWPC alerts; NASA DONKI events when the catalog responds
+- **Simulated demo**: crew vitals, 24h waveforms, Hibernation Pod / T2 / ARED / galley logs, cabin ECLSS gauges
+- The UI labels simulated sources so they cannot be mistaken for NASA telemetry
 
 ---
 
@@ -171,14 +192,18 @@ Create a `.env` file in the project root (see `.env.example`):
 # Get your key from https://aistudio.google.com/apikey
 GEMINI_API_KEY=your_actual_gemini_api_key_here
 
+# Optional: NASA DONKI catalog key (live NOAA feeds do not need this)
+NASA_API_KEY=DEMO_KEY
+
 # Optional: Application URL (used for deployment metadata)
 APP_URL=http://localhost:3000
 ```
 
-**Important**: 
-- Do NOT commit real API keys to the repository
-- The app works without `GEMINI_API_KEY` using the offline fallback
-- NASA space environment data works without any API key (uses public DEMO_KEY)
+**Important**:
+- Do NOT commit real API keys
+- AURA works without `GEMINI_API_KEY` (offline two-level engine)
+- NOAA SWPC / GOES work with no key
+- `NASA_API_KEY=DEMO_KEY` is non-production and is disclosed in the UI
 
 ### Installation
 
@@ -221,14 +246,11 @@ npm run lint
 
 ## 🧪 Testing the New Features
 
-### 1. NASA Space Environment Data
-- **Location**: Left sidebar, below the astronaut profile section
-- **What to look for**: 
-  - Solar flare classifications (e.g., C2.5, M1.0, X1.2)
-  - Geomagnetic Kp index (0-9 scale)
-  - Radiation risk level (Low/Moderate/High/Severe)
-  - Recent event list (past 7 days)
-- **Fallback**: If NASA API is unavailable, you'll see a clear error message explaining the data source is offline
+### 1. Official space environment
+- Left sidebar, 「官方空間環境」
+- Expect Kp, GOES class, solar wind km/s, proton pfu, timestamps, source latency
+- DONKI may be empty or timed out — that is shown, not fabricated
+- DEMO_KEY notice appears until a real `NASA_API_KEY` is set
 
 ### 2. Detailed AI Health Analysis
 - **How to access**: Click "與 AI 通話" (Call with AI) button in the top navigation or daily records panel
@@ -256,16 +278,16 @@ SpaceMoni adheres to NASA flight medical guidelines: raw 24-hour physiological t
 **Challenge**: "Create Health Monitoring Software for Astronauts on Space Missions"
 
 **Implementation**:
-1. ✅ **NASA Public Data Integration**: Real-time space environment monitoring via NASA DONKI API
-2. ✅ **Enhanced AI Analysis**: Two-level health assessment (overall + detailed per-metric/system)
-3. ✅ **Clean Architecture**: Separated API/data, domain, and UI layers for maintainability
-4. ✅ **Traditional Chinese UI**: All user-facing strings in zh-Hant-TW for Taipei event
-5. ✅ **Demo Accounts Preserved**: Existing authentication and role-based access maintained
-6. ✅ **Build & Lint Pass**: `npm run lint` and `npm run build` both succeed
-7. ✅ **Offline Fallback**: AURA AI works without GEMINI_API_KEY, NASA data fails gracefully
+1. Official NOAA SWPC / GOES observations with provenance; NASA DONKI catalog when reachable
+2. Two-level health analysis with shared thresholds in `src/domain/healthThresholds.ts`
+3. Domain / API / UI layers; simulated telemetry never labelled as NASA live data
+4. Product-grade zh-Hant-TW console: hierarchy, loading/empty/error, focus, reduced-motion
+5. Demo accounts and roles preserved
+6. `npm run lint` and `npm run build` must pass
+7. Offline AURA fallback uses the same packed two-level structure
 
-**Known Limitations** (Demo/MVP scope):
-- Hardware telemetry is simulated (no actual sensor hardware)
-- NASA DONKI API has rate limits (~1000 req/hr) but is free and public
-- Space Apps Challenge website had HTTP 500 errors during development (did not block implementation)
-- No production hardening (authentication is demo-only with default password "12345")
+**Known limitations**
+- Crew health and cabin ECLSS remain **simulated demonstration data**, clearly labelled
+- NASA DONKI may time out; live operations use NOAA SWPC / GOES
+- `DEMO_KEY` is rate-limited and shown as non-production
+- Authentication is still demo-only (password `12345`)

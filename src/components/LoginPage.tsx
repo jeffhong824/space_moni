@@ -19,7 +19,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     // Validate password (default demo password is 12345)
     if (password !== '12345') {
-      setError('Invalid password. For demo testing, default password is 12345');
+      setError('密碼錯誤。示範預設密碼為 12345');
       return;
     }
 
@@ -71,7 +71,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <span className="text-xl font-bold tracking-tight text-white">SpaceMoni</span>
           </div>
           <p className="text-xs font-mono text-neutral-400">
-            Orbital Bio-Telemetry & Station Task Command
+            軌道生物遙測與站務指揮
           </p>
         </div>
 
@@ -80,11 +80,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Field 1: Role (As shown in wireframe) */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white tracking-wide">
-                Role
+              <label htmlFor="login-role" className="block text-sm font-medium text-white tracking-wide">
+                角色
               </label>
               <div className="relative">
                 <select
+                  id="login-role"
                   value={role}
                   onChange={(e) => {
                     const newRole = e.target.value as UserRole;
@@ -95,9 +96,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   }}
                   className="w-full h-12 px-4 py-2 bg-white text-black font-semibold text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none cursor-pointer shadow-sm"
                 >
-                  <option value="Astronaut">Astronaut</option>
-                  <option value="Commander">Commander</option>
-                  <option value="NASA">NASA</option>
+                  <option value="Astronaut">太空人</option>
+                  <option value="Commander">指揮官</option>
+                  <option value="NASA">NASA 飛行外科醫師</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-600">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
@@ -109,11 +110,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             {/* Field 2: Account (As shown in wireframe) */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white tracking-wide">
-                Account
+              <label htmlFor="login-account" className="block text-sm font-medium text-white tracking-wide">
+                帳號
               </label>
               <input
+                id="login-account"
                 type="text"
+                autoComplete="username"
                 required
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
@@ -125,15 +128,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             {/* Field 3: Password (As shown in wireframe, default 12345) */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-white tracking-wide">
-                  Password
+                <label htmlFor="login-password" className="block text-sm font-medium text-white tracking-wide">
+                  密碼
                 </label>
                 <span className="text-[11px] font-mono text-neutral-400">
-                  Demo: 12345
+                  示範：12345
                 </span>
               </div>
               <input
+                id="login-password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -154,7 +159,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               type="submit"
               className="w-full h-12 mt-2 bg-sky-500 hover:bg-sky-400 text-black font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
             >
-              <span>Log In as {role}</span>
+              <span>
+                {role === 'NASA' ? '以 NASA 飛行外科醫師登入' : role === 'Commander' ? '以指揮官登入' : '以太空人登入'}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -162,7 +169,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {/* Quick Demo Credentials for Reviewers */}
           <div className="pt-4 border-t border-neutral-800 space-y-2.5">
             <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 text-center">
-              One-Click Demo Roles:
+              一鍵示範角色
             </div>
             <div className="grid grid-cols-1 gap-1.5">
               <button
@@ -171,8 +178,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
-                  <span className="font-semibold text-white">Astronaut: alice_smith</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">Personal view · 24h health access</div>
+                  <span className="font-semibold text-white">太空人：alice_smith</span>
+                  <div className="text-[10px] text-neutral-400 font-mono">個人檢視 · 可看 24 小時生理</div>
                 </div>
                 <span className="text-[10px] font-mono bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800">
                   Astronaut
@@ -185,8 +192,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
-                  <span className="font-semibold text-white">Commander: marcus_vance</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">All members list · No 24h details</div>
+                  <span className="font-semibold text-white">指揮官：marcus_vance</span>
+                  <div className="text-[10px] text-neutral-400 font-mono">全組員名冊 · 24 小時細節受限</div>
                 </div>
                 <span className="text-[10px] font-mono bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800">
                   Commander
@@ -199,8 +206,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
-                  <span className="font-semibold text-white">NASA: nasa_mission_control</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">All members list · Full 24h details</div>
+                  <span className="font-semibold text-white">NASA：nasa_mission_control</span>
+                  <div className="text-[10px] text-neutral-400 font-mono">全組員名冊 · 完整 24 小時臨床</div>
                 </div>
                 <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
                   NASA
@@ -212,7 +219,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         {/* Footer info */}
         <div className="pt-4 text-center text-[11px] font-mono text-neutral-500">
-          ISS Expedition 76 · Secured Flight Telemetry Link
+          ISS Expedition 76 · 示範遙測鏈路
         </div>
       </div>
 
@@ -235,10 +242,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         {/* Bottom subtle mission caption */}
         <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between text-xs font-mono text-white/80">
           <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>ORBIT: 418 KM · LEO INCLINATION: 51.6°</span>
+            <span>軌道 418 km · 傾角 51.6°</span>
           </div>
           <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>NASA EXPEDITION 76 SPACE HABITAT</span>
+            <span>NASA EXPEDITION 76 棲地（檔案影像）</span>
           </div>
         </div>
       </div>

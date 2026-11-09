@@ -46,7 +46,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-sky-600" />
             <h3 className="text-base font-bold text-slate-900">
-              Add Activity to {date}
+              新增活動至 {date}
             </h3>
           </div>
           <button
@@ -60,7 +60,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Activity Name
+              活動名稱
             </label>
             <input
               type="text"
@@ -74,7 +74,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Time Window (UTC)
+              時段（UTC）
             </label>
             <input
               type="text"
@@ -87,17 +87,17 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              Category
+              類別
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
-              <option value="Research">Research & Botany</option>
-              <option value="Maintenance">Maintenance & Systems</option>
-              <option value="Health Countermeasure">Health Countermeasure</option>
-              <option value="Operation">Station Operations</option>
+              <option value="Research">研究／植物學</option>
+              <option value="Maintenance">維護／系統</option>
+              <option value="Health Countermeasure">健康對策</option>
+              <option value="Operation">站務操作</option>
             </select>
           </div>
 
@@ -107,13 +107,13 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium shadow-2xs"
             >
-              Save Activity
+              儲存活動
             </button>
           </div>
         </form>

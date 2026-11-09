@@ -62,8 +62,8 @@ export const TopNav: React.FC<TopNavProps> = ({
           <span className="text-base font-bold tracking-tight text-slate-900 leading-tight">
             SpaceMoni
           </span>
-          <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider hidden sm:inline">
-            ISS Expedition 76 · Astronaut Health & Mission Ops
+          <span className="text-[11px] font-mono text-slate-500 tracking-wide hidden sm:inline">
+            ISS Expedition 76 · 太空人健康與任務作業
           </span>
         </div>
       </div>
@@ -76,17 +76,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">STATION CLOCK:</span>
+          <span className="text-slate-400">站時：</span>
           <span className="font-semibold text-slate-800 tabular-nums">{utcTime || '07:45:00 UTC'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-slate-500">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>ECLSS: NOMINAL</span>
+          <span>ECLSS：標稱（示範）</span>
           <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>ORBIT: 418 KM</span>
+          <span>軌道 418 km</span>
           <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>VELOCITY: 7.66 KM/S</span>
+          <span>7.66 km/s</span>
         </div>
       </div>
 
@@ -94,8 +94,8 @@ export const TopNav: React.FC<TopNavProps> = ({
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {currentUser && (
           <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border uppercase ${getRoleBadge(currentUser.role)}`}>
-              {currentUser.role}
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getRoleBadge(currentUser.role)}`}>
+              {currentUser.role === 'NASA' ? 'NASA' : currentUser.role === 'Commander' ? '指揮官' : '太空人'}
             </span>
             <span className="font-semibold text-slate-800 max-w-[120px] truncate hidden sm:inline">
               {currentUser.name}
@@ -111,17 +111,18 @@ export const TopNav: React.FC<TopNavProps> = ({
                 ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-300'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
             }`}
-            title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for better viewing of health & activities"}
+            aria-pressed={!isRightPanelCollapsed}
+            title={isRightPanelCollapsed ? '顯示站務目標面板' : '隱藏右側面板以放大健康視圖'}
           >
             {isRightPanelCollapsed ? (
               <>
                 <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                <span className="hidden md:inline">Show Objectives</span>
+                <span className="hidden md:inline">顯示目標</span>
               </>
             ) : (
               <>
                 <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden md:inline">Hide Objectives</span>
+                <span className="hidden md:inline">隱藏目標</span>
               </>
             )}
           </button>
@@ -130,19 +131,19 @@ export const TopNav: React.FC<TopNavProps> = ({
         <button
           onClick={onOpenAiCall}
           className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-sky-900 bg-sky-100 hover:bg-sky-200 border border-sky-300/80 rounded-lg transition-all shadow-2xs active:scale-98 cursor-pointer"
-          title="Talk with Station AI Flight Doctor"
+          title="與 AURA 飛行外科醫師通話"
         >
           <Radio className="w-3.5 h-3.5 text-sky-600 animate-pulse" />
-          <span className="hidden sm:inline">AI Flight Surgeon</span>
+          <span className="hidden sm:inline">AI 飛行外科醫師</span>
         </button>
 
         <button
           onClick={onLogout}
           className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-          title="Log out back to SpaceMoni login screen"
+          title="登出並返回登入頁"
         >
           <LogOut className="w-3.5 h-3.5 text-slate-500" />
-          <span className="hidden sm:inline">Log out</span>
+          <span className="hidden sm:inline">登出</span>
         </button>
       </div>
     </header>
