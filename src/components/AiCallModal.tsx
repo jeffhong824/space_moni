@@ -15,8 +15,11 @@ import {
   Bot,
   User,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, StationTask, AiMessage } from '../types';
+import { DetailedHealthAnalysis, type MetricAnalysis, type SystemAnalysis } from './DetailedHealthAnalysis';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -44,33 +47,33 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       id: 'msg-init',
       sender: 'aura',
       timestamp: '07:46 UTC',
-      text: `AURA Flight Surgeon online, Botanist ${astronaut.name.split(' ')[0]}. I am monitoring your telemetry on Mission Day ${astronaut.missionDaysElapsed}. I note your resting heart rate is elevated at ${todayRecord.restingHR} bpm and HRV is reduced to ${todayRecord.hrv} ms. How are you feeling right now?`,
+      text: `AURA 飛行外科醫師上線，植物學家 ${astronaut.name.split(' ')[0]}。我正在監測您任務第 ${astronaut.missionDaysElapsed} 天的遙測數據。注意到您的靜息心率升高至 ${todayRecord.restingHR} bpm，HRV 降至 ${todayRecord.hrv} ms。您現在感覺如何？`,
       healthAssessment: {
         status: todayRecord.restingHR > 100 ? 'Attention Required' : 'Nominal',
-        summary: `Resting HR at ${todayRecord.restingHR} bpm requires cardiovascular monitoring during experimental cycles.`,
+        summary: `靜息心率 ${todayRecord.restingHR} bpm 需要在實驗週期中持續監測心血管狀態。`,
       },
       suggestedActions: [
         {
           id: 'sug-1',
-          label: 'Schedule 20-min Hydration & Electrolyte Countermeasure',
+          label: '安排 20 分鐘補液與電解質對策',
           type: 'ADD_TASK',
           payload: {
-            title: 'Isotonic Rehydration & Cardiovascular Protocol',
+            title: '等滲補液與心血管方案',
             module: 'Tranquility ECLSS',
             priority: 'High',
-            description: 'Oral fluid load of 0.9% saline electrolyte to combat microgravity cephalad fluid translocation.',
+            description: '口服 0.9% 生理食鹽水電解質以對抗微重力頭部體液轉移。',
           },
         },
         {
           id: 'sug-2',
-          label: 'Flag Tachycardia Anomaly in Daily Health Record',
+          label: '在每日健康紀錄標記心搏過速異常',
           type: 'LOG_ANOMALY',
           payload: {
-            note: `Tachycardia observed: Resting HR ${todayRecord.restingHR} bpm, HRV ${todayRecord.hrv} ms. Advised oral hydration.`,
+            note: `觀測到心搏過速：靜息心率 ${todayRecord.restingHR} bpm，HRV ${todayRecord.hrv} ms。已建議口服補液。`,
           },
         },
       ],
-    },
+    } as any,
   ]);
 
   const [inputText, setInputText] = useState('');
@@ -78,6 +81,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [speechSynthesisEnabled, setSpeechSynthesisEnabled] = useState(true);
   const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
+  const [expandedAnalysisId, setExpandedAnalysisId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -219,9 +223,10 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       });
 
       const data = await response.json();
-      const aiReply = data.replyText || data.fallback?.replyText || 'Telemetry received. Standing by for instructions.';
+      const aiReply = data.replyText || data.fallback?.replyText || '遙測收訊完成。待命中。';
       const suggestedActions = data.suggestedActions || data.fallback?.suggestedActions || [];
       const healthAssessment = data.healthAssessment || data.fallback?.healthAssessment;
+      const detailedAnalysis = data.detailedAnalysis;
 
       const auraMessage: AiMessage = {
         id: 'aura-' + Date.now(),
@@ -230,7 +235,8 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         text: aiReply,
         suggestedActions,
         healthAssessment,
-      };
+        ...(detailedAnalysis && { detailedAnalysis }),
+      } as any;
 
       setMessages((prev) => [...prev, auraMessage]);
 
@@ -243,14 +249,14 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         id: 'aura-err-' + Date.now(),
         sender: 'aura',
         timestamp: new Date().toUTCString().slice(17, 22) + ' UTC',
-        text: `Telemetry relay received: "${text}". Given your 103 bpm resting heart rate and 14 ms HRV, I recommend completing the scheduled hydration countermeasure before initiating the plant catalyst in space experiment.`,
+        text: `遙測中繼收訊：「${text}」。根據您的靜息心率 103 bpm 及 HRV 14 ms，建議在執行太空植物催化劑實驗前，先完成預定的補液對策。`,
         suggestedActions: [
           {
             id: 'err-act-1',
-            label: 'Add 20-min Rest & Hydration Countermeasure',
+            label: '新增 20 分鐘休息與補液對策',
             type: 'ADD_TASK',
             payload: {
-              title: 'Mandatory Cardiovascular Rest Interval',
+              title: '強制心血管休息週期',
               module: 'Tranquility ECLSS',
               priority: 'High',
             },
@@ -311,14 +317,14 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                  AURA · Station AI Medical & Mission Officer
+                  AURA · 站務 AI 醫療與任務官
                 </h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  REAL-TIME BIO-LINK
+                  即時生物鏈結
                 </span>
               </div>
               <p className="text-xs font-mono text-slate-500">
-                Connected to {astronaut.name} ({astronaut.role}) · Resting HR: {todayRecord.restingHR} bpm
+                已連接 {astronaut.name} ({astronaut.role}) · 靜息心率：{todayRecord.restingHR} bpm
               </p>
             </div>
           </div>
@@ -334,7 +340,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   ? 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100'
                   : 'bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600'
               }`}
-              title={speechSynthesisEnabled ? 'Voice output enabled' : 'Voice output muted'}
+              title={speechSynthesisEnabled ? '語音輸出啟用' : '語音輸出靜音'}
             >
               {speechSynthesisEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -401,15 +407,57 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                         {isSpeaking ? (
                           <>
                             <Square className="w-3 h-3 text-rose-500 fill-current" />
-                            <span>Stop voice</span>
+                            <span>停止語音</span>
                           </>
                         ) : (
                           <>
                             <Play className="w-3 h-3" />
-                            <span>Replay audio</span>
+                            <span>重播語音</span>
                           </>
                         )}
                       </button>
+                    </div>
+                  )}
+
+                  {/* Health Assessment Summary */}
+                  {msg.healthAssessment && (
+                    <div className="pt-2 border-t border-slate-100">
+                      <div className={`px-3 py-2 rounded-lg text-xs ${
+                        msg.healthAssessment.status === 'Critical' ? 'bg-rose-50 border border-rose-200 text-rose-900' :
+                        msg.healthAssessment.status === 'Attention Required' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
+                        'bg-emerald-50 border border-emerald-200 text-emerald-900'
+                      }`}>
+                        <div className="font-bold mb-1">健康狀態：{msg.healthAssessment.status === 'Critical' ? '危急' : msg.healthAssessment.status === 'Attention Required' ? '需注意' : '正常'}</div>
+                        <div className="text-[11px] opacity-90">{msg.healthAssessment.summary}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed Analysis - Collapsible */}
+                  {(msg as any).detailedAnalysis && (
+                    <div className="pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setExpandedAnalysisId(expandedAnalysisId === msg.id ? null : msg.id)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors"
+                      >
+                        <span>詳細健康分析</span>
+                        {expandedAnalysisId === msg.id ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
+                      
+                      {expandedAnalysisId === msg.id && (
+                        <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <DetailedHealthAnalysis
+                            metrics={(msg as any).detailedAnalysis.metrics}
+                            systems={(msg as any).detailedAnalysis.systems}
+                            overallStatus={msg.healthAssessment?.status || 'Nominal'}
+                            overallSummary={msg.healthAssessment?.summary || ''}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -417,7 +465,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   {msg.suggestedActions && msg.suggestedActions.length > 0 && (
                     <div className="pt-2 border-t border-slate-100 space-y-2">
                       <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-                        Available Station Actions:
+                        可執行站務行動
                       </div>
                       <div className="flex flex-col gap-1.5">
                         {msg.suggestedActions.map((action) => (
@@ -460,7 +508,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               </div>
               <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-sky-500 animate-pulse" />
-                <span>AURA synthesizing medical analysis...</span>
+                <span>AURA 正在合成醫療分析...</span>
               </div>
             </div>
           )}
@@ -470,24 +518,24 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 
         {/* Quick prompt suggestions */}
         <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0 font-mono">
-          <span className="text-slate-400 shrink-0">Quick prompts:</span>
+          <span className="text-slate-400 shrink-0">快速詢問：</span>
           <button
-            onClick={() => handleSendMessage('Why is my resting heart rate 103 bpm?')}
+            onClick={() => handleSendMessage('為什麼我的靜息心率是 103 bpm？')}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            Heart rate 103 bpm analysis
+            心率 103 bpm 分析
           </button>
           <button
-            onClick={() => handleSendMessage('Can I safely run the Plant Catalyst experiment now?')}
+            onClick={() => handleSendMessage('我現在可以安全執行植物催化劑實驗嗎？')}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            Plant experiment readiness
+            實驗準備度評估
           </button>
           <button
-            onClick={() => handleSendMessage('Recommend a fluid loading countermeasure.')}
+            onClick={() => handleSendMessage('建議補液對策方案。')}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            Fluid countermeasure
+            補液對策建議
           </button>
         </div>
 
@@ -509,7 +557,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   ? 'bg-rose-500 border-rose-600 text-white animate-pulse'
                   : 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-800'
               }`}
-              title={isListening ? 'Stop microphone' : 'Talk into microphone'}
+              title={isListening ? '停止麥克風' : '語音輸入'}
             >
               {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5 text-sky-600" />}
             </button>
@@ -522,15 +570,15 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={
                   isListening
-                    ? 'Listening... speak to the space station AI...'
-                    : 'Talk with AI or type a question about health/tasks...'
+                    ? '聆聽中... 請向太空站 AI 說話...'
+                    : '與 AI 對話或輸入健康/任務相關問題...'
                 }
                 className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
               />
               {isListening && (
                 <span className="absolute right-3 top-2.5 text-[10px] font-mono text-rose-600 font-semibold flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                  RECORDING
+                  錄音中
                 </span>
               )}
             </div>
@@ -542,7 +590,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               className="p-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-40 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline">發送</span>
             </button>
           </form>
         </div>

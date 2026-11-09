@@ -37,7 +37,7 @@ const getGeminiClient = () => {
   });
 };
 
-// Server-side AI Doctor & Operations Endpoint
+// Server-side AI Doctor & Operations Endpoint with detailed analysis
 app.post('/api/ai-doctor', async (req: Request, res: Response) => {
   try {
     const { message, astronaut, telemetry, currentTasks, history } = req.body;
@@ -45,35 +45,8 @@ app.post('/api/ai-doctor', async (req: Request, res: Response) => {
     const ai = getGeminiClient();
 
     if (!ai) {
-      // Offline fallback when no key is configured
-      return res.json({
-        replyText: `[AURA Flight Surgeon Offline Mode] Receiving transmission: "${message}". Telemetry indicates Resting HR at ${telemetry?.restingHR || 103} bpm and SpO2 at ${telemetry?.spo2 || 95}%. Recommending immediate 20-minute isotonic rehydration countermeasure and scheduled rest cycle before next botany session.`,
-        suggestedActions: [
-          {
-            id: 'act-' + Date.now() + '-1',
-            label: 'Schedule 20-min Rehydration & Electrolyte Protocol',
-            type: 'ADD_TASK',
-            payload: {
-              title: 'Rehydration & Electrolyte Balance Protocol',
-              module: 'Tranquility ECLSS',
-              priority: 'High',
-              category: 'Health Countermeasure',
-            },
-          },
-          {
-            id: 'act-' + Date.now() + '-2',
-            label: 'Log Tachycardia Observation for Ground Telemetry',
-            type: 'LOG_ANOMALY',
-            payload: {
-              note: `Resting HR at ${telemetry?.restingHR || 103} bpm. Crew flagged via voice check.`,
-            },
-          },
-        ],
-        healthAssessment: {
-          status: 'Attention Required',
-          summary: 'Elevated resting HR with microgravity cardiovascular adaptation. No critical hypoxia detected.',
-        },
-      });
+      // Offline fallback with detailed analysis
+      return res.json(generateOfflineFallback(message, astronaut, telemetry));
     }
 
     const systemInstruction = `
@@ -98,11 +71,12 @@ Station Habitat Atmosphere:
 - Carbon Dioxide: 0.38% (slight elevation common in orbital modules)
 - Cabin Pressure: 101.3 kPa
 
-Tone & Style:
-- Speak as a calm, highly capable aerospace doctor / flight surgeon with direct, reassuring language.
-- Keep the verbal response concise and conversational (2-4 sentences max so it reads smoothly as spoken audio).
-- Always assess both the physiological symptom/question and any relevant station tasks or experiments (e.g. Plant molecular observation, Plant catalyst experiment).
-- Provide 2 to 3 concrete interactive action suggestions with structured payloads that the astronaut can click to immediately append tasks to the station schedule or log medical flags.
+Response Requirements:
+- Respond in Traditional Chinese (zh-Hant-TW) for user-facing text
+- Provide both overall assessment AND detailed per-metric/system analysis
+- Keep verbal response concise (2-4 sentences for spoken audio)
+- Assess physiological symptoms and relate to station tasks/experiments
+- Provide 2-3 actionable suggestions with structured payloads
 `;
 
     const prompt = `Astronaut Message: "${message || 'Run a quick biometrics check and advise on today schedule.'}"
@@ -123,7 +97,7 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
           properties: {
             replyText: {
               type: Type.STRING,
-              description: 'The spoken dialogue response from AURA to the astronaut.',
+              description: 'The spoken dialogue response from AURA in Traditional Chinese (zh-Hant-TW)',
             },
             healthAssessment: {
               type: Type.OBJECT,
@@ -134,6 +108,7 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
                 },
                 summary: {
                   type: Type.STRING,
+                  description: 'Overall health summary in Traditional Chinese',
                 },
               },
               required: ['status', 'summary'],
@@ -144,7 +119,7 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  label: { type: Type.STRING, description: 'Action button label under 10 words' },
+                  label: { type: Type.STRING, description: 'Action button label in Traditional Chinese, under 15 characters' },
                   type: {
                     type: Type.STRING,
                     enum: ['ADD_TASK', 'LOG_ANOMALY', 'UPDATE_VITALS', 'NOTIFY_MISSION_CONTROL'],
@@ -163,8 +138,58 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
                 required: ['id', 'label', 'type'],
               },
             },
+            detailedAnalysis: {
+              type: Type.OBJECT,
+              description: 'Detailed per-metric and per-system health analysis',
+              properties: {
+                metrics: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      metric: { type: Type.STRING, description: 'Metric name in Traditional Chinese' },
+                      value: { type: Type.STRING },
+                      status: { type: Type.STRING, enum: ['Normal', 'Attention', 'Critical'] },
+                      analysis: { type: Type.STRING, description: 'Detailed analysis in Traditional Chinese' },
+                      recommendations: { 
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: 'Specific recommendations in Traditional Chinese'
+                      },
+                    },
+                    required: ['metric', 'value', 'status', 'analysis', 'recommendations'],
+                  },
+                },
+                systems: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      system: { 
+                        type: Type.STRING,
+                        enum: ['Cardiovascular', 'Respiratory', 'Sleep', 'Exercise', 'Mental', 'Musculoskeletal', 'Nutrition'],
+                      },
+                      status: { type: Type.STRING, enum: ['Normal', 'Attention', 'Critical'] },
+                      summary: { type: Type.STRING, description: 'System summary in Traditional Chinese' },
+                      concerns: { 
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: 'Specific concerns in Traditional Chinese'
+                      },
+                      recommendations: { 
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: 'System-level recommendations in Traditional Chinese'
+                      },
+                    },
+                    required: ['system', 'status', 'summary', 'concerns', 'recommendations'],
+                  },
+                },
+              },
+              required: ['metrics', 'systems'],
+            },
           },
-          required: ['replyText', 'healthAssessment', 'suggestedActions'],
+          required: ['replyText', 'healthAssessment', 'suggestedActions', 'detailedAnalysis'],
         },
       },
     });
@@ -174,37 +199,187 @@ Past conversation context: ${JSON.stringify(history?.slice(-4) || [])}`;
     return res.json(parsed);
   } catch (error: any) {
     console.error('Gemini AI doctor error:', error);
-    // Return resilient flight-surgeon consultation payload
+    const { message, astronaut, telemetry } = req.body;
+    return res.json(generateOfflineFallback(message, astronaut, telemetry));
+  }
+});
+
+// NASA Space Environment Data Endpoint
+app.get('/api/nasa/space-environment', async (req: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    const startDate = formatDate(sevenDaysAgo);
+    const endDate = formatDate(now);
+
+    const NASA_API_KEY = 'DEMO_KEY';
+    const DONKI_BASE = 'https://api.nasa.gov/DONKI';
+
+    // Fetch space weather data from NASA DONKI
+    const [flareRes, gstRes, cmeRes] = await Promise.all([
+      fetch(`${DONKI_BASE}/FLR?startDate=${startDate}&endDate=${endDate}&api_key=${NASA_API_KEY}`, {
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => null),
+      fetch(`${DONKI_BASE}/GST?startDate=${startDate}&endDate=${endDate}&api_key=${NASA_API_KEY}`, {
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => null),
+      fetch(`${DONKI_BASE}/CME?startDate=${startDate}&endDate=${endDate}&api_key=${NASA_API_KEY}`, {
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => null),
+    ]);
+
+    const solarFlares = flareRes?.ok ? await flareRes.json() : [];
+    const geomagneticStorms = gstRes?.ok ? await gstRes.json() : [];
+    const coronalMassEjections = cmeRes?.ok ? await cmeRes.json() : [];
+
+    // Calculate summary metrics
+    const highestFlare = solarFlares.reduce((max: string, flare: any) => {
+      const current = flare.classType || 'A0.0';
+      return current > max ? current : max;
+    }, 'A0.0');
+
+    const maxKp = geomagneticStorms.reduce((max: number, storm: any) => {
+      const stormMax = Math.max(
+        storm.kpIndex || 0,
+        ...(storm.allKpIndex || []).map((k: any) => k.kpIndex || 0)
+      );
+      return Math.max(max, stormMax);
+    }, 0);
+
+    let radiationRisk: string = 'Low';
+    const flareClass = highestFlare.charAt(0);
+    if (flareClass === 'X' || maxKp >= 7) radiationRisk = 'Severe';
+    else if (flareClass === 'M' || maxKp >= 5) radiationRisk = 'High';
+    else if (flareClass === 'C' || maxKp >= 3) radiationRisk = 'Moderate';
+
     return res.json({
-      replyText: `AURA Flight Surgeon responding. Telemetry analysis indicates resting heart rate is elevated at ${req.body.telemetry?.restingHR || 103} bpm with reduced HRV (${req.body.telemetry?.hrv || 14} ms). I recommend completing the 20-minute isotonic rehydration countermeasure before continuing your botany research in Columbus BioLab.`,
-      suggestedActions: [
-        {
-          id: 'act-fallback-1',
-          label: 'Schedule 20-min Rehydration & Electrolyte Protocol',
-          type: 'ADD_TASK',
-          payload: {
-            title: 'Isotonic Rehydration & Cardiovascular Protocol',
-            module: 'Tranquility ECLSS',
-            priority: 'High',
-            description: 'Oral fluid loading of 0.9% saline electrolyte to stabilize blood volume.',
-          },
-        },
-        {
-          id: 'act-fallback-2',
-          label: 'Log Tachycardia Observation for Ground Telemetry',
-          type: 'LOG_ANOMALY',
-          payload: {
-            note: `Tachycardia observed: Resting HR ${req.body.telemetry?.restingHR || 103} bpm, HRV ${req.body.telemetry?.hrv || 14} ms. Advised oral hydration.`,
-          },
-        },
-      ],
-      healthAssessment: {
-        status: 'Attention Required',
-        summary: 'Elevated resting HR with microgravity cardiovascular adaptation. No acute hypoxia.',
+      timestamp: now.toISOString(),
+      solarFlares: solarFlares.slice(0, 10),
+      geomagneticStorms: geomagneticStorms.slice(0, 5),
+      coronalMassEjections: coronalMassEjections.slice(0, 5),
+      summary: {
+        totalEvents: solarFlares.length + geomagneticStorms.length + coronalMassEjections.length,
+        highestSolarFlareClass: highestFlare,
+        maxKpIndex: maxKp,
+        radiationRisk,
+      },
+    });
+  } catch (error: any) {
+    console.error('NASA API error:', error);
+    return res.status(500).json({
+      error: 'Failed to fetch NASA space environment data',
+      timestamp: new Date().toISOString(),
+      solarFlares: [],
+      geomagneticStorms: [],
+      coronalMassEjections: [],
+      summary: {
+        totalEvents: 0,
+        highestSolarFlareClass: 'N/A',
+        maxKpIndex: 0,
+        radiationRisk: 'Unknown',
       },
     });
   }
 });
+
+// Offline fallback with detailed analysis in Traditional Chinese
+function generateOfflineFallback(message: string, astronaut: any, telemetry: any) {
+  const metrics = [
+    {
+      metric: '靜息心率',
+      value: `${telemetry?.restingHR || 103} bpm`,
+      status: (telemetry?.restingHR || 103) > 100 ? 'Critical' : (telemetry?.restingHR || 103) > 90 ? 'Attention' : 'Normal',
+      analysis: (telemetry?.restingHR || 103) > 100 
+        ? '檢測到心搏過速。微重力環境下靜息心率顯著升高，可能與體液轉移、自主神經失調或脫水有關。'
+        : '心率在軌道環境可接受範圍內。',
+      recommendations: (telemetry?.restingHR || 103) > 100 
+        ? ['立即執行等滲補液方案', '減少高強度運動', '監測血氧飽和度變化']
+        : ['維持常規運動對策', '保持充足水分攝取'],
+    },
+    {
+      metric: '心率變異性 (HRV)',
+      value: `${telemetry?.hrv || 14} ms`,
+      status: (telemetry?.hrv || 14) < 20 ? 'Critical' : (telemetry?.hrv || 14) < 25 ? 'Attention' : 'Normal',
+      analysis: (telemetry?.hrv || 14) < 20
+        ? 'HRV 嚴重抑制，表示自主神經系統壓力過大。可能與睡眠不足、過度訓練或心理壓力相關。'
+        : 'HRV 正常，自主神經調節良好。',
+      recommendations: (telemetry?.hrv || 14) < 20
+        ? ['安排強制休息週期', '減少訓練強度', '進行放鬆訓練']
+        : ['維持平衡的工作-休息週期'],
+    },
+    {
+      metric: '血氧飽和度',
+      value: `${telemetry?.spo2 || 95}%`,
+      status: (telemetry?.spo2 || 95) < 94 ? 'Critical' : (telemetry?.spo2 || 95) < 96 ? 'Attention' : 'Normal',
+      analysis: (telemetry?.spo2 || 95) < 94
+        ? '血氧偏低，需立即檢查艙內氧氣濃度。'
+        : '血氧飽和度正常。',
+      recommendations: (telemetry?.spo2 || 95) < 94
+        ? ['檢查 ECLSS 氧氣生成系統', '評估呼吸系統功能']
+        : ['定期監測艙內氣體成分'],
+    },
+  ];
+
+  const systems = [
+    {
+      system: 'Cardiovascular',
+      status: (telemetry?.restingHR || 103) > 100 ? 'Attention' : 'Normal',
+      summary: (telemetry?.restingHR || 103) > 100
+        ? '心血管系統顯示微重力適應壓力，心搏過速伴隨自主神經抑制。'
+        : '心血管系統適應良好。',
+      concerns: (telemetry?.restingHR || 103) > 100 ? ['靜息心搏過速', 'HRV 抑制'] : [],
+      recommendations: (telemetry?.restingHR || 103) > 100
+        ? ['執行等滲補液方案', '調整運動強度']
+        : ['維持常規 ARED 訓練'],
+    },
+    {
+      system: 'Respiratory',
+      status: (telemetry?.spo2 || 95) < 95 ? 'Attention' : 'Normal',
+      summary: (telemetry?.spo2 || 95) < 95
+        ? '血氧飽和度偏低，需檢查艙內環境。'
+        : '呼吸系統功能正常。',
+      concerns: (telemetry?.spo2 || 95) < 95 ? ['SpO2 低於理想值'] : [],
+      recommendations: (telemetry?.spo2 || 95) < 95
+        ? ['檢查 CO2 清除效率', '確認氧氣濃度']
+        : ['定期監測艙內氣體'],
+    },
+  ];
+
+  return {
+    replyText: `[AURA 飛行外科醫師離線模式] 收到訊息：「${message}」。遙測數據顯示靜息心率為 ${telemetry?.restingHR || 103} bpm，血氧飽和度為 ${telemetry?.spo2 || 95}%。建議立即執行 20 分鐘等滲補液對策，並在下次植物學實驗前安排休息週期。`,
+    suggestedActions: [
+      {
+        id: 'act-' + Date.now() + '-1',
+        label: '安排補液與電解質平衡方案',
+        type: 'ADD_TASK',
+        payload: {
+          title: '補液與電解質平衡方案',
+          module: 'Tranquility ECLSS',
+          priority: 'High',
+          category: 'Health Countermeasure',
+        },
+      },
+      {
+        id: 'act-' + Date.now() + '-2',
+        label: '記錄心搏過速觀測',
+        type: 'LOG_ANOMALY',
+        payload: {
+          note: `靜息心率 ${telemetry?.restingHR || 103} bpm。太空人透過語音通報。`,
+        },
+      },
+    ],
+    healthAssessment: {
+      status: 'Attention Required',
+      summary: '心血管系統顯示微重力適應壓力。未檢測到危急缺氧狀態。',
+    },
+    detailedAnalysis: {
+      metrics,
+      systems,
+    },
+  };
+}
 
 // Setup Vite or static serving
 async function startServer() {

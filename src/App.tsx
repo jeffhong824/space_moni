@@ -7,6 +7,7 @@ import { AiCallModal } from './components/AiCallModal';
 import { NewTaskModal } from './components/NewTaskModal';
 import { AddActivityModal } from './components/AddActivityModal';
 import { LoginPage } from './components/LoginPage';
+import { SpaceEnvironmentPanel } from './components/SpaceEnvironmentPanel';
 import {
   INITIAL_ASTRONAUTS,
   INITIAL_ENVIRONMENT,
@@ -225,14 +226,21 @@ export default function App() {
       {/* Main 3-Column Responsive Workstation Layout (Matching wireframe) */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         {/* Left Sidebar: Astronaut Personal Info & Env Metrics (Different for Commander/NASA) */}
-        <AstronautSidebar
-          currentAstronaut={selectedAstronaut}
-          allAstronauts={astronauts}
-          onSelectAstronaut={handleSelectAstronaut}
-          envMetrics={envMetrics}
-          onUpdateEnvMetrics={(updated) => setEnvMetrics((prev) => ({ ...prev, ...updated }))}
-          currentUserRole={currentUser.role}
-        />
+        <div className="flex flex-col w-full lg:w-80 shrink-0 overflow-y-auto bg-slate-50 border-r border-slate-200">
+          <AstronautSidebar
+            currentAstronaut={selectedAstronaut}
+            allAstronauts={astronauts}
+            onSelectAstronaut={handleSelectAstronaut}
+            envMetrics={envMetrics}
+            onUpdateEnvMetrics={(updated) => setEnvMetrics((prev) => ({ ...prev, ...updated }))}
+            currentUserRole={currentUser.role}
+          />
+          
+          {/* NASA Space Environment Panel */}
+          <div className="p-4 border-t border-slate-200">
+            <SpaceEnvironmentPanel />
+          </div>
+        </div>
 
         {/* Center Panel: 24-Hour Daily Records & Activities + Call with AI button */}
         <DailyRecordsPanel
