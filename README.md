@@ -129,38 +129,14 @@ Clicking any conditioning metric reveals the operational pipeline and past 5-day
 The codebase has been reorganized into clear layers:
 
 ```
-src/
-├── domain/                # Thresholds, packing, space-weather types
-│   ├── healthThresholds.ts
-│   ├── healthPacking.ts
-│   └── spaceWeather.ts
-├── server/                # Server-only official feed client
-│   └── fetchSpaceEnvironment.ts
-├── api/                   # Browser API clients
-│   └── aiDoctor.ts
-├── ui/                    # Shared status / empty / error primitives
-├── components/            # UI components (zh-Hant-TW)
-│   ├── SpaceEnvironmentPanel.tsx    # NEW: NASA space environment data display
-│   ├── DetailedHealthAnalysis.tsx   # NEW: Two-level health analysis display
-│   ├── AiCallModal.tsx              # UPDATED: Supports detailed analysis + zh-Hant-TW
-│   ├── AstronautSidebar.tsx
-│   ├── DailyRecordsPanel.tsx
-│   ├── StationTaskPanel.tsx
-│   ├── TopNav.tsx
-│   ├── LoginPage.tsx
-│   ├── NewTaskModal.tsx
-│   ├── AddActivityModal.tsx
-│   └── ConditioningDetailCard.tsx
-├── data/                  # Mock data and data utilities
-│   ├── mockData.ts
-│   └── conditioningData.ts
-├── utils/                 # Utility functions
-│   └── dateUtils.ts
-├── types.ts               # TypeScript type definitions
-├── App.tsx                # Main application
-└── main.tsx               # Entry point
-
-server.ts                  # UPDATED: Added /api/nasa/space-environment endpoint
+src/domain/                # Thresholds, packing, space-weather types
+src/server/                # Shared handlers (Express + Vercel)
+src/api/aiDoctor.ts        # Browser fetch helper
+api/ai-doctor.ts           # Vercel: POST /api/ai-doctor
+api/nasa/space-environment.ts
+server.ts                  # Local Express: Vite in dev, dist in production
+dist-server/server.js      # esbuild output for `npm start`
+vercel.json                # Vite static output + /api functions
 ```
 
 **Key API Endpoints**:
@@ -208,7 +184,7 @@ APP_URL=http://localhost:3000
 ### Installation
 
 ```bash
-# Clone the repository (jeffhong824/space_moni fork)
+# Clone the repository
 git clone https://github.com/jeffhong824/space_moni.git
 cd space_moni
 
@@ -225,15 +201,52 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Production Build
+### Production Build (long-running Express host)
 
 ```bash
-# Build the Vite frontend application
+# Vite frontend → dist/  and  bundled Express → dist-server/server.js
 npm run build
 
-# Start the Node.js production server
+# NODE_ENV=production node dist-server/server.js  (port 3000, or $PORT)
 npm run start
 ```
+
+`npm start` no longer executes TypeScript directly. `npm run build` compiles `server.ts` with esbuild so production Node only runs JavaScript.
+
+### Vercel (public site)
+
+Vercel serves the Vite `dist/` SPA and the two serverless functions in `api/`. Import the GitHub repo, select branch `cursor/coco-demo-mvp-6b90` (or `main` after merge).
+
+**Project settings**
+- Framework preset: **Vite** (also set in `vercel.json`)
+- Build command: `npm run build`
+- Output directory: `dist`
+- Install command: `npm install --legacy-peer-deps`
+- Node.js: 18.x or 20.x
+
+**Environment variables** (all optional; leave empty for the public demo)
+- `GEMINI_API_KEY` — live AURA; if unset, offline two-level fallback is used
+- `NASA_API_KEY` — NASA DONKI catalog; if unset, public `DEMO_KEY` + on-screen notice
+- `APP_URL` — optional public URL metadata
+
+Do not paste real keys into the repo. NOAA SWPC / GOES and offline AURA work with empty values.
+
+**Smoke-test after deploy** (`https://<deployment>.vercel.app`):
+
+```bash
+# Space environment (NOAA live observations; DONKI may time out — that is expected)
+curl -sS "https://<deployment>.vercel.app/api/nasa/space-environment" | jq '{overallStatus, nasaKeyMode, notices, kp: .observations.kp}'
+
+# AURA health analysis (offline fallback unless GEMINI_API_KEY is set)
+curl -sS -X POST "https://<deployment>.vercel.app/api/ai-doctor" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"請做健康檢核","astronaut":{"id":"astro-alice","name":"Alice Smith","gender":"Female","age":46,"role":"Botanist","missionStartDate":"2026/01/21","missionDuration":"10m","missionDaysElapsed":305},"telemetry":{"date":"2026/11/22","restingHR":103,"hrv":14,"vo2Max":20,"spo2":95,"avgSleepMinutes":305,"avgExerciseMinutes":175,"mentalStatus":"Normal","musculoskeletalStatus":"Normal","nutritionStatus":"Normal"}}' \
+  | jq '{analysisMode, healthAssessment, metricCount: (.detailedAnalysis.metrics|length)}'
+```
+
+Expect HTTP 200. Space-environment should include NOAA Kp / GOES fields and must not invent DONKI flares. AI-doctor should return overall + per-metric analysis in zh-Hant-TW. Repeating the POST quickly may return HTTP 429 (30 requests / 15 minutes / IP, best-effort per instance).
+
+Custom domain `space-moni.ogtech.ai` can be attached later in the Vercel project; this repo does not create DNS.
 
 ### Type Checking & Linting
 
