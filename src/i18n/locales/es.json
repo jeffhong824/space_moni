@@ -186,7 +186,7 @@
     "title": "Simulación de flota",
     "subtitle": "Universo determinista compartido desde 2026-11-10 00:00 Taipei. No es vídeo NASA.",
     "backDash": "Volver a la consola",
-    "clickHint": "Clic en una nave o astronauta para vitales simulados.",
+    "clickHint": "Clic en una nave, la Tierra (control de misión) o un astronauta. El hover marca lo que se puede entrar.",
     "mobileHint": "Móvil: solo mapa 2D. Abra una nave de la lista.",
     "loadingEngine": "Cargando motor de simulación…",
     "engineFail": "No se pudo iniciar el motor 2D. Use la lista.",
@@ -202,6 +202,16 @@
     "interiorNote": "SIMULACIÓN · interiores procedimentales, no NASA",
     "moduleStatus": "Estado del módulo",
     "crewCount": "{n} tripulantes",
+    "clickEnter": "Clic para entrar",
+    "hqLabel": "NASA HQ",
+    "crumbFleet": "Mapa de flota",
+    "crumbHq": "Control de misión",
+    "openFullHq": "Abrir consola HQ completa (login NASA)",
+    "earthHint": "Tierra · plataforma de monitorización",
+    "liveWx": "EN VIVO · NOAA SWPC / NASA DONKI — datos oficiales, no simulados",
+    "flagged": "Tripulación señalada",
+    "eventsFeed": "Eventos recientes",
+    "noEvents": "Sin eventos en esta ventana",
     "room": {
       "command": "MANDO / COMMS",
       "galley": "COCINA",
@@ -213,7 +223,9 @@
       "eclss": "ECLSS",
       "airlock": "COMPUERTA / EVA",
       "shelter": "REFUGIO",
-      "capsule": "CÁPSULA"
+      "capsule": "CÁPSULA",
+      "tunnel": "TÚNEL",
+      "display": "PANTALLA"
     },
     "roomDesc": {
       "command": "Puente de vuelo, comunicaciones y consolas de guía.",
@@ -226,7 +238,9 @@
       "eclss": "Soporte vital: O2/N2, agua, bucle térmico y depurador de CO2.",
       "airlock": "Trajes EVA, escotilla y brazo robótico.",
       "shelter": "Estanterías de refugio. La tripulación viene aquí si sube la escala S.",
-      "capsule": "Asientos y guía de la cápsula acoplada."
+      "capsule": "Asientos y guía de la cápsula acoplada.",
+      "tunnel": "Pasillo presurizado entre cúpulas.",
+      "display": "Pantallas del director de vuelo. Clima en vivo y estado de la flota."
     }
   },
   "wx": {

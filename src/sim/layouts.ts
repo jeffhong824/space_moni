@@ -13,7 +13,9 @@ export type RoomId =
   | 'eclss'
   | 'airlock'
   | 'shelter'
-  | 'capsule';
+  | 'capsule'
+  | 'tunnel'
+  | 'display';
 
 export type Facing = 's' | 'n' | 'e' | 'w';
 export type CrewAnim = 'walk-s' | 'walk-n' | 'walk-e' | 'walk-w' | 'idle-s' | 'idle-n' | 'sleep' | 'sleep-float' | 'work-n' | 'work-e';
@@ -61,6 +63,13 @@ export interface DoorDef {
   right: RoomId;
 }
 
+export interface NpcPlace {
+  sheet: string;
+  x: number;
+  y: number;
+  anim: CrewAnim;
+}
+
 export interface ShipLayout {
   id: string;
   cols: number;
@@ -70,6 +79,7 @@ export interface ShipLayout {
   doors: DoorDef[];
   props: PropPlace[];
   hullEva: StationPlace[];
+  npcs?: NpcPlace[];
   microgravity: boolean;
   hasShower: boolean;
   shelterRoom: RoomId;
@@ -167,6 +177,99 @@ const P = (tex: string, tx: number, ty: number, extra: Partial<PropPlace> = {}):
   ty,
   ...extra,
 });
+
+interface RectSpec {
+  id: RoomId;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  floor: number;
+  props: RoomSpec['props'];
+  stations: StationPlace[];
+}
+
+function fromRects(
+  shipId: string,
+  specs: RectSpec[],
+  opts: { microgravity: boolean; hasShower: boolean; shelterRoom: RoomId; npcs?: NpcPlace[]; hullFrom?: RoomId }
+): ShipLayout {
+  const rooms: RoomDef[] = specs.map((s) => ({
+    id: s.id,
+    labelKey: `sim.room.${s.id}`,
+    descKey: `sim.roomDesc.${s.id}`,
+    x0: s.x0,
+    x1: s.x1,
+    y0: s.y0,
+    y1: s.y1,
+    floor: s.floor,
+    stations: s.stations.map((st) => ({ ...st, x: s.x0 + st.x, y: s.y0 + st.y })),
+  }));
+  const cols = Math.max(...rooms.map((r) => r.x1), 1) + 1;
+  const rows = Math.max(...rooms.map((r) => r.y1), 1) + 1;
+  const doors: DoorDef[] = [];
+  const seen = new Set<string>();
+  const punch = (x: number, y: number, a: RoomId, b: RoomId) => {
+    const k = `${x},${y},${a},${b}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    doors.push({ x, y, left: a, right: b });
+  };
+  for (let i = 0; i < rooms.length; i++) {
+    for (let j = i + 1; j < rooms.length; j++) {
+      const a = rooms[i];
+      const b = rooms[j];
+      if (a.x1 === b.x0 || b.x1 === a.x0) {
+        const left = a.x1 === b.x0 ? a : b;
+        const right = a.x1 === b.x0 ? b : a;
+        const yLo = Math.max(left.y0, right.y0) + 1;
+        const yHi = Math.min(left.y1, right.y1) - 1;
+        if (yHi >= yLo) {
+          const mid = Math.floor((yLo + yHi) / 2);
+          punch(left.x1, mid, left.id, right.id);
+          if (mid + 1 <= yHi) punch(left.x1, mid + 1, left.id, right.id);
+        }
+      }
+      if (a.y1 === b.y0 || b.y1 === a.y0) {
+        const top = a.y1 === b.y0 ? a : b;
+        const bot = a.y1 === b.y0 ? b : a;
+        const xLo = Math.max(top.x0, bot.x0) + 1;
+        const xHi = Math.min(top.x1, bot.x1) - 1;
+        if (xHi >= xLo) {
+          const mid = Math.floor((xLo + xHi) / 2);
+          punch(mid, top.y1, top.id, bot.id);
+          if (mid + 1 <= xHi) punch(mid + 1, top.y1, top.id, bot.id);
+        }
+      }
+    }
+  }
+  const props: PropPlace[] = [];
+  specs.forEach((s) => {
+    for (const p of s.props) props.push({ ...p, x: s.x0 + p.tx, y: s.y0 + p.ty });
+  });
+  const evaRoom = rooms.find((r) => r.id === (opts.hullFrom ?? 'airlock')) ?? rooms[rooms.length - 1];
+  const midY = evaRoom ? Math.floor((evaRoom.y0 + evaRoom.y1) / 2) : 3;
+  const hullEva: StationPlace[] = evaRoom
+    ? [
+        { x: evaRoom.x1, y: midY, facing: 'e', anim: 'walk-e', eva: true, hull: true },
+        { x: evaRoom.x1, y: midY + 1, facing: 'e', anim: 'walk-e', eva: true, hull: true },
+      ]
+    : [];
+  return {
+    id: shipId,
+    cols,
+    rows,
+    interiorH: rows - 2,
+    rooms,
+    doors,
+    props,
+    hullEva,
+    npcs: opts.npcs,
+    microgravity: opts.microgravity,
+    hasShower: opts.hasShower,
+    shelterRoom: opts.shelterRoom,
+  };
+}
 
 /** LEO US-segment chain — matches preview/sim-preview-1-leo-interior.png */
 const LEO = chain(
@@ -410,188 +513,289 @@ const GATEWAY = chain(
   { H: 7, microgravity: true, hasShower: false, shelterRoom: 'crew_quarters' }
 );
 
-const ARES = chain(
+/** Mars transit: two-row habitat ring per DESIGN_NOTES §4.3 */
+const ARES = fromRects(
   'ship-ares',
   [
     {
       id: 'command',
-      w: 5,
+      x0: 0, y0: 0, x1: 10, y1: 5,
       floor: FLOOR.darkLarge,
       props: [
         P('console_command', 1, 1, { dir: 1, anim: { frames: 2, ds: 2 } }),
-        P('console_nav', 2, 1, { dir: 1, anim: { frames: 3, ds: 1 } }),
-        P('console_comms', 3, 1, { dir: 1, anim: { frames: 3, ds: 4 } }),
-        P('comms_relay', 4, 3, { anim: { frames: 16, ds: 1 } }),
+        P('console_nav', 3, 1, { dir: 1, anim: { frames: 3, ds: 1 } }),
+        P('console_comms', 5, 1, { dir: 1, anim: { frames: 3, ds: 4 } }),
+        P('comms_relay', 8, 2, { anim: { frames: 16, ds: 1 } }),
       ],
-      stations: [{ x: 2, y: 2, facing: 'n', anim: 'work-n' }],
+      stations: [{ x: 3, y: 2, facing: 'n', anim: 'work-n' }],
     },
     {
       id: 'lab',
-      w: 5,
+      x0: 10, y0: 0, x1: 20, y1: 5,
       floor: FLOOR.white,
-      props: [P('server_rack', 1, 1, { anim: { frames: 8, ds: 0.75 } }), P('analyzer', 2, 1), P('sample_fridge', 3, 1), P('circuit_bench', 3, 6)],
-      stations: [{ x: 2, y: 2, facing: 'n', anim: 'work-n' }],
+      props: [
+        P('server_rack', 1, 1, { anim: { frames: 8, ds: 0.75 } }),
+        P('analyzer', 3, 1),
+        P('sample_fridge', 5, 1),
+        P('circuit_bench', 7, 4),
+      ],
+      stations: [{ x: 3, y: 2, facing: 'n', anim: 'work-n' }],
     },
     {
       id: 'medical',
-      w: 5,
+      x0: 20, y0: 0, x1: 30, y1: 5,
       floor: FLOOR.whiteLarge,
       props: [
         P('stasis_bed_on', 2, 2, { dir: 0 }),
-        P('vitals_monitor', 3, 1, { anim: { frames: 13, ds: 1 } }),
-        P('iv_drip', 3, 2),
-        P('med_bed', 1, 6),
+        P('vitals_monitor', 4, 1, { anim: { frames: 13, ds: 1 } }),
+        P('iv_drip', 5, 2),
+        P('med_bed', 7, 3),
       ],
       stations: [
         { x: 2, y: 3, facing: 's', anim: 'sleep' },
-        { x: 1, y: 5, facing: 'e', anim: 'work-e' },
+        { x: 6, y: 3, facing: 'e', anim: 'work-e' },
       ],
     },
     {
       id: 'exercise',
-      w: 5,
+      x0: 30, y0: 0, x1: 39, y1: 5,
       floor: FLOOR.textured,
-      props: [P('treadmill', 1, 2, { wide: 49, tall: 64, originBottom: true }), P('cycle_ergometer', 3, 2, { wide: 36, tall: 48, originBottom: true })],
+      props: [
+        P('treadmill', 1, 2, { wide: 49, tall: 64, originBottom: true }),
+        P('cycle_ergometer', 5, 2, { wide: 36, tall: 48, originBottom: true }),
+      ],
       stations: [
         { x: 2, y: 2, facing: 'e', anim: 'walk-e' },
-        { x: 3, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 5, y: 3, facing: 's', anim: 'idle-s' },
       ],
     },
     {
       id: 'crew_quarters',
-      w: 4,
+      x0: 0, y0: 5, x1: 8, y1: 10,
       floor: FLOOR.smooth,
       props: [
         P('crew_quarters_locker', 1, 1, { originBottom: true, tall: 48 }),
-        P('crew_quarters_locker', 2, 1, { originBottom: true, tall: 48 }),
         P('crew_quarters_locker', 3, 1, { originBottom: true, tall: 48 }),
+        P('crew_quarters_locker', 5, 1, { originBottom: true, tall: 48 }),
       ],
       stations: [
         { x: 1, y: 2, facing: 's', anim: 'sleep-float' },
-        { x: 2, y: 2, facing: 's', anim: 'sleep-float' },
+        { x: 3, y: 2, facing: 's', anim: 'sleep-float' },
       ],
     },
     {
       id: 'shelter',
-      w: 4,
+      x0: 8, y0: 5, x1: 14, y1: 10,
       floor: FLOOR.plating,
       props: [
         P('crate', 1, 1, { originBottom: true, tall: 48 }),
-        P('crate_secure', 2, 1, { originBottom: true, tall: 48 }),
-        P('crate', 3, 1, { originBottom: true, tall: 48 }),
-        P('crate', 1, 6, { originBottom: true, tall: 48 }),
-        P('crate_secure', 2, 6, { originBottom: true, tall: 48 }),
+        P('crate_secure', 3, 1, { originBottom: true, tall: 48 }),
+        P('crate', 1, 4, { originBottom: true, tall: 48 }),
+        P('crate_secure', 3, 4, { originBottom: true, tall: 48 }),
       ],
       stations: [
-        { x: 1, y: 3, facing: 's', anim: 'idle-s' },
-        { x: 2, y: 3, facing: 's', anim: 'idle-s' },
-        { x: 3, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 2, y: 2, facing: 's', anim: 'idle-s' },
+        { x: 4, y: 2, facing: 's', anim: 'idle-s' },
       ],
     },
     {
       id: 'galley',
-      w: 4,
+      x0: 14, y0: 5, x1: 24, y1: 10,
       floor: FLOOR.kitchen,
-      props: [P('fridge', 1, 1), P('food_storage', 2, 1), P('food_warmer_on', 3, 1, { anim: { frames: 4, ds: 1 } })],
-      stations: [{ x: 2, y: 3, facing: 's', anim: 'idle-s' }],
+      props: [P('fridge', 1, 1), P('food_storage', 3, 1), P('food_warmer_on', 5, 1, { anim: { frames: 4, ds: 1 } }), P('coffee_maker', 7, 1)],
+      stations: [{ x: 3, y: 3, facing: 's', anim: 'idle-s' }],
     },
     {
       id: 'hygiene',
-      w: 3,
+      x0: 24, y0: 5, x1: 30, y1: 10,
       floor: FLOOR.freezer,
-      props: [P('sink', 1, 1, { dir: 0 }), P('toilet', 2, 1, { dir: 0 })],
-      stations: [{ x: 1, y: 3, facing: 'n', anim: 'idle-n' }],
+      props: [P('sink', 1, 1, { dir: 0 }), P('toilet', 3, 1, { dir: 0 })],
+      stations: [{ x: 2, y: 3, facing: 'n', anim: 'idle-n' }],
     },
     {
       id: 'eclss',
-      w: 5,
+      x0: 30, y0: 5, x1: 39, y1: 10,
       floor: FLOOR.plating,
       props: [
         P('thermal_control_on', 1, 1, { anim: { frames: 10, ds: 1 } }),
-        P('water_processor', 2, 1),
-        P('o2_tank', 3, 1),
-        P('co2_scrubber', 2, 4, { anim: { frames: 24, ds: 0.8 } }),
-        P('airlock_external', 4, 3),
+        P('water_processor', 3, 1),
+        P('o2_tank', 5, 1),
+        P('co2_scrubber', 3, 3, { anim: { frames: 24, ds: 0.8 } }),
+        P('airlock_external', 7, 3),
       ],
-      stations: [{ x: 1, y: 5, facing: 'n', anim: 'work-n' }],
+      stations: [{ x: 2, y: 3, facing: 'n', anim: 'work-n' }],
     },
   ],
-  { microgravity: true, hasShower: false, shelterRoom: 'shelter' }
+  { microgravity: true, hasShower: false, shelterRoom: 'shelter', hullFrom: 'eclss' }
 );
 
-const MARE = chain(
+/** Lunar surface: two domes + tunnel per DESIGN_NOTES §4.4 */
+const MARE = fromRects(
   'ship-mare',
   [
     {
       id: 'crew_quarters',
-      w: 5,
+      x0: 0, y0: 0, x1: 16, y1: 6,
       floor: FLOOR.smooth,
-      props: [P('bunk', 1, 2), P('bunk', 2, 2), P('bunk', 3, 2), P('crew_quarters_locker', 4, 1, { originBottom: true, tall: 48 })],
+      props: [
+        P('bunk', 2, 2),
+        P('bunk', 4, 2),
+        P('bunk', 6, 2),
+        P('crew_quarters_locker', 10, 1, { originBottom: true, tall: 48 }),
+        P('crew_quarters_locker', 12, 1, { originBottom: true, tall: 48 }),
+      ],
       stations: [
-        { x: 1, y: 2, facing: 's', anim: 'sleep' },
         { x: 2, y: 2, facing: 's', anim: 'sleep' },
-        { x: 3, y: 2, facing: 's', anim: 'sleep' },
+        { x: 4, y: 2, facing: 's', anim: 'sleep' },
+        { x: 6, y: 2, facing: 's', anim: 'sleep' },
       ],
     },
     {
       id: 'galley',
-      w: 4,
+      x0: 0, y0: 6, x1: 8, y1: 11,
       floor: FLOOR.kitchen,
-      props: [P('fridge', 1, 1), P('food_warmer_on', 2, 1, { anim: { frames: 4, ds: 1 } }), P('coffee_maker', 3, 1)],
-      stations: [{ x: 2, y: 3, facing: 's', anim: 'idle-s' }],
+      props: [P('fridge', 1, 1), P('food_warmer_on', 3, 1, { anim: { frames: 4, ds: 1 } }), P('coffee_maker', 5, 1)],
+      stations: [{ x: 3, y: 3, facing: 's', anim: 'idle-s' }],
     },
     {
       id: 'hygiene',
-      w: 4,
+      x0: 8, y0: 6, x1: 16, y1: 11,
       floor: FLOOR.freezer,
-      props: [P('toilet', 1, 1, { dir: 0 }), P('sink', 2, 1, { dir: 0 }), P('shower', 3, 1, { dir: 0 }), P('curtain', 3, 2)],
-      stations: [{ x: 2, y: 3, facing: 'n', anim: 'idle-n' }],
+      props: [P('toilet', 1, 1, { dir: 0 }), P('sink', 3, 1, { dir: 0 }), P('shower', 5, 1, { dir: 0 }), P('curtain', 5, 2)],
+      stations: [{ x: 3, y: 3, facing: 'n', anim: 'idle-n' }],
+    },
+    {
+      id: 'tunnel',
+      x0: 16, y0: 4, x1: 20, y1: 8,
+      floor: FLOOR.plating,
+      props: [P('handrail', 2, 2, { dir: 2 })],
+      stations: [{ x: 2, y: 2, facing: 'e', anim: 'idle-s' }],
     },
     {
       id: 'lab',
-      w: 5,
+      x0: 20, y0: 0, x1: 27, y1: 6,
       floor: FLOOR.white,
-      props: [P('analyzer', 1, 1), P('sample_fridge', 2, 1), P('server_rack', 3, 1, { anim: { frames: 8, ds: 0.75 } }), P('fabricator', 4, 1)],
-      stations: [{ x: 2, y: 2, facing: 'n', anim: 'work-n' }],
+      props: [P('analyzer', 1, 1), P('sample_fridge', 3, 1), P('server_rack', 5, 1, { anim: { frames: 8, ds: 0.75 } })],
+      stations: [{ x: 3, y: 2, facing: 'n', anim: 'work-n' }],
     },
     {
       id: 'medical',
-      w: 4,
+      x0: 27, y0: 0, x1: 34, y1: 6,
       floor: FLOOR.whiteLarge,
-      props: [P('med_bed', 1, 3), P('vitals_monitor', 2, 1, { anim: { frames: 13, ds: 1 } }), P('med_kiosk', 3, 1, { anim: { frames: 6, ds: 1 } })],
+      props: [P('med_bed', 1, 3), P('vitals_monitor', 3, 1, { anim: { frames: 13, ds: 1 } }), P('med_kiosk', 5, 1, { anim: { frames: 6, ds: 1 } })],
       stations: [{ x: 1, y: 3, facing: 's', anim: 'sleep' }],
     },
     {
       id: 'exercise',
-      w: 5,
+      x0: 20, y0: 6, x1: 27, y1: 11,
       floor: FLOOR.textured,
-      props: [P('treadmill', 1, 2, { wide: 49, tall: 64, originBottom: true }), P('ared', 3, 5, { wide: 52, tall: 64, originBottom: true })],
+      props: [P('treadmill', 1, 2, { wide: 49, tall: 64, originBottom: true }), P('ared', 4, 4, { wide: 52, tall: 64, originBottom: true })],
       stations: [
         { x: 2, y: 2, facing: 'e', anim: 'walk-e' },
-        { x: 3, y: 4, facing: 's', anim: 'idle-s' },
+        { x: 4, y: 3, facing: 's', anim: 'idle-s' },
       ],
     },
     {
       id: 'command',
-      w: 4,
+      x0: 27, y0: 6, x1: 34, y1: 11,
       floor: FLOOR.darkLarge,
-      props: [P('console_command', 1, 1, { dir: 1, anim: { frames: 2, ds: 2 } }), P('console_comms', 2, 1, { dir: 1, anim: { frames: 3, ds: 4 } })],
-      stations: [{ x: 2, y: 2, facing: 'n', anim: 'work-n' }],
+      props: [P('console_command', 1, 1, { dir: 1, anim: { frames: 2, ds: 2 } }), P('console_comms', 3, 1, { dir: 1, anim: { frames: 3, ds: 4 } })],
+      stations: [{ x: 3, y: 2, facing: 'n', anim: 'work-n' }],
     },
     {
       id: 'airlock',
-      w: 5,
+      x0: 20, y0: 11, x1: 34, y1: 14,
       floor: FLOOR.plating,
       props: [
-        P('suit_storage', 1, 1),
-        P('suit_storage_industrial', 2, 1),
-        P('locker_eva', 3, 1, { originBottom: true, tall: 48 }),
-        P('airlock_external', 4, 3),
+        P('suit_storage', 2, 1),
+        P('suit_storage_industrial', 4, 1),
+        P('locker_eva', 6, 1, { originBottom: true, tall: 48 }),
+        P('airlock_external', 10, 1),
       ],
-      stations: [{ x: 2, y: 3, facing: 'e', anim: 'idle-s' }],
+      stations: [{ x: 4, y: 2, facing: 'e', anim: 'idle-s' }],
     },
   ],
   { microgravity: false, hasShower: true, shelterRoom: 'crew_quarters' }
+);
+
+const HQ = fromRects(
+  'hq-earth',
+  [
+    {
+      id: 'display',
+      x0: 0, y0: 0, x1: 24, y1: 5,
+      floor: FLOOR.darkLarge,
+      props: [
+        P('console_crew', 1, 1, { anim: { frames: 20, ds: 1 } }),
+        P('console_crew', 4, 1, { frame: 8, anim: { frames: 20, ds: 1 } }),
+        P('server_rack', 7, 1, { anim: { frames: 8, ds: 0.75 } }),
+        P('server_rack', 9, 1, { frame: 4, anim: { frames: 8, ds: 0.75 } }),
+        P('comms_hub', 12, 1, { anim: { frames: 6, ds: 3 } }),
+        P('vitals_monitor', 15, 1, { anim: { frames: 13, ds: 1 } }),
+        P('comms_relay', 18, 1, { anim: { frames: 16, ds: 1 } }),
+        P('console_crew', 21, 1, { frame: 12, anim: { frames: 20, ds: 1 } }),
+        P('console_nav', 2, 3, { dir: 1, anim: { frames: 3, ds: 1 } }),
+        P('console_comms', 6, 3, { dir: 1, anim: { frames: 3, ds: 4 } }),
+        P('console_atmos', 10, 3, { dir: 1 }),
+        P('console_power', 14, 3, { dir: 1 }),
+        P('console_command', 18, 3, { dir: 1, anim: { frames: 2, ds: 2 } }),
+      ],
+      stations: [],
+    },
+    {
+      id: 'command',
+      x0: 0, y0: 5, x1: 24, y1: 12,
+      floor: FLOOR.dark,
+      props: [
+        P('console_command', 2, 1, { dir: 1, anim: { frames: 2, ds: 2 } }),
+        P('console_nav', 5, 1, { dir: 1, anim: { frames: 3, ds: 1 } }),
+        P('console_comms', 8, 1, { dir: 1, anim: { frames: 3, ds: 4 } }),
+        P('console_atmos', 11, 1, { dir: 1 }),
+        P('console_power', 14, 1, { dir: 1 }),
+        P('console_crew', 17, 1, { dir: 1, anim: { frames: 20, ds: 1 } }),
+        P('office_chair', 2, 2, { dir: 1 }),
+        P('office_chair', 5, 2, { dir: 1 }),
+        P('office_chair', 8, 2, { dir: 1 }),
+        P('office_chair', 11, 2, { dir: 1 }),
+        P('office_chair', 14, 2, { dir: 1 }),
+        P('office_chair', 17, 2, { dir: 1 }),
+        P('console_comms', 3, 5, { dir: 1, anim: { frames: 3, ds: 4 } }),
+        P('console_nav', 7, 5, { dir: 1, anim: { frames: 3, ds: 1 } }),
+        P('console_crew', 11, 5, { dir: 1, anim: { frames: 20, ds: 1 } }),
+        P('console_atmos', 15, 5, { dir: 1 }),
+        P('office_chair', 3, 6, { dir: 1 }),
+        P('office_chair', 7, 6, { dir: 1 }),
+        P('office_chair', 11, 6, { dir: 1 }),
+        P('office_chair', 15, 6, { dir: 1 }),
+        P('comms_transmitter', 21, 6),
+      ],
+      stations: [
+        { x: 2, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 5, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 8, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 11, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 14, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 17, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 3, y: 6, facing: 'n', anim: 'work-n' },
+        { x: 7, y: 6, facing: 'n', anim: 'work-n' },
+      ],
+    },
+  ],
+  {
+    microgravity: false,
+    hasShower: false,
+    shelterRoom: 'command',
+    npcs: [
+      { sheet: 'commander', x: 5, y: 7, anim: 'work-n' },
+      { sheet: 'pilot', x: 8, y: 7, anim: 'work-n' },
+      { sheet: 'flight_engineer', x: 11, y: 7, anim: 'work-n' },
+      { sheet: 'science_officer', x: 14, y: 7, anim: 'work-n' },
+      { sheet: 'medical_officer', x: 17, y: 7, anim: 'work-n' },
+      { sheet: 'mission_specialist', x: 2, y: 7, anim: 'work-n' },
+      { sheet: 'science_officer', x: 7, y: 11, anim: 'work-n' },
+      { sheet: 'flight_engineer', x: 11, y: 11, anim: 'work-n' },
+    ],
+  }
 );
 
 export const LAYOUTS: Record<string, ShipLayout> = {
@@ -599,6 +803,7 @@ export const LAYOUTS: Record<string, ShipLayout> = {
   'ship-gateway': GATEWAY,
   'ship-ares': ARES,
   'ship-mare': MARE,
+  'hq-earth': HQ,
 };
 
 export function layoutOf(shipId: string): ShipLayout {

@@ -186,7 +186,7 @@
     "title": "船隊模擬",
     "subtitle": "共享決定性宇宙，起點 2026-11-10 00:00 台北。非 NASA 即時畫面。",
     "backDash": "返回控制台",
-    "clickHint": "點選船艦或太空人查看即時模擬生命徵象。",
+    "clickHint": "點選船艦、地球（任務控制）或太空人。游標停在可進入的物件上會醒目提示。",
     "mobileHint": "行動裝置：僅 2D 地圖。請從清單開啟船艦。",
     "loadingEngine": "載入模擬引擎…",
     "engineFail": "2D 引擎無法啟動。請改用下方船艦清單。",
@@ -202,6 +202,16 @@
     "interiorNote": "模擬 · 內部為程序生成，非 NASA",
     "moduleStatus": "艙段狀態",
     "crewCount": "{n} 名組員",
+    "clickEnter": "點擊進入",
+    "hqLabel": "NASA 任務控制",
+    "crumbFleet": "船隊地圖",
+    "crumbHq": "任務控制",
+    "openFullHq": "開啟完整任務控制台（NASA 登入）",
+    "earthHint": "地球 · 監視平台",
+    "liveWx": "即時 · NOAA SWPC／NASA DONKI — 官方資料，非模擬",
+    "flagged": "需注意組員",
+    "eventsFeed": "近期事件",
+    "noEvents": "此視窗無事件",
     "room": {
       "command": "指揮／通訊",
       "galley": "廚房",
@@ -213,7 +223,9 @@
       "eclss": "環控生保",
       "airlock": "氣閘／艙外",
       "shelter": "風暴避難",
-      "capsule": "乘員艙"
+      "capsule": "乘員艙",
+      "tunnel": "通道",
+      "display": "牆面顯示"
     },
     "roomDesc": {
       "command": "飛行甲板、通訊與導航控制台。",
@@ -226,7 +238,9 @@
       "eclss": "生保系統：氧／氮、水處理、熱控迴路與二氧化碳洗滌器。",
       "airlock": "艙外衣存放、艙門與機械臂。",
       "shelter": "風暴避難貨架。S 尺度升高時組員移入此處。",
-      "capsule": "對接乘員艙座椅與導航。"
+      "capsule": "對接乘員艙座椅與導航。",
+      "tunnel": "連接居住穹頂的加壓走道。",
+      "display": "飛航主任牆面螢幕。即時天氣與船隊狀態。"
     }
   },
   "wx": {

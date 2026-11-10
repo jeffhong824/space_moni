@@ -186,7 +186,7 @@
     "title": "Fleet simulation",
     "subtitle": "Shared deterministic world from 2026-11-10 00:00 Taipei. Not live NASA video.",
     "backDash": "Back to console",
-    "clickHint": "Click a ship or astronaut for live simulated vitals.",
+    "clickHint": "Click a ship, Earth (NASA HQ), or an astronaut. Hover highlights what you can enter.",
     "mobileHint": "Mobile: 2D map only. Open a ship from the list.",
     "loadingEngine": "Loading simulation engine…",
     "engineFail": "The 2D engine could not start. Use the ship list below.",
@@ -202,6 +202,16 @@
     "interiorNote": "SIMULATION · interiors are procedural, not NASA",
     "moduleStatus": "Module status",
     "crewCount": "{n} crew",
+    "clickEnter": "Click to enter",
+    "hqLabel": "NASA HQ",
+    "crumbFleet": "Fleet map",
+    "crumbHq": "Mission Control",
+    "openFullHq": "Open full HQ console (NASA login)",
+    "earthHint": "Earth · monitoring platform",
+    "liveWx": "LIVE · NOAA SWPC / NASA DONKI — official data, not simulated",
+    "flagged": "Flagged crew",
+    "eventsFeed": "Recent events",
+    "noEvents": "No events in this window",
     "room": {
       "command": "COMMAND / COMMS",
       "galley": "GALLEY",
@@ -213,7 +223,9 @@
       "eclss": "ECLSS",
       "airlock": "AIRLOCK / EVA",
       "shelter": "STORM SHELTER",
-      "capsule": "ORION CAPSULE"
+      "capsule": "ORION CAPSULE",
+      "tunnel": "TUNNEL",
+      "display": "WALL DISPLAY"
     },
     "roomDesc": {
       "command": "Flight deck, comms and guidance consoles.",
@@ -226,7 +238,9 @@
       "eclss": "Life support: O2/N2, water processor, thermal loop and CO2 scrubber.",
       "airlock": "EVA suit storage, hatch and robotic arm.",
       "shelter": "Storm-shelter racks. Crew move here when S-scale is elevated.",
-      "capsule": "Docked crew capsule seats and guidance."
+      "capsule": "Docked crew capsule seats and guidance.",
+      "tunnel": "Pressurized walkway between habitat domes.",
+      "display": "Flight-director wall screens. Live weather and fleet status."
     }
   },
   "wx": {

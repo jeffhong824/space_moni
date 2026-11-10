@@ -186,7 +186,7 @@
     "title": "艦隊シミュレーション",
     "subtitle": "共有決定論ワールド。起点 2026-11-10 00:00 台北。NASAライブ映像ではありません。",
     "backDash": "コンソールへ戻る",
-    "clickHint": "船または宇宙飛行士をクリックすると模擬バイタル。",
+    "clickHint": "船、地球（ミッション制御）、宇宙飛行士をクリック。ホバーで入れる対象が分かります。",
     "mobileHint": "モバイルは2Dマップのみ。リストから船を開いてください。",
     "loadingEngine": "シミュレーションエンジンを読み込み中…",
     "engineFail": "2Dエンジンを起動できません。下のリストを使用。",
@@ -202,6 +202,16 @@
     "interiorNote": "シミュレーション · 内部は手続き生成でありNASAではない",
     "moduleStatus": "モジュール状態",
     "crewCount": "乗員 {n} 名",
+    "clickEnter": "クリックして入室",
+    "hqLabel": "NASA HQ",
+    "crumbFleet": "艦隊マップ",
+    "crumbHq": "ミッション制御",
+    "openFullHq": "HQコンソール全体を開く（NASAログイン）",
+    "earthHint": "地球 · 監視プラットフォーム",
+    "liveWx": "LIVE · NOAA SWPC / NASA DONKI — 公式データ、シミュレーションではない",
+    "flagged": "要注意乗員",
+    "eventsFeed": "最近の事象",
+    "noEvents": "この窓に事象なし",
     "room": {
       "command": "指揮／通信",
       "galley": "ギャレー",
@@ -213,7 +223,9 @@
       "eclss": "ECLSS",
       "airlock": "エアロック／EVA",
       "shelter": "ストームシェルター",
-      "capsule": "カプセル"
+      "capsule": "カプセル",
+      "tunnel": "トンネル",
+      "display": "壁面ディスプレイ"
     },
     "roomDesc": {
       "command": "フライトデッキ、通信と誘導コンソール。",
@@ -226,7 +238,9 @@
       "eclss": "生命維持：O2/N2、水処理、熱制御、CO2スクラバー。",
       "airlock": "EVAスーツ保管、ハッチ、ロボットアーム。",
       "shelter": "嵐避難ラック。Sスケール上昇時に乗員が移動。",
-      "capsule": "ドッキングした乗員カプセルの座席と誘導。"
+      "capsule": "ドッキングした乗員カプセルの座席と誘導。",
+      "tunnel": "居住ドーム間の与圧通路。",
+      "display": "フライトディレクターの壁面。ライブ天気と艦隊状態。"
     }
   },
   "wx": {

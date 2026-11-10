@@ -4,12 +4,16 @@ import { shipCrewStatus } from '../world/shipStatus.ts';
 import type { WorldState } from '../world/worldState.ts';
 import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
-import { isWalkable, layoutOf, TILE, wallFrame, type ShipLayout } from './layouts.ts';
+import { FLEET_LABEL_GAP, FLEET_LABEL_H, unionHitBox } from './fleetHit.ts';
+import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
 export type SimSelect =
   | { kind: 'ship'; id: string }
   | { kind: 'crew'; id: string }
-  | { kind: 'module'; shipId: string; roomId: string };
+  | { kind: 'module'; shipId: string; roomId: string }
+  | { kind: 'hq' };
+
+export type SimView = { kind: 'map' } | { kind: 'interior'; shipId: string } | { kind: 'hq' };
 
 export type SimTranslate = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -66,12 +70,24 @@ function bezier(a: number, x0: number, y0: number, x1: number, y1: number, bulge
 }
 
 function enablePan(scene: Phaser.Scene) {
+  let panning = false;
+  scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    panning = scene.input.hitTestPointer(p).length === 0;
+  });
+  scene.input.on('pointerup', () => {
+    panning = false;
+  });
   scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-    if (!p.isDown) return;
+    if (!p.isDown || !panning) return;
     const cam = scene.cameras.main;
     cam.scrollX -= (p.x - p.prevPosition.x) / cam.zoom;
     cam.scrollY -= (p.y - p.prevPosition.y) / cam.zoom;
   });
+}
+
+function emitView(scene: Phaser.Scene, view: SimView) {
+  const cb = scene.registry.get('onView') as ((v: SimView) => void) | undefined;
+  cb?.(view);
 }
 
 class BootScene extends Phaser.Scene {
@@ -100,9 +116,23 @@ class BootScene extends Phaser.Scene {
   }
 }
 
+interface FleetPin {
+  id: string;
+  kind: 'ship' | 'hq';
+  sprite: Phaser.GameObjects.Image;
+  baseScale: number;
+  ring: Phaser.GameObjects.Graphics;
+  glow: Phaser.GameObjects.Graphics;
+  labelBg: Phaser.GameObjects.Graphics;
+  title: Phaser.GameObjects.Text;
+  sub: Phaser.GameObjects.Text;
+  hit: Phaser.GameObjects.Rectangle;
+  hovered: boolean;
+}
+
 class MapScene extends Phaser.Scene {
-  private shipSprites = new Map<string, Phaser.GameObjects.Image>();
-  private labels = new Map<string, { bg: Phaser.GameObjects.Graphics; title: Phaser.GameObjects.Text; sub: Phaser.GameObjects.Text }>();
+  private pins: FleetPin[] = [];
+  private tooltip!: Phaser.GameObjects.Text;
 
   constructor() {
     super('map');
@@ -117,7 +147,6 @@ class MapScene extends Phaser.Scene {
     this.drawDashedArc(arcs, EARTH.x, EARTH.y, MOON.x, MOON.y, 70);
     this.drawDashedArc(arcs, EARTH.x, EARTH.y, MARS.x, MARS.y, -70);
 
-    this.add.image(EARTH.x, EARTH.y, 'earth').setScale(2).setOrigin(0.5);
     this.add.image(MOON.x, MOON.y, 'moon').setScale(1).setOrigin(0.5);
     this.add.image(MARS.x, MARS.y, 'mars').setScale(2).setOrigin(0.5);
 
@@ -130,34 +159,77 @@ class MapScene extends Phaser.Scene {
       })
       .setOrigin(0, 0);
 
+    this.pins = [];
+    this.pins.push(this.makePin('earth-hq', 'hq', 'earth', 2));
     for (const id of ['ship-harmony', 'ship-gateway', 'ship-ares', 'ship-mare']) {
-      const img = this.add.image(0, 0, id).setOrigin(0.5);
-      const w = img.width;
-      const h = img.height;
-      geomHit(img, -w / 2, -h / 2, w, h);
-      img.on('pointerdown', () => this.onShip(id));
-      this.shipSprites.set(id, img);
-
-      const bg = this.add.graphics();
-      const title = this.add.text(0, 0, '', {
-        fontFamily: 'ui-monospace, monospace',
-        fontSize: '11px',
-        color: '#f1f5f9',
-      }).setOrigin(0.5, 0);
-      const sub = this.add.text(0, 0, '', {
-        fontFamily: 'ui-monospace, monospace',
-        fontSize: '9px',
-        color: '#94a3b8',
-      }).setOrigin(0.5, 0);
-      this.labels.set(id, { bg, title, sub });
+      this.pins.push(this.makePin(id, 'ship', id, 1));
     }
+
+    this.tooltip = this.add
+      .text(0, 0, t('sim.clickEnter'), {
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: '10px',
+        color: '#ecfeff',
+        backgroundColor: '#0f172a',
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(30)
+      .setVisible(false);
 
     this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
     const fit = Math.min(this.scale.width / MAP_W, this.scale.height / MAP_H);
     this.cameras.main.setZoom(Math.max(1, Math.min(2, Math.floor(fit) || 1)));
     this.cameras.main.centerOn(MAP_W / 2, MAP_H / 2);
     enablePan(this);
-    this.placeShips();
+    this.placePins();
+  }
+
+  private makePin(id: string, kind: 'ship' | 'hq', tex: string, scale: number): FleetPin {
+    const sprite = this.add.image(0, 0, tex).setScale(scale).setOrigin(0.5).setDepth(4);
+    const ring = this.add.graphics().setDepth(3);
+    const glow = this.add.graphics().setDepth(5);
+    const labelBg = this.add.graphics().setDepth(6);
+    const title = this.add.text(0, 0, '', {
+      fontFamily: 'ui-monospace, monospace',
+      fontSize: '11px',
+      color: '#f1f5f9',
+    }).setOrigin(0.5, 0).setDepth(7);
+    const sub = this.add.text(0, 0, '', {
+      fontFamily: 'ui-monospace, monospace',
+      fontSize: '9px',
+      color: '#94a3b8',
+    }).setOrigin(0.5, 0).setDepth(7);
+    const hit = this.add.rectangle(0, 0, 8, 8, 0x5eead4, 0.001).setOrigin(0, 0).setDepth(8);
+    geomHit(hit, 0, 0, 8, 8);
+    const pin: FleetPin = { id, kind, sprite, baseScale: scale, ring, glow, labelBg, title, sub, hit, hovered: false };
+    hit.on('pointerover', () => {
+      pin.hovered = true;
+      this.input.setDefaultCursor('pointer');
+    });
+    hit.on('pointerout', () => {
+      pin.hovered = false;
+      this.input.setDefaultCursor('default');
+    });
+    hit.on('pointerup', () => this.onPin(pin));
+    return pin;
+  }
+
+  private onPin(pin: FleetPin) {
+    const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
+    const mobile = Boolean(this.registry.get('mobile'));
+    if (pin.kind === 'hq') {
+      onSelect?.({ kind: 'hq' });
+      this.registry.set('interiorId', 'hq-earth');
+      this.scene.start('interior');
+      emitView(this, { kind: 'hq' });
+      return;
+    }
+    onSelect?.({ kind: 'ship', id: pin.id });
+    if (mobile) return;
+    this.registry.set('interiorId', pin.id);
+    this.scene.start('interior');
+    emitView(this, { kind: 'interior', shipId: pin.id });
   }
 
   private drawDashedArc(g: Phaser.GameObjects.Graphics, x0: number, y0: number, x1: number, y1: number, bulge: number) {
@@ -188,50 +260,62 @@ class MapScene extends Phaser.Scene {
     return bezier(a, EARTH.x, EARTH.y, MARS.x, MARS.y, -70);
   }
 
-  private onShip(id: string) {
-    const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
-    onSelect?.({ kind: 'ship', id });
-    const mobile = Boolean(this.registry.get('mobile'));
-    if (!mobile) {
-      this.registry.set('interiorId', id);
-      this.scene.start('interior');
-      const cb = this.registry.get('onInterior') as ((id: string | null) => void) | undefined;
-      cb?.(id);
-    }
-  }
-
-  private placeShips() {
+  private placePins() {
     const world: WorldState | undefined = this.registry.get('world');
     const t: SimTranslate = this.registry.get('t');
     if (!world) return;
-    for (const id of this.shipSprites.keys()) {
-      const ship = world.ships.find((s) => s.def.id === id);
-      if (!ship) continue;
-      const pos = this.shipXY(id, world);
-      const img = this.shipSprites.get(id)!;
-      img.setPosition(pos.x, pos.y);
-      const lab = this.labels.get(id)!;
-      const status = shipCrewStatus(ship);
-      const color = statusColor(status);
-      const title = t(ship.def.nameKey);
-      const sub = `${t(ship.def.kindKey)} · ${ship.crew.length}`;
-      lab.title.setText(title);
-      lab.sub.setText(sub);
-      const tw = Math.max(lab.title.width, lab.sub.width);
-      const x = pos.x;
-      const y = pos.y + img.displayHeight / 2 + 6;
-      lab.bg.clear();
-      lab.bg.fillStyle(0x0f172a, 0.92);
-      lab.bg.lineStyle(1, color, 1);
-      lab.bg.fillRoundedRect(x - tw / 2 - 8, y, tw + 16, 36, 6);
-      lab.bg.strokeRoundedRect(x - tw / 2 - 8, y, tw + 16, 36, 6);
-      lab.title.setPosition(x, y + 3);
-      lab.sub.setPosition(x, y + 19);
+    let hoverTip: { x: number; y: number; text: string } | null = null;
+    for (const pin of this.pins) {
+      const pos = pin.kind === 'hq' ? EARTH : this.shipXY(pin.id, world);
+      pin.sprite.setPosition(pos.x, pos.y);
+      const ship = world.ships.find((s) => s.def.id === pin.id);
+      const color = pin.kind === 'hq' ? 0x38bdf8 : statusColor(ship ? shipCrewStatus(ship) : 'Normal');
+      const title = pin.kind === 'hq' ? t('sim.hqLabel') : t(ship?.def.nameKey ?? pin.id);
+      const sub = pin.kind === 'hq' ? t('sim.earthHint') : `${t(ship?.def.kindKey ?? '')} · ${ship?.crew.length ?? 0}`;
+      pin.title.setText(title);
+      pin.sub.setText(sub);
+      const tw = Math.max(pin.title.width, pin.sub.width) + 16;
+      const labelY = pos.y + pin.sprite.displayHeight / 2 + FLEET_LABEL_GAP;
+      pin.labelBg.clear();
+      pin.labelBg.fillStyle(0x0f172a, 0.92);
+      pin.labelBg.lineStyle(1, color, 1);
+      pin.labelBg.fillRoundedRect(pos.x - tw / 2, labelY, tw, FLEET_LABEL_H, 6);
+      pin.labelBg.strokeRoundedRect(pos.x - tw / 2, labelY, tw, FLEET_LABEL_H, 6);
+      pin.title.setPosition(pos.x, labelY + 3);
+      pin.sub.setPosition(pos.x, labelY + 19);
+
+      const box = unionHitBox(pin.sprite.width, pin.sprite.height, pin.baseScale, tw, FLEET_LABEL_H, FLEET_LABEL_GAP);
+      pin.hit.setPosition(pos.x + box.x, pos.y + box.y);
+      pin.hit.setSize(box.w, box.h);
+      const area = pin.hit.input?.hitArea;
+      if (area instanceof Phaser.Geom.Rectangle) area.setTo(0, 0, box.w, box.h);
+
+      const pulse = 0.22 + 0.18 * Math.sin(this.time.now / 420);
+      pin.ring.clear();
+      pin.ring.lineStyle(1, color, pulse);
+      const rx = Math.max(pin.sprite.displayWidth, tw) / 2 + 10;
+      const ry = (pin.sprite.displayHeight + FLEET_LABEL_H + FLEET_LABEL_GAP) / 2 + 8;
+      pin.ring.strokeEllipse(pos.x, pos.y + FLEET_LABEL_GAP / 2, rx * 2, ry * 2);
+
+      pin.glow.clear();
+      if (pin.hovered) {
+        pin.sprite.setScale(pin.baseScale * 1.08);
+        pin.glow.lineStyle(2, 0xf0fdfa, 0.9);
+        pin.glow.strokeRoundedRect(pos.x + box.x - 2, pos.y + box.y - 2, box.w + 4, box.h + 4, 8);
+        hoverTip = { x: pos.x, y: pos.y + box.y - 6, text: t('sim.clickEnter') };
+      } else {
+        pin.sprite.setScale(pin.baseScale);
+      }
+    }
+    if (hoverTip) {
+      this.tooltip.setText(hoverTip.text).setPosition(hoverTip.x, hoverTip.y).setVisible(true);
+    } else {
+      this.tooltip.setVisible(false);
     }
   }
 
   update() {
-    this.placeShips();
+    this.placePins();
   }
 }
 
@@ -263,7 +347,7 @@ class InteriorScene extends Phaser.Scene {
     for (let y = 0; y < L.rows; y++) {
       for (let x = 0; x < L.cols; x++) {
         if (!isWalkable(L, x, y)) continue;
-        const room = L.rooms.find((r) => x > r.x0 && x < r.x1);
+        const room = roomAtTile(L, x, y);
         const frame = room?.floor ?? 0;
         this.add.image(this.tx(x), this.ty(y), 'floors', frame).setOrigin(0, 0);
       }
@@ -288,15 +372,17 @@ class InteriorScene extends Phaser.Scene {
       this.add.image(this.tx(d.x), this.ty(d.y), 'hatch_shuttle_opening', hatchCols - 1).setOrigin(0, 0);
     }
 
-    for (let x = 1; x < L.cols - 1; x += 4) {
-      if (isWalkable(L, x, 1)) {
-        this.add.image(this.tx(x), this.ty(1), 'light_tube', 0).setOrigin(0, 0);
+    if (shipId !== 'hq-earth') {
+      for (let x = 1; x < L.cols - 1; x += 4) {
+        if (isWalkable(L, x, 1)) {
+          this.add.image(this.tx(x), this.ty(1), 'light_tube', 0).setOrigin(0, 0);
+        }
       }
-    }
-    const railY = Math.floor(L.interiorH / 2);
-    for (let x = 2; x < L.cols - 1; x += 3) {
-      if (isWalkable(L, x, railY)) {
-        this.add.image(this.tx(x), this.ty(railY), 'handrail', 2).setOrigin(0, 0);
+      const railY = Math.floor(L.interiorH / 2);
+      for (let x = 2; x < L.cols - 1; x += 3) {
+        if (isWalkable(L, x, railY)) {
+          this.add.image(this.tx(x), this.ty(railY), 'handrail', 2).setOrigin(0, 0);
+        }
       }
     }
 
@@ -333,7 +419,7 @@ class InteriorScene extends Phaser.Scene {
       const label = t(room.labelKey);
       const tw = Math.max(48, label.length * 6.2);
       const x = cx;
-      const y = this.padY - 28;
+      const y = this.ty(room.y0) - 16;
       const g = this.add.graphics();
       g.fillStyle(0x0f172a, 0.92);
       g.lineStyle(1, 0x5eead4, 1);
@@ -344,16 +430,17 @@ class InteriorScene extends Phaser.Scene {
         .setOrigin(0.5, 0);
 
       const hx = this.tx(room.x0 + 1);
-      const hy = this.ty(1);
-      const hw = (room.x1 - room.x0 - 1) * TILE;
-      const hh = (L.rows - 2) * TILE;
+      const hy = this.ty(room.y0 + 1);
+      const hw = Math.max(TILE, (room.x1 - room.x0 - 1) * TILE);
+      const hh = Math.max(TILE, (room.y1 - room.y0 - 1) * TILE);
       const hit = this.add.rectangle(hx, hy, hw, hh, 0x000000, co2 && room.id === 'eclss' ? 0.08 : 0.001).setOrigin(0, 0);
       if (co2 && room.id === 'eclss') hit.setFillStyle(0xfb923c, 0.12);
       if (storm && room.id === L.shelterRoom) hit.setFillStyle(0x38bdf8, 0.08);
       geomHit(hit, 0, 0, hw, hh);
       hit.on('pointerdown', () => {
         const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
-        onSelect?.({ kind: 'module', shipId, roomId: room.id });
+        if (shipId === 'hq-earth') onSelect?.({ kind: 'hq' });
+        else onSelect?.({ kind: 'module', shipId, roomId: room.id });
       });
     }
 
@@ -376,8 +463,7 @@ class InteriorScene extends Phaser.Scene {
       .on('pointerdown', () => {
         this.registry.set('interiorId', null);
         this.scene.start('map');
-        const cb = this.registry.get('onInterior') as ((id: string | null) => void) | undefined;
-        cb?.(null);
+        emitView(this, { kind: 'map' });
       });
 
     this.add
@@ -393,7 +479,9 @@ class InteriorScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldW, worldH);
     const zoom = Math.max(1, Math.min(2, Math.floor(this.scale.height / (L.rows * TILE * 0.55)) || 1));
     this.cameras.main.setZoom(zoom);
-    this.cameras.main.centerOn(this.tx(9), this.ty(L.rows / 2));
+    const linear = L.rooms.every((r) => r.y0 === 0);
+    if (linear && L.cols > 28) this.cameras.main.centerOn(this.tx(9), this.ty(L.rows / 2));
+    else this.cameras.main.centerOn(this.tx(L.cols / 2), this.ty(L.rows / 2));
     enablePan(this);
     this.syncCrew();
   }
@@ -410,8 +498,6 @@ class InteriorScene extends Phaser.Scene {
     const L = this.layout;
     if (x < 0 || y < 0 || x >= L.cols || y >= L.rows) return false;
     if (isWalkable(L, x, y)) return false;
-    if (x === 0 || y === 0 || x === L.cols - 1 || y === L.rows - 1) return true;
-    if (L.rooms.some((r) => r.x0 === x || r.x1 === x)) return true;
     return (
       isWalkable(L, x - 1, y) ||
       isWalkable(L, x + 1, y) ||
@@ -436,7 +522,10 @@ class InteriorScene extends Phaser.Scene {
 
   private syncCrew() {
     const ship = this.ship();
-    if (!ship) return;
+    if (!ship) {
+      this.syncNpcs();
+      return;
+    }
     const t = Date.now();
     const poses = crewPosesForShip(t, ship);
     const seen = new Set<string>();
@@ -474,6 +563,30 @@ class InteriorScene extends Phaser.Scene {
     }
   }
 
+  private syncNpcs() {
+    const npcs = this.layout.npcs ?? [];
+    const seen = new Set<string>();
+    npcs.forEach((npc, i) => {
+      const id = `npc-${i}`;
+      seen.add(id);
+      const key = `crew-${npc.sheet}`;
+      let spr = this.crewSprites.get(id);
+      if (!spr) {
+        spr = this.add.sprite(this.tx(npc.x), this.ty(npc.y), key, 0).setOrigin(0, 0).setDepth(10);
+        this.crewSprites.set(id, spr);
+      }
+      spr.setPosition(this.tx(npc.x), this.ty(npc.y));
+      const animKey = `${key}-${npc.anim}`;
+      if (this.anims.exists(animKey) && spr.anims.currentAnim?.key !== animKey) spr.play(animKey);
+    });
+    for (const [id, spr] of this.crewSprites) {
+      if (!seen.has(id)) {
+        spr.destroy();
+        this.crewSprites.delete(id);
+      }
+    }
+  }
+
   update(_time: number, _delta: number) {
     const now = Date.now() / 1000;
     for (const p of this.animProps) {
@@ -496,13 +609,14 @@ export function bootFleetGame(
     onSelect: (sel: SimSelect) => void;
     mobile: boolean;
     t: SimTranslate;
-    onInterior?: (id: string | null) => void;
+    onView?: (v: SimView) => void;
   }
 ): {
   destroy: (remove: boolean) => void;
   setWorld: (w: WorldState) => void;
   setTranslator: (t: SimTranslate) => void;
   openInterior: (id: string) => void;
+  openHq: () => void;
   closeInterior: () => void;
 } {
   const game = new Phaser.Game({
@@ -527,30 +641,30 @@ export function bootFleetGame(
   game.registry.set('mobile', data.mobile);
   game.registry.set('t', data.t);
   game.registry.set('interiorId', null);
-  game.registry.set('onInterior', data.onInterior ?? null);
+  game.registry.set('onView', data.onView ?? null);
   game.scene.add('boot', BootScene, true);
   game.scene.add('map', MapScene, false);
   game.scene.add('interior', InteriorScene, false);
+  const goInterior = (id: string, view: SimView) => {
+    if (data.mobile && id !== 'hq-earth') return;
+    if (!game.textures.exists('floors')) return;
+    game.registry.set('interiorId', id);
+    game.scene.stop('map');
+    game.scene.stop('interior');
+    game.scene.start('interior');
+    data.onView?.(view);
+  };
   return {
     destroy: (remove: boolean) => game.destroy(remove),
     setWorld: (w) => game.registry.set('world', w),
     setTranslator: (fn) => game.registry.set('t', fn),
-    openInterior: (id) => {
-      if (data.mobile) return;
-      if (!game.textures.exists('floors')) return;
-      game.registry.set('interiorId', id);
-      game.scene.stop('map');
-      game.scene.stop('interior');
-      game.scene.start('interior');
-      const cb = game.registry.get('onInterior') as ((id: string | null) => void) | undefined;
-      cb?.(id);
-    },
+    openInterior: (id) => goInterior(id, { kind: 'interior', shipId: id }),
+    openHq: () => goInterior('hq-earth', { kind: 'hq' }),
     closeInterior: () => {
       game.registry.set('interiorId', null);
       game.scene.stop('interior');
       game.scene.start('map');
-      const cb = game.registry.get('onInterior') as ((id: string | null) => void) | undefined;
-      cb?.(null);
+      data.onView?.({ kind: 'map' });
     },
   };
 }
