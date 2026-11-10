@@ -199,7 +199,35 @@
     "roomEclss": "ECLSS",
     "backFleet": "← Fleet",
     "notNasa": "SIMULATION · not NASA imagery",
-    "interiorNote": "SIMULATION · interiors are procedural, not NASA"
+    "interiorNote": "SIMULATION · interiors are procedural, not NASA",
+    "moduleStatus": "Module status",
+    "crewCount": "{n} crew",
+    "room": {
+      "command": "COMMAND / COMMS",
+      "galley": "GALLEY",
+      "crew_quarters": "CREW QUARTERS",
+      "exercise": "EXERCISE",
+      "lab": "LAB",
+      "medical": "MEDICAL",
+      "hygiene": "HYGIENE",
+      "eclss": "ECLSS",
+      "airlock": "AIRLOCK / EVA",
+      "shelter": "STORM SHELTER",
+      "capsule": "ORION CAPSULE"
+    },
+    "roomDesc": {
+      "command": "Flight deck, comms and guidance consoles.",
+      "galley": "Food warmers, fridge and meal stations.",
+      "crew_quarters": "Sleep stations and personal lockers. Storm shelter on LEO.",
+      "exercise": "Treadmill, cycle ergometer and ARED resistive exercise.",
+      "lab": "Science racks, analyzer and sample fridge.",
+      "medical": "Crew medical restraint, vitals monitor and stasis bed.",
+      "hygiene": "Waste and hygiene compartment. Shower on the surface base only.",
+      "eclss": "Life support: O2/N2, water processor, thermal loop and CO2 scrubber.",
+      "airlock": "EVA suit storage, hatch and robotic arm.",
+      "shelter": "Storm-shelter racks. Crew move here when S-scale is elevated.",
+      "capsule": "Docked crew capsule seats and guidance."
+    }
   },
   "wx": {
     "title": "Official space environment",
@@ -300,6 +328,7 @@
     "hint": "Official feeds only use verified public URLs. Physiology bands are demo policy — no invented papers.",
     "back": "Back to role home",
     "official": "Official and public portals",
+    "simArt": "Simulation sprites",
     "open": "Open",
     "thresholds": "Health thresholds (demo policy, pending literature)",
     "thresholdsHint": "Built-in demo clinical policy for AURA and role homes. Not a NASA-certified protocol and not bound to a verified OSDR/NTRS paper.",
@@ -331,6 +360,14 @@
       "ntrs": {
         "used": "Microgravity cardiovascular / exercise-countermeasure literature portal",
         "note": "Verified public URL. Unverified report numbers or titles are not cited."
+      },
+      "tgstation": {
+        "used": "Crew, interiors, props and floor/wall tiles on the /sim page",
+        "note": "Pixel art sprites from Space Station 13 / tgstation by the tgstation contributors, licensed CC BY-SA 3.0. Modified for SpaceMoni: sliced, recoloured, composited, and animation frames derived. ShareAlike: derivatives stay CC BY-SA 3.0. This applies only to the art."
+      },
+      "simAi": {
+        "used": "Ship exteriors, Earth/Moon/Mars, treadmill, cycle ergometer and ARED",
+        "note": "AI-generated art (SpaceMoni team), keyed and pixel-downsampled. No NASA logos or insignia."
       }
     }
   },

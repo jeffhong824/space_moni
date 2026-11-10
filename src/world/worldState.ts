@@ -36,6 +36,8 @@ export type ScriptedEvent = 'event.illness' | 'event.co2' | 'event.evaFatigue' |
 export interface CrewLive {
   def: CrewDef;
   activityKey: ActivityKey;
+  prevActivityKey: ActivityKey;
+  activityStartedAt: number;
   nextActivityKey: ActivityKey;
   nextActivityAt: number;
   vitals: {
@@ -316,10 +318,14 @@ export function worldStateAt(t: number, wx: SpaceEnvironmentPayload | null = nul
       const event = scriptedEvent(def.id, cDef.id, day);
       const activityKey = activityAtHour(hour, def.kind, day, cDef.id);
       const nextAt = nextBoundary(t);
+      const startedAt = nextAt - 3600 * 1000;
+      const prevHour = taipeiHour(startedAt - 1000);
       const nextHour = taipeiHour(nextAt + 1000);
       return {
         def: cDef,
         activityKey,
+        prevActivityKey: activityAtHour(prevHour, def.kind, missionDayAt(startedAt - 1000), cDef.id),
+        activityStartedAt: startedAt,
         nextActivityKey: activityAtHour(nextHour, def.kind, missionDayAt(nextAt), cDef.id),
         nextActivityAt: nextAt,
         vitals: vitalsFor(cDef, t, activityKey, event),

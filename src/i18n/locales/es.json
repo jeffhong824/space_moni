@@ -199,7 +199,35 @@
     "roomEclss": "ECLSS",
     "backFleet": "← Flota",
     "notNasa": "SIMULACIÓN · no es imagen NASA",
-    "interiorNote": "SIMULACIÓN · interiores procedimentales, no NASA"
+    "interiorNote": "SIMULACIÓN · interiores procedimentales, no NASA",
+    "moduleStatus": "Estado del módulo",
+    "crewCount": "{n} tripulantes",
+    "room": {
+      "command": "MANDO / COMMS",
+      "galley": "COCINA",
+      "crew_quarters": "CAMAROTES",
+      "exercise": "EJERCICIO",
+      "lab": "LABORATORIO",
+      "medical": "MÉDICO",
+      "hygiene": "HIGIENE",
+      "eclss": "ECLSS",
+      "airlock": "COMPUERTA / EVA",
+      "shelter": "REFUGIO",
+      "capsule": "CÁPSULA"
+    },
+    "roomDesc": {
+      "command": "Puente de vuelo, comunicaciones y consolas de guía.",
+      "galley": "Calentadores de comida, nevera y puestos de comida.",
+      "crew_quarters": "Literas y taquillas. Refugio de tormenta en LEO.",
+      "exercise": "Cinta, cicloergómetro y ejercicio resistivo ARED.",
+      "lab": "Racks científicos, analizador y nevera de muestras.",
+      "medical": "Camilla médica, monitor de vitales y cama de estasis.",
+      "hygiene": "Compartimento de higiene. Ducha solo en la base lunar.",
+      "eclss": "Soporte vital: O2/N2, agua, bucle térmico y depurador de CO2.",
+      "airlock": "Trajes EVA, escotilla y brazo robótico.",
+      "shelter": "Estanterías de refugio. La tripulación viene aquí si sube la escala S.",
+      "capsule": "Asientos y guía de la cápsula acoplada."
+    }
   },
   "wx": {
     "title": "Entorno espacial oficial",
@@ -300,6 +328,7 @@
     "hint": "Las fuentes oficiales usan URL públicas verificadas. Los umbrales son política demo.",
     "back": "Volver al inicio de rol",
     "official": "Portales oficiales y públicos",
+    "simArt": "Sprites de la simulación",
     "open": "Abrir",
     "thresholds": "Umbrales de salud (política demo, literatura pendiente)",
     "thresholdsHint": "Política clínica demo. No es un protocolo certificado por la NASA.",
@@ -331,6 +360,14 @@
       "ntrs": {
         "used": "Portal de literatura cardiovascular / ejercicio en microgravedad",
         "note": "URL verificada. No se citan números de informe no verificados."
+      },
+      "tgstation": {
+        "used": "Tripulación, interiores, props y baldosas en /sim",
+        "note": "Pixel art de Space Station 13 / tgstation por los contribuidores de tgstation, licencia CC BY-SA 3.0. Modificado para SpaceMoni: recortado, recoloreado, compuesto y fotogramas derivados. ShareAlike: los derivados siguen CC BY-SA 3.0. Solo aplica al arte."
+      },
+      "simAi": {
+        "used": "Exteriores de naves, Tierra/Luna/Marte, cinta, cicloergómetro y ARED",
+        "note": "Arte generado por IA (equipo SpaceMoni), recortado y pixelado. Sin logos de la NASA."
       }
     }
   },

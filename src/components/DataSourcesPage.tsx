@@ -88,6 +88,32 @@ export const DataSourcesPage: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-bold">{t('sources.simArt')}</h2>
+        <ul className="mt-3 space-y-3">
+          <li className="rounded-xl border border-slate-200 px-3 py-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-900">tgstation / Space Station 13</p>
+              <a
+                href="https://github.com/tgstation/tgstation"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-sky-700 shrink-0"
+              >
+                {t('sources.open')} <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <p className="text-xs text-slate-700 mt-1">{t('sources.cite.tgstation.used')}</p>
+            <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.tgstation.note')}</p>
+          </li>
+          <li className="rounded-xl border border-slate-200 px-3 py-2.5">
+            <p className="text-sm font-semibold text-slate-900">AI-generated (SpaceMoni)</p>
+            <p className="text-xs text-slate-700 mt-1">{t('sources.cite.simAi.used')}</p>
+            <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.simAi.note')}</p>
+          </li>
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-bold">{t('sources.thresholds')}</h2>
         <p className="text-[11px] text-slate-500 mt-1">{t('sources.thresholdsHint')}</p>
         <table className="mt-3 w-full text-xs">

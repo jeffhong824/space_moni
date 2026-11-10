@@ -1,0 +1,15 @@
+{
+  "_note": "activity -> room + station props + crew animation. Animation keys follow MANIFEST.md (crew rows).",
+  "sleep":       {"room": "crew_quarters", "props": ["props/sleep/crew_quarters_locker.png", "props/sleep/sleep_pod.png", "props/sleep/bunk.png"], "anim": {"microgravity": "sleep-float", "surface": "sleep"}},
+  "exercise":    {"room": "exercise", "props": ["props/exercise/treadmill.png", "props/exercise/cycle_ergometer.png", "props/exercise/ared.png", "props/exercise/resistive_lifter_in_use.png"], "anim": {"treadmill": "walk-e", "default": "idle-s"}},
+  "eva":         {"room": "airlock", "props": ["props/airlock/suit_storage.png", "props/airlock/suit_storage_empty.png", "props/airlock/airlock_external_opening.png"], "anim": "walk-*", "texture_swap": ["crew/eva_suit.png", "crew/eva_suit_heavy.png"]},
+  "science":     {"room": "lab", "props": ["props/lab/server_rack.png", "props/lab/analyzer.png", "props/lab/sample_fridge.png", "props/lab/fabricator.png"], "anim": "work-n"},
+  "maintenance": {"room": "eclss", "props": ["props/eclss/thermal_control_on.png", "props/eclss/water_processor.png", "props/command/console_power.png", "props/lab/circuit_bench.png", "props/robotics/robotics_fab_active.png"], "anim": "work-n"},
+  "comms":       {"room": "command", "props": ["props/command/console_comms.png", "props/command/comms_transmitter.png", "props/command/comms_hub.png"], "anim": "work-n"},
+  "meal":        {"room": "galley", "props": ["props/galley/fridge.png", "props/galley/food_warmer_on.png", "props/galley/coffee_maker.png", "props/galley/food_storage.png"], "anim": "idle-s"},
+  "hygiene":     {"room": "hygiene", "props": ["props/hygiene/toilet.png", "props/hygiene/sink.png", "props/hygiene/shower.png", "props/hygiene/curtain.png"], "anim": "idle-n", "note": "shower only on lunar_surface_base"},
+  "medical":     {"room": "medical", "props": ["props/medical/med_kiosk.png", "props/medical/vitals_monitor.png", "props/medical/stasis_bed_on.png", "props/medical/med_bed.png", "props/medical/iv_drip.png"], "anim": {"patient": "sleep", "officer": "work-e"}},
+  "command":     {"room": "command", "props": ["props/command/console_command.png", "props/command/console_nav.png", "props/command/console_crew.png"], "anim": "work-n"},
+  "robotics":    {"room": "airlock", "props": ["props/robotics/arm_base.png", "props/robotics/arm_hand.png", "props/robotics/robotics_fab.png"], "anim": "work-n"},
+  "storm_shelter": {"room": "shelter", "props": ["props/storage/crate.png", "props/storage/crate_secure.png"], "anim": "idle-s", "trigger": "live NOAA SWPC proton / DONKI SEP alert"}
+}

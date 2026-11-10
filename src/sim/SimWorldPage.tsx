@@ -4,7 +4,7 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
-import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import { sScaleElevated, type SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { findCrewLive, overallRankFromVitals, worldStateAt, type WorldState } from '../world/worldState';
 import type { SimSelect } from './FleetScene';
 
@@ -15,7 +15,10 @@ export const SimWorldPage: React.FC = () => {
     destroy: (remove: boolean) => void;
     setWorld: (w: WorldState) => void;
     setTranslator: (t: (k: string, v?: Record<string, string | number>) => string) => void;
+    openInterior: (id: string) => void;
+    closeInterior: () => void;
   } | null>(null);
+  const [interiorId, setInteriorId] = useState<string | null>(null);
   const [world, setWorld] = useState<WorldState>(() => worldStateAt(Date.now(), null));
   const [wx, setWx] = useState<SpaceEnvironmentPayload | null>(null);
   const [sel, setSel] = useState<SimSelect | null>({ kind: 'ship', id: 'ship-harmony' });
@@ -66,6 +69,7 @@ export const SimWorldPage: React.FC = () => {
           onSelect: setSel,
           mobile,
           t,
+          onInterior: setInteriorId,
         });
         setEngineOk(true);
       } catch {
@@ -85,6 +89,7 @@ export const SimWorldPage: React.FC = () => {
   const detail = useMemo(() => {
     if (!sel) return null;
     if (sel.kind === 'ship') return world.ships.find((s) => s.def.id === sel.id) ?? null;
+    if (sel.kind === 'module') return world.ships.find((s) => s.def.id === sel.shipId) ?? null;
     return findCrewLive(world, sel.id);
   }, [sel, world]);
 
@@ -125,12 +130,24 @@ export const SimWorldPage: React.FC = () => {
         <aside className="border-t lg:border-t-0 lg:border-l border-slate-800 p-4 overflow-y-auto space-y-3 bg-slate-900">
           <p className="text-[11px] text-slate-400">{t('sim.clickHint')}</p>
           {mobile && <p className="text-[11px] text-slate-500">{t('sim.mobileHint')}</p>}
+          {interiorId && !mobile && (
+            <button
+              type="button"
+              onClick={() => engine.current?.closeInterior()}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-cyan-700 text-cyan-200"
+            >
+              {t('sim.backFleet')}
+            </button>
+          )}
           <ul className="space-y-1">
             {world.ships.map((s) => (
               <li key={s.def.id}>
                 <button
                   type="button"
-                  onClick={() => setSel({ kind: 'ship', id: s.def.id })}
+                  onClick={() => {
+                    setSel({ kind: 'ship', id: s.def.id });
+                    engine.current?.openInterior(s.def.id);
+                  }}
                   className="w-full text-left text-xs px-2 py-1.5 rounded-lg hover:bg-slate-800"
                 >
                   {t(s.def.nameKey)} · {t(s.def.kindKey)}
@@ -166,6 +183,9 @@ export const SimWorldPage: React.FC = () => {
               })}
             </div>
           )}
+          {sel?.kind === 'module' && (
+            <ModuleCard shipId={sel.shipId} roomId={sel.roomId} world={world} t={t} />
+          )}
           {sel?.kind === 'crew' && findCrewLive(world, sel.id) && (
             <CrewCard live={findCrewLive(world, sel.id)!.crew} lang={lang} t={t} />
           )}
@@ -174,6 +194,38 @@ export const SimWorldPage: React.FC = () => {
     </div>
   );
 };
+
+function ModuleCard({
+  shipId,
+  roomId,
+  world,
+  t,
+}: {
+  shipId: string;
+  roomId: string;
+  world: WorldState;
+  t: (k: string, vars?: Record<string, string | number>) => string;
+}) {
+  const ship = world.ships.find((s) => s.def.id === shipId);
+  const co2 = ship?.crew.some((c) => c.event === 'event.co2');
+  const storm = sScaleElevated(ship?.sScaleUsed);
+  return (
+    <div className="rounded-xl border border-cyan-700/40 bg-slate-800 p-3 space-y-1">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-bold">{t(`sim.room.${roomId}`)}</h3>
+        <SimBadge />
+      </div>
+      <p className="text-[11px] text-slate-400">{t(`sim.roomDesc.${roomId}`)}</p>
+      {ship && (
+        <p className="text-[10px] text-slate-500">
+          {t(ship.def.nameKey)} · {t('sim.moduleStatus')}
+          {co2 && roomId === 'eclss' ? ' · CO₂' : ''}
+          {storm && (roomId === 'shelter' || roomId === 'crew_quarters') ? ' · S' : ''}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function CrewCard({
   live,

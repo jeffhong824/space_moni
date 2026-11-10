@@ -199,7 +199,35 @@
     "roomEclss": "ECLSS",
     "backFleet": "← 艦隊",
     "notNasa": "シミュレーション · NASA画像ではない",
-    "interiorNote": "シミュレーション · 内部は手続き生成でありNASAではない"
+    "interiorNote": "シミュレーション · 内部は手続き生成でありNASAではない",
+    "moduleStatus": "モジュール状態",
+    "crewCount": "乗員 {n} 名",
+    "room": {
+      "command": "指揮／通信",
+      "galley": "ギャレー",
+      "crew_quarters": "居住区",
+      "exercise": "運動区",
+      "lab": "実験室",
+      "medical": "医務室",
+      "hygiene": "衛生",
+      "eclss": "ECLSS",
+      "airlock": "エアロック／EVA",
+      "shelter": "ストームシェルター",
+      "capsule": "カプセル"
+    },
+    "roomDesc": {
+      "command": "フライトデッキ、通信と誘導コンソール。",
+      "galley": "フードウォーマー、冷蔵庫、食事ステーション。",
+      "crew_quarters": "睡眠ステーションとロッカー。LEOでは嵐の避難場所。",
+      "exercise": "トレッドミル、サイクルエルゴメーター、ARED。",
+      "lab": "サイエンスラック、分析装置、サンプル冷蔵庫。",
+      "medical": "医療ベッド、バイタルモニタ、ステーシスベッド。",
+      "hygiene": "衛生区画。シャワーは月面基地のみ。",
+      "eclss": "生命維持：O2/N2、水処理、熱制御、CO2スクラバー。",
+      "airlock": "EVAスーツ保管、ハッチ、ロボットアーム。",
+      "shelter": "嵐避難ラック。Sスケール上昇時に乗員が移動。",
+      "capsule": "ドッキングした乗員カプセルの座席と誘導。"
+    }
   },
   "wx": {
     "title": "公式宇宙環境",
@@ -300,6 +328,7 @@
     "hint": "公式フィードは検証済み公開URLのみ。生理閾値はデモ方針で、文献の捏造はありません。",
     "back": "役割ホームへ戻る",
     "official": "公式・公開ポータル",
+    "simArt": "シミュレーション素材",
     "open": "開く",
     "thresholds": "健康閾値（デモ方針、文献待ち）",
     "thresholdsHint": "製品内蔵のデモ臨床方針。NASA認定プロトコルではありません。",
@@ -331,6 +360,14 @@
       "ntrs": {
         "used": "微小重力の循環／運動対策文献入口",
         "note": "公開URLを確認。未確認の報告番号は引用しない。"
+      },
+      "tgstation": {
+        "used": "／sim の乗員・船内・小物・床／壁タイル",
+        "note": "ピクセルアートは Space Station 13／tgstation 貢献者による CC BY-SA 3.0。SpaceMoni 向けに裁断・再彩色・合成・派生フレーム。ShareAlike：派生物も CC BY-SA 3.0。美術のみ。"
+      },
+      "simAi": {
+        "used": "船体、地球／月／火星、トレッドミル、サイクルエルゴメーター、ARED",
+        "note": "AI生成（SpaceMoni チーム）、キーイングとピクセル化。NASAロゴなし。"
       }
     }
   },

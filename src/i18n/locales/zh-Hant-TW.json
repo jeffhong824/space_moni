@@ -199,7 +199,35 @@
     "roomEclss": "環控 ECLSS",
     "backFleet": "← 船隊",
     "notNasa": "模擬 · 非 NASA 影像",
-    "interiorNote": "模擬 · 內部為程序生成，非 NASA"
+    "interiorNote": "模擬 · 內部為程序生成，非 NASA",
+    "moduleStatus": "艙段狀態",
+    "crewCount": "{n} 名組員",
+    "room": {
+      "command": "指揮／通訊",
+      "galley": "廚房",
+      "crew_quarters": "組員艙",
+      "exercise": "運動艙",
+      "lab": "實驗艙",
+      "medical": "醫護艙",
+      "hygiene": "衛生艙",
+      "eclss": "環控生保",
+      "airlock": "氣閘／艙外",
+      "shelter": "風暴避難",
+      "capsule": "乘員艙"
+    },
+    "roomDesc": {
+      "command": "飛行甲板、通訊與導航控制台。",
+      "galley": "食物加熱器、冰箱與用餐站。",
+      "crew_quarters": "睡眠站與個人置物櫃。近地軌道任務以此作為風暴避難。",
+      "exercise": "跑步機、腳踏測功機與 ARED 阻力訓練。",
+      "lab": "科學機櫃、分析儀與樣本冰箱。",
+      "medical": "組員醫護固定床、生命徵象監視器與靜滯床。",
+      "hygiene": "廢棄物與衛生隔間。僅月面基地有淋浴。",
+      "eclss": "生保系統：氧／氮、水處理、熱控迴路與二氧化碳洗滌器。",
+      "airlock": "艙外衣存放、艙門與機械臂。",
+      "shelter": "風暴避難貨架。S 尺度升高時組員移入此處。",
+      "capsule": "對接乘員艙座椅與導航。"
+    }
   },
   "wx": {
     "title": "官方空間環境",
@@ -300,6 +328,7 @@
     "hint": "官方饋送只連到已核對的公開 URL。生理門檻為示範政策，未編造文獻。",
     "back": "返回角色首頁",
     "official": "官方與公開入口",
+    "simArt": "模擬像素素材",
     "open": "開啟",
     "thresholds": "健康門檻（示範政策，待文獻）",
     "thresholdsHint": "下列區間是產品內建示範臨床政策。不是 NASA 認證協議，也尚未綁定已核對的 OSDR／NTRS 單篇文獻。",
@@ -331,6 +360,14 @@
       "ntrs": {
         "used": "微重力心血管／運動對策文獻入口",
         "note": "已核對公開 URL。未引用未核對的報告編號或標題。"
+      },
+      "tgstation": {
+        "used": "／sim 頁的組員、艙內、道具與地板／牆磚",
+        "note": "像素精靈來自 Space Station 13／tgstation 貢獻者，授權 CC BY-SA 3.0。SpaceMoni 修改：裁切、改色、合成與衍生動畫幀。ShareAlike：衍生圖仍為 CC BY-SA 3.0。僅適用於美術。"
+      },
+      "simAi": {
+        "used": "船艦外觀、地球／月球／火星、跑步機、腳踏測功機與 ARED",
+        "note": "AI 生成圖（SpaceMoni 團隊），去背並像素化。不含 NASA 標誌。"
       }
     }
   },
