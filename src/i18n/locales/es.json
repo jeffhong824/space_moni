@@ -663,6 +663,9 @@
     "liveVitals": "Flujo wearable en vivo",
     "overall": "Estado de la persona",
     "radar": "Radar de dominios",
+    "tabOverview": "Resumen",
+    "tabBody": "Cuerpo",
+    "tabRadar": "Radar y tendencias",
     "trends": "Tendencias y pronóstico",
     "range": {
       "24h": "24 h",

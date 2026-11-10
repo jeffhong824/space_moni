@@ -84,12 +84,28 @@ button:disabled {
 }
 
 .sm-page-pad {
-  padding-bottom: max(12rem, calc(env(safe-area-inset-bottom, 0px) + 10rem));
+  padding-bottom: max(16rem, calc(env(safe-area-inset-bottom, 0px) + 14rem)) !important;
 }
 @media (min-width: 768px) {
   .sm-page-pad {
-    padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom, 0px) + 7.5rem));
+    padding-bottom: max(11rem, calc(env(safe-area-inset-bottom, 0px) + 10rem)) !important;
   }
+}
+
+.sm-ask-aura {
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+@media (min-width: 768px) {
+  .sm-orb-gutter {
+    padding-right: 8.5rem;
+  }
+}
+body:has([role="dialog"]) .sm-ask-aura,
+body:has(.sm-sheet-panel) .sm-ask-aura {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .sm-scrim {
@@ -104,7 +120,12 @@ button:disabled {
 }
 
 .sm-chip-fade {
-  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.4rem), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 0.4rem), transparent 100%);
+}
+
+.sm-wrap-btn,
+.sm-wrap-btn * {
+  white-space: normal !important;
 }
 
 .sm-surface {

@@ -213,7 +213,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="relative inline-flex items-center gap-0.5 p-1 rounded-full bg-white/80 shadow-[inset_0_0_0_1px_rgba(28,27,24,0.04)]"
+      className="relative inline-flex flex-wrap items-center gap-0.5 p-1 rounded-full bg-white/80 shadow-[inset_0_0_0_1px_rgba(28,27,24,0.04)] max-w-full"
     >
       {options.map((opt) => {
         const active = opt.id === value;
@@ -224,7 +224,7 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.id)}
-            className={`relative z-10 px-3.5 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+            className={`relative z-10 px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-[12px] font-semibold rounded-full transition-colors whitespace-normal leading-tight text-center ${
               active ? 'text-white' : 'text-stone-500 hover:text-stone-800'
             }`}
           >
@@ -276,7 +276,7 @@ export const Sheet: React.FC<{
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 24, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-            className={`relative h-full ${wide ? 'w-full max-w-[38.75rem]' : 'w-full max-w-md'} sm-sheet-panel rounded-l-[32px] p-5 overflow-y-auto`}
+            className={`relative h-full ${wide ? 'w-full max-w-[38.75rem]' : 'w-full max-w-md'} sm-sheet-panel rounded-l-[32px] p-5 pb-36 overflow-y-auto sm-page-pad`}
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="min-w-0">{title}</div>
@@ -526,7 +526,7 @@ export const AskAuraOrb: React.FC<{ onClick: () => void; label?: string }> = ({ 
       type="button"
       onClick={onClick}
       aria-label={label ?? t('ui.askAura')}
-      className="fixed z-30 right-4 bottom-[5.75rem] md:right-5 md:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
+      className="sm-ask-aura fixed z-30 right-4 bottom-[5.75rem] md:right-5 md:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
     >
       <span className="hidden sm:inline font-display text-lg italic">{label ?? t('ui.askAura')}</span>
       <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 via-violet-200 to-fuchsia-200 shadow-inner" />
@@ -676,7 +676,7 @@ export function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium shrink-0 ${
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium shrink-0 whitespace-nowrap ${
         active ? 'bg-white shadow-[var(--sm-shadow-soft)] text-stone-800' : 'text-stone-500 hover:text-stone-800'
       }`}
     >

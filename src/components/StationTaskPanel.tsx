@@ -190,7 +190,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
       </div>
 
       {/* Task List */}
-      <div className={`flex-1 overflow-y-auto p-4 space-y-3 sm-page-pad ${isCollapsed ? 'hidden' : ''}`}>
+      <div className={`flex-1 overflow-y-auto px-4 pt-4 space-y-3 sm-page-pad ${isCollapsed ? 'hidden' : ''}`}>
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 px-4 bg-white rounded-xl border border-dashed border-slate-200">
             <CheckSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
@@ -311,7 +311,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
 
         {/* Footer Collapse Shortcut */}
         {filteredTasks.length > 0 && (
-          <div className="pt-2 pb-20 text-center">
+          <div className="pt-2 pb-8 text-center">
             <button
               onClick={toggleCollapse}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-white border border-dashed border-slate-300 transition-colors shadow-2xs cursor-pointer"

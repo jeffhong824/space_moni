@@ -59,6 +59,8 @@ export const BodyMapDashboard: React.FC<{
   const [selected, setSelected] = useState<BodyRegionId | null>(hero ? 'heart' : 'heart');
   const [range, setRange] = useState<TrendRange>('24h');
   const [sheetOpen, setSheetOpen] = useState(!hero && !figureOnly && !compact);
+  const [inspTab, setInspTab] = useState<'overview' | 'body' | 'radar'>('overview');
+  const tabbed = !hero && !figureOnly && !compact;
 
   const health = useMemo(() => bodyHealthAt(crew, tNow, wx), [crew, tNow, wx]);
   const series = useMemo(() => combinedTrend(crew, tNow, range, wx), [crew, tNow, range, wx]);
@@ -97,8 +99,7 @@ export const BodyMapDashboard: React.FC<{
     if (hero || figureOnly) setSheetOpen(true);
   };
 
-  const details = (
-    <div className="space-y-4">
+  const regionBlock = (
       <div>
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">{selected ? t(`body.region.${selected}`) : t('body.regionDetail')}</h3>
@@ -122,153 +123,220 @@ export const BodyMapDashboard: React.FC<{
           </>
         )}
       </div>
+  );
 
-      <div className="space-y-3">
-        <div className="h-64 rounded-[28px] bg-white/80 p-3">
-          <p className="text-[10px] font-semibold text-stone-400 px-2 flex items-center gap-1">
-            <Brain className="w-3 h-3" /> {t('body.radar')}
-          </p>
-          <ResponsiveContainer width="100%" height="90%">
-            <RadarChart data={radar} cx="50%" cy="50%" outerRadius="68%">
-              <PolarGrid stroke="#e7e5e0" />
-              <PolarAngleAxis dataKey="key" tick={{ fill: '#4b4a46', fontSize: 11, fontWeight: 600 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-              <Radar dataKey="score" stroke="#2b3bff" fill="#c4b5fd" fillOpacity={0.35} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="rounded-[28px] bg-white/80 p-3">
-          <p className="text-[10px] font-semibold text-stone-400 mb-2">{t('body.liveVitals')}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              [t('wear.hr'), `${w.hr}`, 'bpm'],
-              [t('wear.hrv'), `${w.hrv}`, 'ms'],
-              [t('wear.resp'), `${w.respRate}`, '/min'],
-              ['SpO₂', `${w.spo2}`, '%'],
-              [t('wear.bp'), `${w.bpSys}/${w.bpDia}`, ''],
-              [t('wear.core'), `${w.coreTempC}`, '°C'],
-              [t('wear.skin'), `${w.skinTempC}`, '°C'],
-              [t('wear.dose'), `${w.doseMsv}`, 'mSv'],
-            ].map(([k, v, u]) => (
-              <div key={String(k)} className="rounded-full bg-white px-3 py-2 flex items-center justify-between gap-2 min-w-0">
-                <span className="text-[10px] text-stone-500 truncate">{k}</span>
-                <span className="text-[12px] font-semibold tabular-nums font-sans shrink-0">
-                  {v}
-                  {u ? <span className="ml-0.5 text-[10px] font-medium text-stone-400">{u}</span> : null}
-                </span>
-              </div>
-            ))}
+  const radarBlock = (
+    <div className="h-56 rounded-[28px] bg-white/80 p-3">
+      <p className="text-[10px] font-semibold text-stone-400 px-2 flex items-center gap-1">
+        <Brain className="w-3 h-3" /> {t('body.radar')}
+      </p>
+      <ResponsiveContainer width="100%" height="90%">
+        <RadarChart data={radar} cx="50%" cy="50%" outerRadius="68%">
+          <PolarGrid stroke="#e7e5e0" />
+          <PolarAngleAxis dataKey="key" tick={{ fill: '#4b4a46', fontSize: 11, fontWeight: 600 }} />
+          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+          <Radar dataKey="score" stroke="#2b3bff" fill="#c4b5fd" fillOpacity={0.35} />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+
+  const wearableBlock = (
+    <div className="rounded-[28px] bg-white/80 p-3">
+      <p className="text-[10px] font-semibold text-stone-400 mb-2">{t('body.liveVitals')}</p>
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          [t('wear.hr'), `${w.hr}`, 'bpm'],
+          [t('wear.hrv'), `${w.hrv}`, 'ms'],
+          [t('wear.resp'), `${w.respRate}`, '/min'],
+          ['SpO₂', `${w.spo2}`, '%'],
+          [t('wear.bp'), `${w.bpSys}/${w.bpDia}`, ''],
+          [t('wear.core'), `${w.coreTempC}`, '°C'],
+          [t('wear.skin'), `${w.skinTempC}`, '°C'],
+          [t('wear.dose'), `${w.doseMsv}`, 'mSv'],
+        ].map(([k, v, u]) => (
+          <div key={String(k)} className="rounded-full bg-white px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+            <span className="text-[10px] text-stone-500 truncate">{k}</span>
+            <span className="text-[12px] font-semibold tabular-nums font-sans shrink-0">
+              {v}
+              {u ? <span className="ml-0.5 text-[10px] font-medium text-stone-400">{u}</span> : null}
+            </span>
           </div>
-        </div>
+        ))}
       </div>
+    </div>
+  );
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-xs font-bold">{t('body.trends')}</h3>
-          <Segmented
-            value={range}
-            onChange={setRange}
-            options={(['24h', '7d', 'mission'] as TrendRange[]).map((r) => ({ id: r, label: t(`body.range.${r}`) }))}
-            ariaLabel={t('body.trends')}
-          />
-        </div>
-        <p className="text-[10px] text-stone-400">
-          {t('body.forecastHint')} · {t('body.prediction')}
-        </p>
-        <div className="h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#eeeae4" strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fill: '#6b6a66', fontSize: 9 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fill: '#6b6a66', fontSize: 9 }} width={32} />
-              <Tooltip contentStyle={{ borderRadius: 16, fontSize: 11, border: 'none' }} />
-              <Area dataKey="hrHi" stroke="none" fill="#f08a80" fillOpacity={0.12} />
-              <Line type="monotone" dataKey="hr" stroke="#f08a80" dot={false} strokeWidth={1.6} name={t('wear.hr')} />
-              <Line type="monotone" dataKey="spo2" stroke="#7ddfc3" dot={false} strokeWidth={1.2} name="SpO₂" />
-              <Line
-                type="monotone"
-                dataKey="doseMsv"
-                stroke="#c4b5fd"
-                dot={false}
-                strokeWidth={1.2}
-                strokeDasharray="4 3"
-                name={t('wear.dose')}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-        <ul className="grid sm:grid-cols-3 gap-2 text-[10px] font-mono text-stone-500">
-          <li>
-            {t('body.forecastHr')}: {series.filter((p) => p.predicted).slice(-1)[0]?.hr ?? '—'} bpm
-          </li>
-          <li>
-            {t('body.forecastDose')}: {series.filter((p) => p.predicted).slice(-1)[0]?.doseMsv ?? '—'} mSv
-          </li>
-          <li>
-            {t('body.forecastBone')}: −{series.filter((p) => p.predicted).slice(-1)[0]?.boneLossPct ?? '—'}%
-          </li>
+  const trendsBlock = (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-bold">{t('body.trends')}</h3>
+        <Segmented
+          value={range}
+          onChange={setRange}
+          options={(['24h', '7d', 'mission'] as TrendRange[]).map((r) => ({ id: r, label: t(`body.range.${r}`) }))}
+          ariaLabel={t('body.trends')}
+        />
+      </div>
+      <p className="text-[10px] text-stone-400">
+        {t('body.forecastHint')} · {t('body.prediction')}
+      </p>
+      <div className="h-44">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke="#eeeae4" strokeDasharray="3 3" />
+            <XAxis dataKey="label" tick={{ fill: '#6b6a66', fontSize: 9 }} interval="preserveStartEnd" />
+            <YAxis tick={{ fill: '#6b6a66', fontSize: 9 }} width={32} />
+            <Tooltip contentStyle={{ borderRadius: 16, fontSize: 11, border: 'none' }} />
+            <Area dataKey="hrHi" stroke="none" fill="#f08a80" fillOpacity={0.12} />
+            <Line type="monotone" dataKey="hr" stroke="#f08a80" dot={false} strokeWidth={1.6} name={t('wear.hr')} />
+            <Line type="monotone" dataKey="spo2" stroke="#7ddfc3" dot={false} strokeWidth={1.2} name="SpO₂" />
+            <Line
+              type="monotone"
+              dataKey="doseMsv"
+              stroke="#c4b5fd"
+              dot={false}
+              strokeWidth={1.2}
+              strokeDasharray="4 3"
+              name={t('wear.dose')}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+      <ul className="grid sm:grid-cols-3 gap-2 text-[10px] font-mono text-stone-500">
+        <li>
+          {t('body.forecastHr')}: {series.filter((p) => p.predicted).slice(-1)[0]?.hr ?? '—'} bpm
+        </li>
+        <li>
+          {t('body.forecastDose')}: {series.filter((p) => p.predicted).slice(-1)[0]?.doseMsv ?? '—'} mSv
+        </li>
+        <li>
+          {t('body.forecastBone')}: −{series.filter((p) => p.predicted).slice(-1)[0]?.boneLossPct ?? '—'}%
+        </li>
+      </ul>
+    </div>
+  );
+
+  const logsBlock = (
+    <div className="grid lg:grid-cols-2 gap-3">
+      <div>
+        <h3 className="text-xs font-bold flex items-center gap-1.5">
+          <Activity className="w-3.5 h-3.5" /> {t('body.activityLog')}
+        </h3>
+        <ol className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+          {schedule.map((b) => (
+            <li
+              key={`${b.startHour}-${b.activityKey}`}
+              className={`flex items-center gap-2 text-[11px] rounded-full px-3 py-1.5 ${b.current ? 'bg-white shadow-[var(--sm-shadow-soft)]' : ''}`}
+            >
+              <span className="font-mono text-stone-400 w-24 shrink-0">
+                {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
+              </span>
+              <span className={b.done ? 'text-stone-400 line-through' : ''}>{t(b.activityKey)}</span>
+              <span className="ml-auto text-[10px] text-stone-400">
+                {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div>
+        <h3 className="text-xs font-bold flex items-center gap-1.5">
+          <Dumbbell className="w-3.5 h-3.5" /> {t('body.exerciseLog')}
+        </h3>
+        <ul className="mt-2 space-y-1.5">
+          {exLog.map((b) => (
+            <li key={b.device} className="flex items-center gap-2 text-[11px] rounded-full bg-white/80 px-3 py-1.5">
+              <span className="font-semibold">{t(`body.ex.${b.device}`)}</span>
+              <span className="font-mono text-stone-400">
+                {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
+              </span>
+              <span className="ml-auto text-[10px] text-stone-400">
+                {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
+              </span>
+            </li>
+          ))}
         </ul>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-3">
-        <div>
-          <h3 className="text-xs font-bold flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5" /> {t('body.activityLog')}
-          </h3>
-          <ol className="mt-2 space-y-1 max-h-48 overflow-y-auto">
-            {schedule.map((b) => (
-              <li
-                key={`${b.startHour}-${b.activityKey}`}
-                className={`flex items-center gap-2 text-[11px] rounded-full px-3 py-1.5 ${b.current ? 'bg-white shadow-[var(--sm-shadow-soft)]' : ''}`}
-              >
-                <span className="font-mono text-stone-400 w-24 shrink-0">
-                  {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
-                </span>
-                <span className={b.done ? 'text-stone-400 line-through' : ''}>{t(b.activityKey)}</span>
-                <span className="ml-auto text-[10px] text-stone-400">
-                  {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div>
-          <h3 className="text-xs font-bold flex items-center gap-1.5">
-            <Dumbbell className="w-3.5 h-3.5" /> {t('body.exerciseLog')}
-          </h3>
-          <ul className="mt-2 space-y-1.5">
-            {exLog.map((b) => (
-              <li key={b.device} className="flex items-center gap-2 text-[11px] rounded-full bg-white/80 px-3 py-1.5">
-                <span className="font-semibold">{t(`body.ex.${b.device}`)}</span>
-                <span className="font-mono text-stone-400">
-                  {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
-                </span>
-                <span className="ml-auto text-[10px] text-stone-400">
-                  {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {health.domains.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => askAura(d.id)}
-                className="text-[10px] px-2.5 py-1 rounded-full bg-white text-stone-600"
-              >
-                {t('body.askAura')} · {t(`body.domain.${d.id}`)}
-              </button>
-            ))}
-          </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {health.domains.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => askAura(d.id)}
+              className="text-[10px] px-2.5 py-1 rounded-full bg-white text-stone-600"
+            >
+              {t('body.askAura')} · {t(`body.domain.${d.id}`)}
+            </button>
+          ))}
         </div>
       </div>
     </div>
   );
 
+  const figureBlock = (
+    <div>
+      <div className="flex justify-center mb-2">
+        <Segmented
+          value={side}
+          onChange={setSide}
+          options={[
+            { id: 'front' as const, label: t('body.front') },
+            { id: 'back' as const, label: t('body.back') },
+          ]}
+          ariaLabel={t('body.title')}
+        />
+      </div>
+      <AnatomicalFigure
+        side={side}
+        regionRank={health.regionRank}
+        selected={selected}
+        onSelect={onSelect}
+        pulse={pulseRegion}
+        auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
+        labelFor={(id) => t(`body.region.${id}`)}
+        hero={hero}
+      />
+      {!figureOnly && (
+        <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
+      )}
+    </div>
+  );
+
+  const inspectorTabs = (
+    <div className="space-y-4">
+      <div className="overflow-x-auto -mx-1 px-1">
+        <Segmented
+          value={inspTab}
+          onChange={setInspTab}
+          options={[
+            { id: 'overview' as const, label: t('body.tabOverview') },
+            { id: 'body' as const, label: t('body.tabBody') },
+            { id: 'radar' as const, label: t('body.tabRadar') },
+          ]}
+          ariaLabel={t('body.title')}
+        />
+      </div>
+      {inspTab === 'overview' && (
+        <div className="space-y-4">
+          {regionBlock}
+          {radarBlock}
+          {wearableBlock}
+        </div>
+      )}
+      {inspTab === 'body' && figureBlock}
+      {inspTab === 'radar' && (
+        <div className="space-y-4">
+          {radarBlock}
+          {trendsBlock}
+          {logsBlock}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <section className={hero ? 'lg:flex lg:flex-col min-h-0' : ''}>
-      {!figureOnly && !hero && (
+      {!figureOnly && !hero && !tabbed && (
         <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="font-display text-2xl">{t('body.title')}</h2>
@@ -280,35 +348,7 @@ export const BodyMapDashboard: React.FC<{
         </header>
       )}
 
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <div className="flex justify-center mb-2">
-            <Segmented
-              value={side}
-              onChange={setSide}
-              options={[
-                { id: 'front' as const, label: t('body.front') },
-                { id: 'back' as const, label: t('body.back') },
-              ]}
-              ariaLabel={t('body.title')}
-            />
-          </div>
-          <AnatomicalFigure
-            side={side}
-            regionRank={health.regionRank}
-            selected={selected}
-            onSelect={onSelect}
-            pulse={pulseRegion}
-            auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
-            labelFor={(id) => t(`body.region.${id}`)}
-            hero={hero}
-          />
-          {!figureOnly && (
-            <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
-          )}
-        </div>
-        {!hero && !figureOnly && !compact && details}
-      </div>
+      {tabbed ? inspectorTabs : <div className="grid grid-cols-1 gap-4">{figureBlock}</div>}
 
       <Sheet
         open={sheetOpen && (hero || figureOnly || compact)}
@@ -321,7 +361,7 @@ export const BodyMapDashboard: React.FC<{
         }
         wide
       >
-        {details}
+        {inspectorTabs}
       </Sheet>
     </section>
   );

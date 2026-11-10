@@ -663,6 +663,9 @@
     "liveVitals": "即時穿戴串流",
     "overall": "全人狀態",
     "radar": "域雷達",
+    "tabOverview": "總覽",
+    "tabBody": "身體",
+    "tabRadar": "雷達與趨勢",
     "trends": "趨勢與預測",
     "range": {
       "24h": "24 小時",

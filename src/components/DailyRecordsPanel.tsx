@@ -600,7 +600,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   return (
     <section id="main-records" className="flex-1 flex flex-col h-full overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 sm-page-pad">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 lg:px-6 lg:pt-6 space-y-4 sm-page-pad">
         {/* Header bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>

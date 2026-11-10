@@ -27,6 +27,7 @@ import type { SelfCheckEntry } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { toneFromStatus } from '../ui/StatusPill';
+import { taipeiStamp } from '../world/worldState';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   const buildGreeting = (): AiMessage => ({
       id: 'msg-init',
       sender: 'aura',
-      timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+      timestamp: taipeiStamp(),
       text: t('ai.greeting', {
         name: astronaut.name,
         day: astronaut.missionDaysElapsed,
@@ -243,7 +244,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
     const userMessage: AiMessage = {
       id: 'user-' + Date.now(),
       sender: 'astronaut',
-      timestamp: new Date().toUTCString().slice(17, 22) + ' UTC',
+      timestamp: taipeiStamp(),
       text,
     };
 
@@ -267,7 +268,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       const auraMessage: AiMessage = {
         id: 'aura-' + Date.now(),
         sender: 'aura',
-        timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+        timestamp: taipeiStamp(),
         text: data.replyText || t('ai.standby'),
         suggestedActions: data.suggestedActions,
         healthAssessment: data.healthAssessment,
@@ -288,7 +289,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       const fallbackMsg: AiMessage = {
         id: 'aura-err-' + Date.now(),
         sender: 'aura',
-        timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
+        timestamp: taipeiStamp(),
         text: fallback.replyText,
         suggestedActions: fallback.suggestedActions,
         healthAssessment: fallback.healthAssessment,

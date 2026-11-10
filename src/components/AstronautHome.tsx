@@ -169,7 +169,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             </p>
           )}
 
-          <div className="mt-4 flex flex-nowrap gap-2 overflow-x-auto sm-snap sm-chip-fade pb-1 -mx-1 px-1">
+          <div className="mt-4 flex flex-wrap gap-2 pb-1">
             <FilterChip
               active={filter === 'vitals'}
               onClick={() => setFilter('vitals')}
@@ -280,7 +280,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
         <div className="grid grid-cols-2 gap-2 lg:hidden order-2">{gauges}</div>
 
-        <div className="flex justify-center order-4 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2">
+        <div className="flex justify-center order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 pb-24 md:pb-0">
           {crew && (
             <BodyMapDashboard
               crew={crew}
@@ -295,7 +295,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
         <div className="hidden lg:flex flex-col gap-4 pt-1 lg:col-start-3 lg:row-start-1 lg:row-span-2">{gauges}</div>
 
-        <div className="min-w-0 order-3 lg:order-none lg:col-start-1">
+        <div className="min-w-0 order-4 lg:order-none lg:col-start-1">
           <div className="sm-snap flex gap-3 overflow-x-auto pb-1">
             {timeline.map((item, i) => (
               <button
@@ -306,11 +306,12 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
                   else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
                   else onOpenConsole();
                 }}
-                className="min-w-[11.5rem] max-w-[14rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] whitespace-normal"
+                className="sm-wrap-btn w-[10.5rem] md:w-[14rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] h-auto overflow-hidden"
+                style={{ whiteSpace: 'normal' }}
               >
                 <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
                 <p className="mt-2 text-[11px] font-mono text-stone-400 tabular-nums">{item.t}</p>
-                <p className="text-sm font-medium leading-snug break-words whitespace-normal line-clamp-2 min-h-[2.5rem]">
+                <p className="mt-0.5 w-full text-sm font-medium leading-snug" style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
                   {item.title}
                 </p>
               </button>

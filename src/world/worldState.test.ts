@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { goesClassToRScale } from '../domain/spaceWeather';
-import { calendarDayNumber, taipeiClockHms, taipeiDateString, WORLD_EPOCH_MS, missionDayAt, worldStateAt } from './worldState';
+import { calendarDayNumber, taipeiClockHms, taipeiDateString, taipeiStamp, WORLD_EPOCH_MS, missionDayAt, worldStateAt } from './worldState';
 import { getStationClockDate, taipeiWeekdayLong } from '../utils/dateUtils';
 import { latencyKey, locationVars, shipCrewStatus } from './shipStatus';
 
@@ -12,6 +12,7 @@ describe('deterministic mission world', () => {
     expect(calendarDayNumber(0)).toBe(1);
     expect(taipeiDateString(WORLD_EPOCH_MS)).toBe('2026/11/10');
     expect(taipeiClockHms(WORLD_EPOCH_MS)).toBe('00:00:00');
+    expect(taipeiStamp(WORLD_EPOCH_MS)).toBe('00:00 Asia/Taipei');
     expect(getStationClockDate(new Date(WORLD_EPOCH_MS))).toBe('2026/11/10');
     expect(taipeiWeekdayLong('2026/11/10', 'en')).toBe('Tuesday');
   });

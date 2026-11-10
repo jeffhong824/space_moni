@@ -663,6 +663,9 @@
     "liveVitals": "ライブウェアラブル",
     "overall": "全身状態",
     "radar": "領域レーダー",
+    "tabOverview": "概要",
+    "tabBody": "身体",
+    "tabRadar": "レーダーと予測",
     "trends": "トレンドと予測",
     "range": {
       "24h": "24時間",

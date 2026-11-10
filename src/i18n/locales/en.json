@@ -663,6 +663,9 @@
     "liveVitals": "Live wearable stream",
     "overall": "Whole-person state",
     "radar": "Domain radar",
+    "tabOverview": "Overview",
+    "tabBody": "Body",
+    "tabRadar": "Radar & trends",
     "trends": "Trends & forecast",
     "range": {
       "24h": "24 h",

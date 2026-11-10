@@ -104,7 +104,7 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad sm-orb-gutter">
       <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
       <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
 
@@ -247,7 +247,7 @@ function CaseInspector({
   const idx = CASE_STATE_ORDER.indexOf(selected.state);
   const crew = CREW.find((c) => c.id === selectedAstro.id);
   return (
-    <div className="rounded-[32px] bg-white/90 p-5 shadow-[var(--sm-shadow-soft)] space-y-4">
+    <div className="rounded-[32px] bg-white/90 p-5 pb-40 shadow-[var(--sm-shadow-soft)] space-y-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="font-display text-2xl">
@@ -286,10 +286,6 @@ function CaseInspector({
         ))}
       </ol>
 
-      {crew && (
-        <BodyMapDashboard crew={crew} tNow={tNow} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} figureOnly />
-      )}
-
       <dl className="grid grid-cols-2 gap-2 text-sm">
         <div>
           <dt className="text-stone-400 text-[11px]">{t('ui.problem')}</dt>
@@ -304,6 +300,10 @@ function CaseInspector({
           <dd>{t('surg.offline')}</dd>
         </div>
       </dl>
+
+      {crew && (
+        <BodyMapDashboard crew={crew} tNow={tNow} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} figureOnly />
+      )}
 
       <button
         type="button"

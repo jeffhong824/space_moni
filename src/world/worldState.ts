@@ -97,6 +97,11 @@ export function taipeiClockHms(t: number): string {
   return `${hh}:${mm}:${ss}`;
 }
 
+/** `HH:MM Asia/Taipei` for chat stamps and compact chrome. */
+export function taipeiStamp(t: number = Date.now()): string {
+  return `${taipeiClockHms(t).slice(0, 5)} Asia/Taipei`;
+}
+
 export function taipeiHour(t: number): number {
   return new Date(t + TAIPEI_OFFSET_MS).getUTCHours() + new Date(t + TAIPEI_OFFSET_MS).getUTCMinutes() / 60;
 }

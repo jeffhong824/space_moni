@@ -101,7 +101,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <p className="mt-5 text-[13px] text-stone-500">{t('ui.archiveImagery')}</p>
         </div>
 
-        <div className="max-w-md w-full mx-auto py-10">
+        <div className="max-w-md w-full mx-auto py-10 max-h-full overflow-y-auto">
           <h1 className="font-display text-4xl sm:text-5xl text-stone-900">{t('login.welcome')}</h1>
           <p className="mt-2 text-sm text-stone-500">{t('login.subtitle')}</p>
 
@@ -194,25 +194,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               {t('ui.exploreFleet')} →
             </button>
             <p className="mt-5 text-[11px] text-stone-400">{t('login.quickRoles')}</p>
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={() => onLogin(accountByLogin('alice_smith')!)}
-                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
                 {t('login.quickAstronaut')}
               </button>
               <button
                 type="button"
                 onClick={() => onLogin(accountByLogin('marcus_vance')!)}
-                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
                 {t('login.quickCommander')}
               </button>
               <button
                 type="button"
                 onClick={() => onLogin(NASA_ACCOUNT)}
-                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
                 {t('login.quickNasa')}
               </button>
