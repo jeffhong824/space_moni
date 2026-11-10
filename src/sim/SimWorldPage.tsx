@@ -5,7 +5,8 @@ import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import { sScaleElevated, type SpaceEnvironmentPayload } from '../domain/spaceWeather';
-import { findCrewLive, overallRankFromVitals, worldStateAt, type WorldState } from '../world/worldState';
+import { WearableHud } from '../components/WearableHud';
+import { findCrewLive, overallRank, worldStateAt, type WorldState } from '../world/worldState';
 import type { SimSelect, SimView } from './FleetScene';
 import { hqBoardAt } from './hqBoard';
 
@@ -211,7 +212,7 @@ export const SimWorldPage: React.FC = () => {
               </div>
               <p className="text-[11px] text-slate-400">{t('sim.day', { n: world.missionDay })}</p>
               {detail.crew.map((c) => {
-                const st = ['Normal', 'Attention', 'Critical'][overallRankFromVitals(c.vitals)];
+                const st = ['Normal', 'Attention', 'Critical'][overallRank(c)];
                 return (
                   <button
                     key={c.def.id}
@@ -224,7 +225,7 @@ export const SimWorldPage: React.FC = () => {
                       <StatusPill tone={toneFromStatus(st)}>{statusLabel(lang, st)}</StatusPill>
                     </div>
                     <p className="text-[10px] text-slate-400">
-                      {t(c.activityKey)} · HR {c.vitals.restingHR} · SpO₂ {c.vitals.spo2}
+                      {t(c.activityKey)} · ♥ {c.wearable.hr} · RR {c.wearable.respRate} · SpO₂ {c.wearable.spo2}
                     </p>
                   </button>
                 );
@@ -235,7 +236,7 @@ export const SimWorldPage: React.FC = () => {
             <ModuleCard shipId={sel.shipId} roomId={sel.roomId} world={world} t={t} />
           )}
           {sel?.kind === 'crew' && findCrewLive(world, sel.id) && (
-            <CrewCard live={findCrewLive(world, sel.id)!.crew} lang={lang} t={t} />
+            <WearableHud live={findCrewLive(world, sel.id)!.crew} ship={findCrewLive(world, sel.id)!.ship} wx={wx} />
           )}
         </aside>
       </div>
@@ -306,6 +307,16 @@ function HqPanel({
                     {t('sim.flagged')}: {row.flagged.map((c) => c.name).join(', ')}
                   </p>
                 )}
+                <ul className="mt-1 space-y-0.5">
+                  {row.roster.map((c) => (
+                    <li key={c.id} className="text-[10px] font-mono text-slate-400 flex justify-between gap-2">
+                      <span className="truncate">{c.name}</span>
+                      <span>
+                        ♥ {c.hr} · {c.spo2}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </button>
             </li>
           );
@@ -361,30 +372,3 @@ function ModuleCard({
   );
 }
 
-function CrewCard({
-  live,
-  lang,
-  t,
-}: {
-  live: NonNullable<ReturnType<typeof findCrewLive>>['crew'];
-  lang: string;
-  t: (k: string) => string;
-}) {
-  const st = ['Normal', 'Attention', 'Critical'][overallRankFromVitals(live.vitals)];
-  return (
-    <div className="rounded-xl border border-amber-700/50 bg-slate-800 p-3 space-y-1">
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-bold">{live.def.name}</h3>
-        <SimBadge />
-      </div>
-      <p className="text-[11px] text-slate-400">
-        {t(live.def.occupationKey)} · {t('sim.activity')}: {t(live.activityKey)}
-      </p>
-      <StatusPill tone={toneFromStatus(st)}>{statusLabel(lang, st)}</StatusPill>
-      <p className="text-[11px] font-mono">
-        HR {live.vitals.restingHR} bpm · HRV {live.vitals.hrv} ms · SpO₂ {live.vitals.spo2}%
-      </p>
-      <p className="text-[10px] text-amber-200">{t('sim.vitals')}</p>
-    </div>
-  );
-}

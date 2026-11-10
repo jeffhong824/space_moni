@@ -5,7 +5,7 @@ import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import type { WorldState, ShipLive } from '../world/worldState';
-import { overallRankFromVitals } from '../world/worldState';
+import { overallRank } from '../world/worldState';
 import { locationVars, shipCrewStatus } from '../world/shipStatus';
 import {
   ackVisible,
@@ -116,10 +116,12 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
                   </p>
                 </div>
                 <div className="text-right text-[11px] font-mono">
-                  <StatusPill tone={toneFromStatus(['Normal', 'Attention', 'Critical'][overallRankFromVitals(c.vitals)])}>
-                    {statusLabel(lang, ['Normal', 'Attention', 'Critical'][overallRankFromVitals(c.vitals)])}
+                  <StatusPill tone={toneFromStatus(['Normal', 'Attention', 'Critical'][overallRank(c)])}>
+                    {statusLabel(lang, ['Normal', 'Attention', 'Critical'][overallRank(c)])}
                   </StatusPill>
-                  <p className="mt-1">HR {c.vitals.restingHR} · HRV {c.vitals.hrv} · SpO₂ {c.vitals.spo2}</p>
+                  <p className="mt-1">
+                    ♥ {c.wearable.hr} · RR {c.wearable.respRate} · SpO₂ {c.wearable.spo2} · {c.wearable.doseMsv} mSv
+                  </p>
                 </div>
               </li>
             ))}

@@ -67,7 +67,7 @@ export function crewSheetFor(occ: OccupationKey, eva: boolean, microgravity: boo
   if (eva) return microgravity ? 'eva_suit' : 'eva_suit_heavy';
   if (occ === 'occ.commander') return 'commander';
   if (occ === 'occ.medical') return 'medical_officer';
-  if (occ === 'occ.avionics') return 'pilot';
+  if (occ === 'occ.avionics' || occ === 'occ.pilot') return 'pilot';
   if (occ === 'occ.botanist' || occ === 'occ.science' || occ === 'occ.geology') return 'science_officer';
   if (occ === 'occ.eclss' || occ === 'occ.lifeSupport' || occ === 'occ.flightEng' || occ === 'occ.habitat') {
     return 'flight_engineer';
@@ -75,7 +75,13 @@ export function crewSheetFor(occ: OccupationKey, eva: boolean, microgravity: boo
   return 'mission_specialist';
 }
 
-function pickStation(layout: ShipLayout, roomId: RoomId, crewId: string, prefer: 'sleep' | 'patient' | 'any'): StationPlace {
+function pickStation(
+  layout: ShipLayout,
+  roomId: RoomId,
+  _crewId: string,
+  prefer: 'sleep' | 'patient' | 'any',
+  slot = 0
+): StationPlace {
   const room = roomById(layout, roomId);
   const list = room?.stations?.length ? room.stations : [{ x: (room?.x0 ?? 0) + 2, y: 3, facing: 's' as Facing, anim: 'idle-s' as CrewAnim }];
   let pool = list;
@@ -87,24 +93,30 @@ function pickStation(layout: ShipLayout, roomId: RoomId, crewId: string, prefer:
     const beds = list.filter((s) => s.anim === 'sleep' || s.anim === 'sleep-float');
     if (beds.length) pool = beds;
   }
-  return pool[hash32(crewId, roomId, prefer) % pool.length];
+  return pool[slot % pool.length];
 }
 
-function targetFor(layout: ShipLayout, ship: ShipLive, crew: CrewLive, activity: ActivityKey): { room: RoomId; station: StationPlace; eva: boolean } {
+function targetFor(
+  layout: ShipLayout,
+  ship: ShipLive,
+  crew: CrewLive,
+  activity: ActivityKey,
+  slot = 0
+): { room: RoomId; station: StationPlace; eva: boolean } {
   if (sScaleElevated(ship.sScaleUsed)) {
     const room = roomById(layout, layout.shelterRoom) ? layout.shelterRoom : 'crew_quarters';
-    return { room, station: pickStation(layout, room, crew.def.id, 'any'), eva: false };
+    return { room, station: pickStation(layout, room, crew.def.id, 'any', slot), eva: false };
   }
   if (crew.event === 'event.illness' || crew.event === 'event.evaFatigue') {
     const room = roomById(layout, 'medical') ? 'medical' : roomForActivity(layout, activity);
-    return { room, station: pickStation(layout, room, crew.def.id, 'patient'), eva: false };
+    return { room, station: pickStation(layout, room, crew.def.id, 'patient', slot), eva: false };
   }
   const room = roomForActivity(layout, activity);
   if (activity === 'act.eva') {
-    return { room, station: pickStation(layout, room, crew.def.id, 'any'), eva: true };
+    return { room, station: pickStation(layout, room, crew.def.id, 'any', slot), eva: true };
   }
   const prefer = activity === 'act.sleep' || activity === 'act.preSleep' ? 'sleep' : 'any';
-  return { room, station: pickStation(layout, room, crew.def.id, prefer), eva: false };
+  return { room, station: pickStation(layout, room, crew.def.id, prefer, slot), eva: false };
 }
 
 interface Pt {
@@ -154,10 +166,10 @@ function walkAnim(facing: Facing): CrewAnim {
   return (`walk-${facing}` as CrewAnim);
 }
 
-export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive): CrewPose {
+export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive, slot = 0): CrewPose {
   const layout = layoutOf(ship.def.id);
-  const dest = targetFor(layout, ship, crew, crew.activityKey);
-  const origin = targetFor(layout, ship, crew, crew.prevActivityKey);
+  const dest = targetFor(layout, ship, crew, crew.activityKey, slot);
+  const origin = targetFor(layout, ship, crew, crew.prevActivityKey, slot);
   const elapsed = Math.max(0, (t - crew.activityStartedAt) / 1000);
   let evaOutside = false;
   let destStation = dest.station;
@@ -194,5 +206,12 @@ export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive): CrewPose 
 }
 
 export function crewPosesForShip(t: number, ship: ShipLive): CrewPose[] {
-  return ship.crew.map((c) => crewPoseAt(t, c, ship));
+  const slots = new Map<string, number>();
+  return ship.crew.map((c) => {
+    const layout = layoutOf(ship.def.id);
+    const room = targetFor(layout, ship, c, c.activityKey).room;
+    const slot = slots.get(room) ?? 0;
+    slots.set(room, slot + 1);
+    return crewPoseAt(t, c, ship, slot);
+  });
 }

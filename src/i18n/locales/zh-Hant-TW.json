@@ -559,6 +559,7 @@
   },
   "occ": {
     "commander": "指揮官",
+    "pilot": "駕駛",
     "botanist": "站上植物學家",
     "eclss": "環控生保專員",
     "avionics": "航空電子與醫療",
@@ -588,7 +589,51 @@
   "event": {
     "illness": "腳本輕症（模擬）",
     "co2": "腳本艙內二氧化碳升高（模擬）",
-    "evaFatigue": "腳本艙外疲勞（模擬）"
+    "evaFatigue": "腳本艙外疲勞（模擬）",
+    "sleepDeficit": "腳本睡眠不足（模擬）"
+  },
+  "nation": {
+    "us": "美國",
+    "ru": "俄羅斯",
+    "jp": "日本",
+    "ng": "奈及利亞",
+    "in": "印度",
+    "it": "義大利",
+    "sn": "塞內加爾",
+    "se": "瑞典",
+    "cn": "中國",
+    "jo": "約旦",
+    "es": "西班牙",
+    "fr": "法國",
+    "ca": "加拿大",
+    "kr": "韓國",
+    "om": "阿曼",
+    "br": "巴西"
+  },
+  "wear": {
+    "title": "穿戴裝置數位分身",
+    "liveStream": "模擬 · Bio-Monitor／Astroskin 級串流，非 ISS 即時遙測",
+    "device": "模擬 Bio-Monitor、Actiwatch 與個人劑量計",
+    "battery": "電量",
+    "signal": "訊號",
+    "hr": "心率",
+    "hrv": "HRV",
+    "resp": "呼吸",
+    "spo2": "血氧",
+    "skin": "皮膚溫",
+    "core": "核心溫",
+    "bp": "血壓",
+    "steps": "步數",
+    "sleepStage": "睡眠階段",
+    "dose": "累積劑量",
+    "doseRate": "劑量率",
+    "stage": {
+      "wake": "清醒",
+      "n1": "N1",
+      "n2": "N2",
+      "n3": "N3",
+      "rem": "REM"
+    }
   },
   "loc": {
     "leo": "近地軌道 · 平近點角 {phase}° · 418 km 類比",

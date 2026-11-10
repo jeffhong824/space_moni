@@ -291,6 +291,11 @@ const LEO = chain(
       stations: [
         { x: 2, y: 2, facing: 'n', anim: 'work-n' },
         { x: 3, y: 2, facing: 'n', anim: 'work-n' },
+        { x: 1, y: 3, facing: 'n', anim: 'work-n' },
+        { x: 4, y: 3, facing: 'n', anim: 'work-n' },
+        { x: 2, y: 4, facing: 's', anim: 'idle-s' },
+        { x: 3, y: 5, facing: 'n', anim: 'work-n' },
+        { x: 1, y: 5, facing: 'e', anim: 'work-e' },
       ],
     },
     {
@@ -305,8 +310,13 @@ const LEO = chain(
         P('crate', 4, 6, { originBottom: true, tall: 48 }),
       ],
       stations: [
+        { x: 1, y: 3, facing: 's', anim: 'idle-s' },
         { x: 2, y: 4, facing: 's', anim: 'idle-s' },
         { x: 3, y: 4, facing: 'n', anim: 'idle-n' },
+        { x: 4, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 1, y: 5, facing: 'e', anim: 'idle-s' },
+        { x: 2, y: 5, facing: 'n', anim: 'idle-n' },
+        { x: 3, y: 3, facing: 'e', anim: 'idle-s' },
       ],
     },
     {
@@ -326,6 +336,9 @@ const LEO = chain(
         { x: 2, y: 2, facing: 's', anim: 'sleep-float' },
         { x: 3, y: 6, facing: 's', anim: 'sleep' },
         { x: 4, y: 2, facing: 's', anim: 'sleep-float' },
+        { x: 1, y: 4, facing: 's', anim: 'sleep-float' },
+        { x: 2, y: 4, facing: 's', anim: 'sleep-float' },
+        { x: 3, y: 4, facing: 's', anim: 'sleep-float' },
       ],
     },
     {
@@ -453,7 +466,12 @@ const GATEWAY = chain(
       w: 3,
       floor: FLOOR.kitchen,
       props: [P('fridge', 1, 1), P('coffee_maker', 2, 1), P('food_warmer_on', 1, 6, { anim: { frames: 4, ds: 1 } })],
-      stations: [{ x: 1, y: 3, facing: 's', anim: 'idle-s' }],
+      stations: [
+        { x: 1, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 2, y: 3, facing: 'n', anim: 'idle-n' },
+        { x: 1, y: 5, facing: 'e', anim: 'idle-s' },
+        { x: 2, y: 5, facing: 's', anim: 'idle-s' },
+      ],
     },
     {
       id: 'crew_quarters',
@@ -469,6 +487,7 @@ const GATEWAY = chain(
         { x: 1, y: 2, facing: 's', anim: 'sleep-float' },
         { x: 2, y: 2, facing: 's', anim: 'sleep-float' },
         { x: 3, y: 2, facing: 's', anim: 'sleep-float' },
+        { x: 1, y: 5, facing: 's', anim: 'sleep-float' },
       ],
     },
     {
@@ -581,6 +600,10 @@ const ARES = fromRects(
       stations: [
         { x: 1, y: 2, facing: 's', anim: 'sleep-float' },
         { x: 3, y: 2, facing: 's', anim: 'sleep-float' },
+        { x: 5, y: 2, facing: 's', anim: 'sleep-float' },
+        { x: 1, y: 3, facing: 's', anim: 'sleep-float' },
+        { x: 3, y: 3, facing: 's', anim: 'sleep-float' },
+        { x: 5, y: 3, facing: 's', anim: 'sleep-float' },
       ],
     },
     {
@@ -603,7 +626,14 @@ const ARES = fromRects(
       x0: 14, y0: 5, x1: 24, y1: 10,
       floor: FLOOR.kitchen,
       props: [P('fridge', 1, 1), P('food_storage', 3, 1), P('food_warmer_on', 5, 1, { anim: { frames: 4, ds: 1 } }), P('coffee_maker', 7, 1)],
-      stations: [{ x: 3, y: 3, facing: 's', anim: 'idle-s' }],
+      stations: [
+        { x: 2, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 4, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 6, y: 3, facing: 'n', anim: 'idle-n' },
+        { x: 3, y: 4, facing: 'e', anim: 'idle-s' },
+        { x: 5, y: 4, facing: 's', anim: 'idle-s' },
+        { x: 7, y: 3, facing: 'n', anim: 'idle-n' },
+      ],
     },
     {
       id: 'hygiene',
@@ -641,6 +671,7 @@ const MARE = fromRects(
         P('bunk', 2, 2),
         P('bunk', 4, 2),
         P('bunk', 6, 2),
+        P('bunk', 8, 2),
         P('crew_quarters_locker', 10, 1, { originBottom: true, tall: 48 }),
         P('crew_quarters_locker', 12, 1, { originBottom: true, tall: 48 }),
       ],
@@ -648,6 +679,7 @@ const MARE = fromRects(
         { x: 2, y: 2, facing: 's', anim: 'sleep' },
         { x: 4, y: 2, facing: 's', anim: 'sleep' },
         { x: 6, y: 2, facing: 's', anim: 'sleep' },
+        { x: 8, y: 2, facing: 's', anim: 'sleep' },
       ],
     },
     {
@@ -655,7 +687,12 @@ const MARE = fromRects(
       x0: 0, y0: 6, x1: 8, y1: 11,
       floor: FLOOR.kitchen,
       props: [P('fridge', 1, 1), P('food_warmer_on', 3, 1, { anim: { frames: 4, ds: 1 } }), P('coffee_maker', 5, 1)],
-      stations: [{ x: 3, y: 3, facing: 's', anim: 'idle-s' }],
+      stations: [
+        { x: 2, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 4, y: 3, facing: 's', anim: 'idle-s' },
+        { x: 3, y: 4, facing: 'n', anim: 'idle-n' },
+        { x: 5, y: 4, facing: 'e', anim: 'idle-s' },
+      ],
     },
     {
       id: 'hygiene',

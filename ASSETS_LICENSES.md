@@ -115,3 +115,5 @@ SpaceMoni is a **non-commercial** NASA Space Apps 2026 hackathon demo. No NASA l
 
 `preview/*.png` are composed from the files above and inherit CC BY-SA 3.0 for the tgstation parts.
 `tools/*.py` are our own build scripts.
+
+Expanded 2026-11-10 crew (Harmony 7 / Gateway 4 / Ares 6 / Mare 4) **reuses** the existing `crew/*.png` tgstation composites by role (commander, pilot, flight_engineer, science_officer, medical_officer, mission_specialist, eva_suit). No new sprite sheets were generated; additional fictional crew members share those sheets. See `docs/crew-composition.md`.

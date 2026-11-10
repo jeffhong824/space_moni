@@ -559,6 +559,7 @@
   },
   "occ": {
     "commander": "指揮官",
+    "pilot": "パイロット",
     "botanist": "ステーション植物学者",
     "eclss": "ECLSS専門家",
     "avionics": "アビオニクスと医療",
@@ -588,7 +589,51 @@
   "event": {
     "illness": "脚本の軽症（模擬）",
     "co2": "脚本の船内CO₂上昇（模擬）",
-    "evaFatigue": "脚本のEVA疲労（模擬）"
+    "evaFatigue": "脚本のEVA疲労（模擬）",
+    "sleepDeficit": "脚本の睡眠不足（模擬）"
+  },
+  "nation": {
+    "us": "米国",
+    "ru": "ロシア",
+    "jp": "日本",
+    "ng": "ナイジェリア",
+    "in": "インド",
+    "it": "イタリア",
+    "sn": "セネガル",
+    "se": "スウェーデン",
+    "cn": "中国",
+    "jo": "ヨルダン",
+    "es": "スペイン",
+    "fr": "フランス",
+    "ca": "カナダ",
+    "kr": "韓国",
+    "om": "オマーン",
+    "br": "ブラジル"
+  },
+  "wear": {
+    "title": "ウェアラブル・デジタルツイン",
+    "liveStream": "シミュレーション · Bio-Monitor／Astroskin級ストリーム。ISSの実テレメトリではない",
+    "device": "模擬 Bio-Monitor・Actiwatch・個人線量計",
+    "battery": "電池",
+    "signal": "信号",
+    "hr": "心拍",
+    "hrv": "HRV",
+    "resp": "呼吸",
+    "spo2": "SpO₂",
+    "skin": "皮膚温",
+    "core": "深部温",
+    "bp": "血圧",
+    "steps": "歩数",
+    "sleepStage": "睡眠段階",
+    "dose": "累積線量",
+    "doseRate": "線量率",
+    "stage": {
+      "wake": "覚醒",
+      "n1": "N1",
+      "n2": "N2",
+      "n3": "N3",
+      "rem": "REM"
+    }
   },
   "loc": {
     "leo": "LEO · 平均近点角 {phase}° · 418 km 相当",

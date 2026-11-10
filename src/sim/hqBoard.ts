@@ -1,5 +1,5 @@
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather.ts';
-import { overallRankFromVitals, type ShipLive, type WorldState } from '../world/worldState.ts';
+import { overallRank, type ShipLive, type WorldState } from '../world/worldState.ts';
 import { latencyKey, shipCrewStatus } from '../world/shipStatus.ts';
 
 export type HqStatus = 'Normal' | 'Attention' | 'Critical';
@@ -11,6 +11,18 @@ export interface HqFlaggedCrew {
   event: string | null;
 }
 
+export interface HqRosterEntry {
+  id: string;
+  name: string;
+  occupationKey: string;
+  activityKey: string;
+  rank: 0 | 1 | 2;
+  hr: number;
+  spo2: number;
+  respRate: number;
+  event: string | null;
+}
+
 export interface HqShipRow {
   id: string;
   nameKey: string;
@@ -18,6 +30,7 @@ export interface HqShipRow {
   status: HqStatus;
   crewCount: number;
   flagged: HqFlaggedCrew[];
+  roster: HqRosterEntry[];
   activityKey: string;
   nextEventKey: string;
   nextEventAt: number;
@@ -51,11 +64,11 @@ export interface HqBoard {
 
 export function hqShipRow(ship: ShipLive): HqShipRow {
   const flagged: HqFlaggedCrew[] = ship.crew
-    .filter((c) => overallRankFromVitals(c.vitals) > 0 || c.event)
+    .filter((c) => overallRank(c) > 0 || c.event)
     .map((c) => ({
       id: c.def.id,
       name: c.def.name,
-      rank: overallRankFromVitals(c.vitals),
+      rank: overallRank(c),
       event: c.event,
     }));
   const commander = ship.crew.find((c) => c.def.roleOnShip === 'commander') ?? ship.crew[0];
@@ -66,6 +79,17 @@ export function hqShipRow(ship: ShipLive): HqShipRow {
     status: shipCrewStatus(ship),
     crewCount: ship.crew.length,
     flagged,
+    roster: ship.crew.map((c) => ({
+      id: c.def.id,
+      name: c.def.name,
+      occupationKey: c.def.occupationKey,
+      activityKey: c.activityKey,
+      rank: overallRank(c),
+      hr: c.wearable.hr,
+      spo2: c.wearable.spo2,
+      respRate: c.wearable.respRate,
+      event: c.event,
+    })),
     activityKey: commander?.activityKey ?? 'act.comms',
     nextEventKey: ship.nextEventKey,
     nextEventAt: ship.nextEventAt,

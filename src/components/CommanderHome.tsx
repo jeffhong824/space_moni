@@ -127,7 +127,16 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
                   <p className="text-xs text-slate-600 mt-0.5 truncate">{interp ? t('badge.simTelemetry') : t('cmd.noRecord')}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] font-mono text-slate-400">{t('cmd.lastUpdated')}</p>
+                  {(() => {
+                    const rowLive = findCrewLive(world, astro.id);
+                    return rowLive ? (
+                      <p className="text-[11px] font-mono text-rose-700">
+                        ♥ {rowLive.crew.wearable.hr} · SpO₂ {rowLive.crew.wearable.spo2}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] font-mono text-slate-400">{t('cmd.lastUpdated')}</p>
+                    );
+                  })()}
                   <p className="text-xs font-mono text-slate-700">{interp?.lastUpdated ?? '—'}</p>
                 </div>
               </button>

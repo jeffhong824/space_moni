@@ -10,6 +10,7 @@ import { hourlyAbnormal, statusRestingHR, statusHrv, statusSpo2 } from '../domai
 import { scaleNumber, type SpaceEnvironmentPayload } from '../domain/spaceWeather.ts';
 import { CREW, SHIPS, type CrewDef, type ShipDef } from './catalog.ts';
 import { hash32, mulberry32, randInt, randRange } from './rng.ts';
+import { wearableAt, wearableRank, type WearableSample } from './wearable.ts';
 
 export const WORLD_EPOCH_MS = Date.parse('2026-11-09T16:00:00.000Z');
 export const TAIPEI_OFFSET_MS = 8 * 3600 * 1000;
@@ -31,7 +32,7 @@ export type ActivityKey =
   | 'act.personal'
   | 'act.preSleep';
 
-export type ScriptedEvent = 'event.illness' | 'event.co2' | 'event.evaFatigue' | null;
+export type ScriptedEvent = 'event.illness' | 'event.co2' | 'event.evaFatigue' | 'event.sleepDeficit' | null;
 
 export interface CrewLive {
   def: CrewDef;
@@ -48,6 +49,7 @@ export interface CrewLive {
     avgSleepMinutes: number;
     avgExerciseMinutes: number;
   };
+  wearable: WearableSample;
   event: ScriptedEvent;
 }
 
@@ -89,6 +91,7 @@ export function taipeiHour(t: number): number {
 function activityAtHour(hour: number, shipKind: ShipDef['kind'], day: number, crewId: string): ActivityKey {
   const slot = Math.floor(hour) % 24;
   const evaDay = hash32(shipKind, day, 'eva') % 7 === 2;
+  const evaCrew = hash32(crewId, day, 'evaSlot') % 4 < 2;
   if (slot < 6) return 'act.sleep';
   if (slot < 7) return 'act.wake';
   if (slot < 8) return 'act.breakfast';
@@ -96,7 +99,11 @@ function activityAtHour(hour: number, shipKind: ShipDef['kind'], day: number, cr
   if (slot < 13) return 'act.lunch';
   if (slot < 15) return 'act.exercise';
   if (slot < 17) {
-    if (evaDay && (shipKind === 'leo-station' || shipKind === 'lunar-habitat' || shipKind === 'lunar-gateway')) {
+    if (
+      evaDay &&
+      evaCrew &&
+      (shipKind === 'leo-station' || shipKind === 'lunar-habitat' || shipKind === 'lunar-gateway')
+    ) {
       return 'act.eva';
     }
     return 'act.science';
@@ -120,6 +127,7 @@ function scriptedEvent(shipId: string, crewId: string, day: number): ScriptedEve
   if (shipId === 'ship-harmony' && day % 17 === 5) return 'event.co2';
   if (crewId === 'astro-samira' && day % 9 === 2) return 'event.evaFatigue';
   if (crewId === 'astro-ines' && day % 13 === 4) return 'event.illness';
+  if (crewId === 'astro-diego' && day % 7 === 1) return 'event.sleepDeficit';
   return null;
 }
 
@@ -174,7 +182,7 @@ function cabinFor(ship: ShipDef, day: number, event: ScriptedEvent, radiation: n
   };
 }
 
-function vitalsFor(crew: CrewDef, t: number, activity: ActivityKey, event: ScriptedEvent): CrewLive['vitals'] {
+function vitalsFor(crew: CrewDef, t: number, event: ScriptedEvent): CrewLive['vitals'] {
   const day = missionDayAt(t);
   const rng = mulberry32(hash32(crew.id, day, 'vitals'));
   let hr = crew.baselineHr + randRange(rng, -3, 4);
@@ -182,15 +190,6 @@ function vitalsFor(crew: CrewDef, t: number, activity: ActivityKey, event: Scrip
   let spo2 = crew.baselineSpo2 + randRange(rng, -0.4, 0.4);
   let sleep = 430 + randInt(rng, -20, 25);
   let exercise = 140 + randInt(rng, -15, 30);
-  if (activity === 'act.exercise' || activity === 'act.eva') {
-    hr += 18;
-    hrv -= 6;
-    spo2 -= 1;
-  }
-  if (activity === 'act.sleep') {
-    hr -= 8;
-    hrv += 4;
-  }
   if (event === 'event.illness') {
     hr += 22;
     hrv -= 10;
@@ -198,12 +197,17 @@ function vitalsFor(crew: CrewDef, t: number, activity: ActivityKey, event: Scrip
     spo2 -= 1.5;
   }
   if (event === 'event.evaFatigue') {
-    hr += 16;
-    hrv -= 12;
+    hr += 8;
+    hrv -= 8;
     exercise = 195;
   }
   if (event === 'event.co2') {
     spo2 -= 2;
+    hr += 6;
+  }
+  if (event === 'event.sleepDeficit') {
+    sleep = 340;
+    hrv -= 6;
     hr += 6;
   }
   return {
@@ -223,10 +227,12 @@ function hourlyTimeline(crew: CrewDef, t: number, event: ScriptedEvent): HourlyV
     const tt = dayStart + h * 3600 * 1000;
     const ship = SHIPS.find((s) => s.id === crew.shipId)!;
     const act = activityAtHour(h, ship.kind, missionDayAt(t), crew.id);
-    const v = vitalsFor(crew, tt, act, event);
+    const v = vitalsFor(crew, tt, event);
+    const liveHr =
+      act === 'act.exercise' ? v.restingHR + 48 : act === 'act.eva' ? v.restingHR + 32 : act === 'act.sleep' ? v.restingHR - 12 : v.restingHR;
     const pt: HourlyVitalPoint = {
       hour: `${String(h).padStart(2, '0')}:00`,
-      hr: v.restingHR,
+      hr: liveHr,
       spo2: Math.round(v.spo2),
       hrv: v.hrv,
       activityNote: act,
@@ -321,6 +327,14 @@ export function worldStateAt(t: number, wx: SpaceEnvironmentPayload | null = nul
       const startedAt = nextAt - 3600 * 1000;
       const prevHour = taipeiHour(startedAt - 1000);
       const nextHour = taipeiHour(nextAt + 1000);
+      const wearable = wearableAt(t, {
+        crew: cDef,
+        ship: def,
+        activity: activityKey,
+        event,
+        cabinMsvDay: rad.msv,
+        wx,
+      });
       return {
         def: cDef,
         activityKey,
@@ -328,7 +342,8 @@ export function worldStateAt(t: number, wx: SpaceEnvironmentPayload | null = nul
         activityStartedAt: startedAt,
         nextActivityKey: activityAtHour(nextHour, def.kind, missionDayAt(nextAt), cDef.id),
         nextActivityAt: nextAt,
-        vitals: vitalsFor(cDef, t, activityKey, event),
+        vitals: vitalsFor(cDef, t, event),
+        wearable,
         event,
       };
     });
@@ -369,4 +384,10 @@ export function overallRankFromVitals(v: CrewLive['vitals']): 0 | 1 | 2 {
   if (hr === 'Critical' || hrv === 'Critical' || spo2 === 'Critical') return 2;
   if (hr === 'Attention' || hrv === 'Attention' || spo2 === 'Attention') return 1;
   return 0;
+}
+
+export function overallRank(crew: CrewLive): 0 | 1 | 2 {
+  const fromWear = wearableRank(crew.wearable, crew.activityKey, crew.event);
+  const fromRest = overallRankFromVitals(crew.vitals);
+  return fromWear > fromRest ? fromWear : fromRest;
 }

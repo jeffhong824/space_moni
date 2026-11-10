@@ -1,5 +1,5 @@
 import type { ShipLive } from './worldState.ts';
-import { overallRankFromVitals } from './worldState.ts';
+import { overallRank } from './worldState.ts';
 
 export function locationVars(ship: ShipLive): { key: string; vars: Record<string, string | number> } {
   const loc = ship.location;
@@ -12,7 +12,7 @@ export function locationVars(ship: ShipLive): { key: string; vars: Record<string
 }
 
 export function shipCrewStatus(ship: ShipLive): 'Critical' | 'Attention' | 'Normal' {
-  const ranks = ship.crew.map((c) => overallRankFromVitals(c.vitals));
+  const ranks = ship.crew.map((c) => overallRank(c));
   if (ranks.includes(2)) return 'Critical';
   if (ranks.includes(1) || ship.cabin.carbonDioxidePercent > 0.5) return 'Attention';
   return 'Normal';

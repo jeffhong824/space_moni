@@ -16,7 +16,11 @@ describe('deterministic mission world', () => {
     const b = worldStateAt(t, null);
     expect(a).toEqual(b);
     expect(a.ships).toHaveLength(4);
-    expect(a.ships.every((s) => s.crew.length >= 3)).toBe(true);
+    expect(a.ships.find((s) => s.def.id === 'ship-harmony')?.crew).toHaveLength(7);
+    expect(a.ships.find((s) => s.def.id === 'ship-gateway')?.crew).toHaveLength(4);
+    expect(a.ships.find((s) => s.def.id === 'ship-ares')?.crew).toHaveLength(6);
+    expect(a.ships.find((s) => s.def.id === 'ship-mare')?.crew).toHaveLength(4);
+    expect(a.ships[0].crew[0].wearable.sim).toBe(true);
   });
 
   it('advances activity across hours but stays identical for the same instant', () => {

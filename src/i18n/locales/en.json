@@ -559,6 +559,7 @@
   },
   "occ": {
     "commander": "Commander",
+    "pilot": "Pilot",
     "botanist": "Station botanist",
     "eclss": "ECLSS specialist",
     "avionics": "Avionics & medical",
@@ -588,7 +589,51 @@
   "event": {
     "illness": "Scripted minor illness (simulation)",
     "co2": "Scripted cabin CO₂ spike (simulation)",
-    "evaFatigue": "Scripted EVA fatigue (simulation)"
+    "evaFatigue": "Scripted EVA fatigue (simulation)",
+    "sleepDeficit": "Scripted sleep deficit (simulation)"
+  },
+  "nation": {
+    "us": "United States",
+    "ru": "Russia",
+    "jp": "Japan",
+    "ng": "Nigeria",
+    "in": "India",
+    "it": "Italy",
+    "sn": "Senegal",
+    "se": "Sweden",
+    "cn": "China",
+    "jo": "Jordan",
+    "es": "Spain",
+    "fr": "France",
+    "ca": "Canada",
+    "kr": "Republic of Korea",
+    "om": "Oman",
+    "br": "Brazil"
+  },
+  "wear": {
+    "title": "Wearable digital twin",
+    "liveStream": "SIMULATION · Bio-Monitor / Astroskin-class stream, not live ISS telemetry",
+    "device": "Simulated Bio-Monitor + Actiwatch + personal dosimeter",
+    "battery": "Battery",
+    "signal": "Signal",
+    "hr": "HR",
+    "hrv": "HRV",
+    "resp": "Resp",
+    "spo2": "SpO₂",
+    "skin": "Skin temp",
+    "core": "Core temp",
+    "bp": "BP",
+    "steps": "Steps",
+    "sleepStage": "Sleep stage",
+    "dose": "Accum. dose",
+    "doseRate": "Dose rate",
+    "stage": {
+      "wake": "Wake",
+      "n1": "N1",
+      "n2": "N2",
+      "n3": "N3",
+      "rem": "REM"
+    }
   },
   "loc": {
     "leo": "LEO · {phase}° mean anomaly · 418 km analog",

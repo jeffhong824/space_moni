@@ -559,6 +559,7 @@
   },
   "occ": {
     "commander": "Comandante",
+    "pilot": "Piloto",
     "botanist": "Botánica de estación",
     "eclss": "Especialista ECLSS",
     "avionics": "Aviónica y medicina",
@@ -588,7 +589,51 @@
   "event": {
     "illness": "Enfermedad menor guionizada (sim)",
     "co2": "Pico de CO₂ de cabina (sim)",
-    "evaFatigue": "Fatiga EVA guionizada (sim)"
+    "evaFatigue": "Fatiga EVA guionizada (sim)",
+    "sleepDeficit": "Déficit de sueño guionizado (simulación)"
+  },
+  "nation": {
+    "us": "Estados Unidos",
+    "ru": "Rusia",
+    "jp": "Japón",
+    "ng": "Nigeria",
+    "in": "India",
+    "it": "Italia",
+    "sn": "Senegal",
+    "se": "Suecia",
+    "cn": "China",
+    "jo": "Jordania",
+    "es": "España",
+    "fr": "Francia",
+    "ca": "Canadá",
+    "kr": "Corea del Sur",
+    "om": "Omán",
+    "br": "Brasil"
+  },
+  "wear": {
+    "title": "Gemelo digital wearable",
+    "liveStream": "SIMULACIÓN · Flujo tipo Bio-Monitor/Astroskin, no telemetría ISS en vivo",
+    "device": "Bio-Monitor, Actiwatch y dosímetro personal simulados",
+    "battery": "Batería",
+    "signal": "Señal",
+    "hr": "FC",
+    "hrv": "VFC",
+    "resp": "Resp",
+    "spo2": "SpO₂",
+    "skin": "Temp. piel",
+    "core": "Temp. central",
+    "bp": "PA",
+    "steps": "Pasos",
+    "sleepStage": "Fase de sueño",
+    "dose": "Dosis acum.",
+    "doseRate": "Tasa de dosis",
+    "stage": {
+      "wake": "Vigilia",
+      "n1": "N1",
+      "n2": "N2",
+      "n3": "N3",
+      "rem": "REM"
+    }
   },
   "loc": {
     "leo": "LEO · anomalía {phase}° · análogo 418 km",

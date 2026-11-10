@@ -15,6 +15,7 @@ import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
 import { SimBadge } from './SimBadge';
 import { ShipStatusCard } from './ShipStatusCard';
+import { WearableStrip } from './WearableHud';
 import type { WorldState } from '../world/worldState';
 import { findCrewLive } from '../world/worldState';
 
@@ -105,6 +106,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
       </header>
 
       {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
+      {live && <WearableStrip live={live.crew} />}
 
       {shelter && (
         <div className="rounded-2xl border-2 border-rose-400 bg-rose-50 p-4 text-rose-950 flex gap-3">
