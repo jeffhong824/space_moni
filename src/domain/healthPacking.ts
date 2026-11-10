@@ -15,9 +15,9 @@ import {
   type MetricStatus,
   type OverallStatus,
   interpretRecord,
-  STATUS_ZH,
   type SelfCheckEntry,
 } from './healthThresholds.ts';
+import { DEFAULT_LANG, statusLabel, translate } from '../i18n/index.ts';
 
 export interface PackedMetric {
   metric: string;
@@ -88,96 +88,57 @@ export interface TwoLevelAnalysis {
   };
 }
 
+function tr(lang: string, key: string, vars?: Record<string, string | number>) {
+  return translate(lang, key, vars);
+}
+
 function analysisFor(
   id: keyof typeof THRESHOLDS,
   status: MetricStatus,
-  valueLabel: string
+  valueLabel: string,
+  lang: string
 ): { analysis: string; recommendations: string[] } {
+  const v = { value: valueLabel };
   switch (id) {
     case 'restingHR':
       if (status === 'Critical') {
-        return {
-          analysis: `靜息心率 ${valueLabel}，超過微重力示範門檻（>100 bpm）。可能與體液頭向轉移、自主神經失調或脫水有關。`,
-          recommendations: ['執行 20 分鐘等滲補液方案', '暫緩高強度 ARED／T2 峰值負荷', '持續監測 SpO₂ 與症狀'],
-        };
+        return { analysis: tr(lang, 'analysis.hrCritical', v), recommendations: [tr(lang, 'rec.hydrate'), tr(lang, 'rec.pausePeak'), tr(lang, 'rec.watchSpo2')] };
       }
       if (status === 'Attention') {
-        return {
-          analysis: `靜息心率 ${valueLabel}，高於軌道示範理想區間（50–90 bpm），尚未達危急心搏過速。`,
-          recommendations: ['增加水分與電解質攝取', '下一班次降低峰值運動強度'],
-        };
+        return { analysis: tr(lang, 'analysis.hrCaution', v), recommendations: [tr(lang, 'rec.fluids'), tr(lang, 'rec.lowerPeak')] };
       }
-      return {
-        analysis: `靜息心率 ${valueLabel}，位於示範正常區間。`,
-        recommendations: ['維持 T2／ARED 常規對策', '保持水分平衡'],
-      };
+      return { analysis: tr(lang, 'analysis.hrNormal', v), recommendations: [tr(lang, 'rec.t2'), tr(lang, 'rec.balance')] };
     case 'hrv':
       if (status === 'Critical') {
-        return {
-          analysis: `HRV ${valueLabel}，自主神經張力嚴重抑制（<20 ms）。可能與睡眠負債、過度訓練或心理負荷有關。`,
-          recommendations: ['安排強制恢復週期', '降低當日訓練負荷', '評估睡眠艙聲學與光照'],
-        };
+        return { analysis: tr(lang, 'analysis.hrvCritical', v), recommendations: [tr(lang, 'rec.recovery'), tr(lang, 'rec.lowerLoad'), tr(lang, 'rec.sleepEnv')] };
       }
       if (status === 'Attention') {
-        return {
-          analysis: `HRV ${valueLabel}，低於理想值（≥25 ms），恢復能力下降。`,
-          recommendations: ['確保 7 小時睡眠窗', '加入放鬆呼吸訓練'],
-        };
+        return { analysis: tr(lang, 'analysis.hrvCaution', v), recommendations: [tr(lang, 'rec.sleep7'), tr(lang, 'rec.breathe')] };
       }
-      return {
-        analysis: `HRV ${valueLabel}，自主神經調節良好。`,
-        recommendations: ['維持工作–休息平衡'],
-      };
+      return { analysis: tr(lang, 'analysis.hrvNormal', v), recommendations: [tr(lang, 'rec.workRest')] };
     case 'spo2':
       if (status === 'Critical') {
-        return {
-          analysis: `SpO₂ ${valueLabel}，低於艙內示範危急門檻（<94%）。需核對 ECLSS 氧氣與 CO₂ 清除。`,
-          recommendations: ['立即核對艙內 O₂／CO₂', '評估呼吸與活動負荷'],
-        };
+        return { analysis: tr(lang, 'analysis.spo2Critical', v), recommendations: [tr(lang, 'rec.checkEclss'), tr(lang, 'rec.respLoad')] };
       }
       if (status === 'Attention') {
-        return {
-          analysis: `SpO₂ ${valueLabel}，略低於示範理想值（≥96%）。`,
-          recommendations: ['持續監看 ECLSS', '避免在血氧偏低時進行峰值運動'],
-        };
+        return { analysis: tr(lang, 'analysis.spo2Caution', v), recommendations: [tr(lang, 'rec.watchEclss'), tr(lang, 'rec.noPeakSpo2')] };
       }
-      return {
-        analysis: `SpO₂ ${valueLabel}，氧合穩定。`,
-        recommendations: ['例行監看艙內氣體組成'],
-      };
+      return { analysis: tr(lang, 'analysis.spo2Normal', v), recommendations: [tr(lang, 'rec.routineGas')] };
     case 'vo2Max':
       if (status !== 'Normal') {
-        return {
-          analysis: `VO₂ max ${valueLabel}，有氧儲備偏低，微重力下易加速體能流失。`,
-          recommendations: ['檢視 T2 有氧處方完成率', '勿在心搏過速時加碼有氧'],
-        };
+        return { analysis: tr(lang, 'analysis.vo2Off', v), recommendations: [tr(lang, 'rec.t2Rate'), tr(lang, 'rec.noAerobicTachy')] };
       }
-      return {
-        analysis: `VO₂ max ${valueLabel}，有氧基線可接受。`,
-        recommendations: ['維持處方運動對策'],
-      };
+      return { analysis: tr(lang, 'analysis.vo2Ok', v), recommendations: [tr(lang, 'rec.exRx')] };
     case 'sleepMinutes':
       if (status !== 'Normal') {
-        return {
-          analysis: `平均睡眠 ${valueLabel}，低於 7 小時示範目標，可能影響認知與自主神經恢復。`,
-          recommendations: ['優先保留睡眠窗', '檢查睡眠艙噪音與光照', '評估是否需調整任務時程'],
-        };
+        return { analysis: tr(lang, 'analysis.sleepOff', v), recommendations: [tr(lang, 'rec.protectSleep'), tr(lang, 'rec.sleepEnv'), tr(lang, 'rec.shiftPlan')] };
       }
-      return {
-        analysis: `平均睡眠 ${valueLabel}，達到示範恢復目標。`,
-        recommendations: ['維持規律作息'],
-      };
+      return { analysis: tr(lang, 'analysis.sleepOk', v), recommendations: [tr(lang, 'rec.sleepHabit')] };
     case 'exerciseMinutes':
       if (status !== 'Normal') {
-        return {
-          analysis: `運動對策 ${valueLabel}，偏離 ISS 示範處方（約 90–210 分鐘）。`,
-          recommendations: ['對齊 T2／ARED 當日處方', '過量時改為恢復日'],
-        };
+        return { analysis: tr(lang, 'analysis.exOff', v), recommendations: [tr(lang, 'rec.alignT2'), tr(lang, 'rec.restDay')] };
       }
-      return {
-        analysis: `運動對策 ${valueLabel}，符合示範處方區間。`,
-        recommendations: ['維持阻力與有氧平衡'],
-      };
+      return { analysis: tr(lang, 'analysis.exOk', v), recommendations: [tr(lang, 'rec.resistAerobic')] };
   }
 }
 
@@ -186,7 +147,8 @@ export function packHealthPayload(
   record: DailyHealthRecord,
   envMetrics?: EnvironmentalMetrics | null,
   spaceEnvironment?: SpaceEnvironmentPayload | null,
-  selfCheck?: SelfCheckEntry | null
+  selfCheck?: SelfCheckEntry | null,
+  lang: string = DEFAULT_LANG
 ): PackedHealthPayload {
   const hr = statusRestingHR(record.restingHR);
   const hrv = statusHrv(record.hrv);
@@ -195,85 +157,85 @@ export function packHealthPayload(
   const sleep = statusSleep(record.avgSleepMinutes);
   const exercise = statusExercise(record.avgExerciseMinutes);
 
-  const hrA = analysisFor('restingHR', hr, `${record.restingHR} bpm`);
-  const hrvA = analysisFor('hrv', hrv, `${record.hrv} ms`);
-  const spo2A = analysisFor('spo2', spo2, `${record.spo2}%`);
-  const vo2A = analysisFor('vo2Max', vo2, `${record.vo2Max.toFixed(1)} mL/kg/min`);
-  const sleepA = analysisFor('sleepMinutes', sleep, formatSleep(record.avgSleepMinutes));
-  const exA = analysisFor('exerciseMinutes', exercise, `${record.avgExerciseMinutes} min`);
+  const hrA = analysisFor('restingHR', hr, `${record.restingHR} bpm`, lang);
+  const hrvA = analysisFor('hrv', hrv, `${record.hrv} ms`, lang);
+  const spo2A = analysisFor('spo2', spo2, `${record.spo2}%`, lang);
+  const vo2A = analysisFor('vo2Max', vo2, `${record.vo2Max.toFixed(1)} mL/kg/min`, lang);
+  const sleepA = analysisFor('sleepMinutes', sleep, formatSleep(record.avgSleepMinutes), lang);
+  const exA = analysisFor('exerciseMinutes', exercise, `${record.avgExerciseMinutes} min`, lang);
 
   const metrics: PackedMetric[] = [
     {
-      metric: THRESHOLDS.restingHR.labelZh,
+      metric: tr(lang, 'metric.restingHR'),
       id: 'restingHR',
       value: `${record.restingHR} bpm`,
       numericValue: record.restingHR,
       unit: 'bpm',
       status: hr,
-      threshold: `正常 ${THRESHOLDS.restingHR.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.restingHR.normal }),
       analysis: hrA.analysis,
       recommendations: hrA.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
     {
-      metric: THRESHOLDS.hrv.labelZh,
+      metric: tr(lang, 'metric.hrv'),
       id: 'hrv',
       value: `${record.hrv} ms`,
       numericValue: record.hrv,
       unit: 'ms',
       status: hrv,
-      threshold: `正常 ${THRESHOLDS.hrv.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.hrv.normal }),
       analysis: hrvA.analysis,
       recommendations: hrvA.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
     {
-      metric: THRESHOLDS.spo2.labelZh,
+      metric: tr(lang, 'metric.spo2'),
       id: 'spo2',
       value: `${record.spo2}%`,
       numericValue: record.spo2,
       unit: '%',
       status: spo2,
-      threshold: `正常 ${THRESHOLDS.spo2.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.spo2.normal }),
       analysis: spo2A.analysis,
       recommendations: spo2A.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
     {
-      metric: THRESHOLDS.vo2Max.labelZh,
+      metric: tr(lang, 'metric.vo2Max'),
       id: 'vo2Max',
       value: `${record.vo2Max.toFixed(1)} mL/kg/min`,
       numericValue: record.vo2Max,
       unit: 'mL/kg/min',
       status: vo2,
-      threshold: `正常 ${THRESHOLDS.vo2Max.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.vo2Max.normal }),
       analysis: vo2A.analysis,
       recommendations: vo2A.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
     {
-      metric: THRESHOLDS.sleepMinutes.labelZh,
+      metric: tr(lang, 'metric.sleepMinutes'),
       id: 'sleepMinutes',
       value: formatSleep(record.avgSleepMinutes),
       numericValue: record.avgSleepMinutes,
       unit: 'min',
       status: sleep,
-      threshold: `正常 ${THRESHOLDS.sleepMinutes.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.sleepMinutes.normal }),
       analysis: sleepA.analysis,
       recommendations: sleepA.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
     {
-      metric: THRESHOLDS.exerciseMinutes.labelZh,
+      metric: tr(lang, 'metric.exerciseMinutes'),
       id: 'exerciseMinutes',
       value: `${record.avgExerciseMinutes} min`,
       numericValue: record.avgExerciseMinutes,
       unit: 'min',
       status: exercise,
-      threshold: `正常 ${THRESHOLDS.exerciseMinutes.normal}`,
+      threshold: tr(lang, 'band.normal', { v: THRESHOLDS.exerciseMinutes.normal }),
       analysis: exA.analysis,
       recommendations: exA.recommendations,
-      source: TELEMETRY_SOURCE.labelZh,
+      source: tr(lang, 'badge.simTelemetry'),
     },
   ];
 
@@ -288,57 +250,54 @@ export function packHealthPayload(
     {
       system: 'Cardiovascular',
       status: cardioStatus,
-      summary:
-        cardioStatus === 'Normal'
-          ? '心血管系統適應良好，靜息心率與 HRV 均在示範門檻內。'
-          : '心血管系統顯示微重力適應壓力：心率與／或 HRV 偏離示範門檻。',
+      summary: cardioStatus === 'Normal' ? tr(lang, 'sys.cardioOk') : tr(lang, 'sys.cardioOff'),
       concerns: [
-        ...(hr !== 'Normal' ? [`靜息心率 ${record.restingHR} bpm（${STATUS_ZH[hr]}）`] : []),
-        ...(hrv !== 'Normal' ? [`HRV ${record.hrv} ms（${STATUS_ZH[hrv]}）`] : []),
+        ...(hr !== 'Normal' ? [`${tr(lang, 'metric.restingHR')} ${record.restingHR} bpm (${statusLabel(lang, hr)})`] : []),
+        ...(hrv !== 'Normal' ? [`${tr(lang, 'metric.hrv')} ${record.hrv} ms (${statusLabel(lang, hrv)})`] : []),
       ],
-      recommendations: cardioStatus === 'Normal' ? ['維持 ARED／T2 常規'] : ['執行補液與降低峰值負荷', '記錄異常供地面飛行外科醫師'],
+      recommendations: cardioStatus === 'Normal' ? [tr(lang, 'rec.keepAred')] : [tr(lang, 'rec.hydrateLog'), tr(lang, 'rec.logGround')],
     },
     {
       system: 'Respiratory',
       status: spo2,
-      summary: spo2 === 'Normal' ? '呼吸與氧合穩定。' : '血氧偏低，需對照艙內氣體與活動負荷。',
+      summary: spo2 === 'Normal' ? tr(lang, 'sys.respOk') : tr(lang, 'sys.respOff'),
       concerns: spo2 !== 'Normal' ? [`SpO₂ ${record.spo2}%`] : [],
-      recommendations: spo2 === 'Normal' ? ['例行監看 ECLSS'] : ['核對艙內 O₂／CO₂', '避免峰值運動直至氧合回穩'],
+      recommendations: spo2 === 'Normal' ? [tr(lang, 'rec.routineGas')] : [tr(lang, 'rec.checkEclss'), tr(lang, 'rec.noPeakSpo2')],
     },
     {
       system: 'Sleep',
       status: sleep,
-      summary: sleep === 'Normal' ? '睡眠時數達到恢復目標。' : '睡眠負債可能削弱認知與 HRV 恢復。',
-      concerns: sleep !== 'Normal' ? [`睡眠 ${formatSleep(record.avgSleepMinutes)}`] : [],
+      summary: sleep === 'Normal' ? tr(lang, 'sys.sleepOk') : tr(lang, 'sys.sleepOff'),
+      concerns: sleep !== 'Normal' ? [`${tr(lang, 'metric.sleepMinutes')} ${formatSleep(record.avgSleepMinutes)}`] : [],
       recommendations: sleepA.recommendations,
     },
     {
       system: 'Exercise',
       status: exercise,
-      summary: exercise === 'Normal' ? '運動對策符合示範處方。' : '運動時數偏離處方，需與心血管狀態一併調整。',
-      concerns: exercise !== 'Normal' ? [`運動 ${record.avgExerciseMinutes} min`] : [],
+      summary: exercise === 'Normal' ? tr(lang, 'sys.exOk') : tr(lang, 'sys.exOff'),
+      concerns: exercise !== 'Normal' ? [`${tr(lang, 'metric.exerciseMinutes')} ${record.avgExerciseMinutes} min`] : [],
       recommendations: exA.recommendations,
     },
     {
       system: 'Mental',
       status: mentalStatus,
-      summary: mentalStatus === 'Normal' ? '心理狀態標示為正常。' : `心理狀態標示為「${record.mentalStatus}」，建議結合睡眠與任務負荷解讀。`,
+      summary: mentalStatus === 'Normal' ? tr(lang, 'sys.mentalOk') : tr(lang, 'sys.mentalOff', { value: record.mentalStatus }),
       concerns: mentalStatus !== 'Normal' ? [record.mentalStatus] : [],
-      recommendations: mentalStatus === 'Normal' ? ['維持規律語音檢核'] : ['安排非勤務恢復時段', '與飛行外科醫師同步負荷'],
+      recommendations: mentalStatus === 'Normal' ? [tr(lang, 'rec.voiceCheck')] : [tr(lang, 'rec.offDuty'), tr(lang, 'rec.syncLoad')],
     },
     {
       system: 'Musculoskeletal',
       status: mskStatus,
-      summary: mskStatus === 'Normal' ? '肌肉骨骼狀態標示為正常。' : `肌肉骨骼狀態為「${record.musculoskeletalStatus}」。`,
+      summary: mskStatus === 'Normal' ? tr(lang, 'sys.mskOk') : tr(lang, 'sys.mskOff', { value: record.musculoskeletalStatus }),
       concerns: mskStatus !== 'Normal' ? [record.musculoskeletalStatus] : [],
-      recommendations: mskStatus === 'Normal' ? ['維持 ARED 阻力處方'] : ['核對 ARED 負荷與疼痛回報'],
+      recommendations: mskStatus === 'Normal' ? [tr(lang, 'rec.keepAred')] : [tr(lang, 'rec.aredLoad')],
     },
     {
       system: 'Nutrition',
       status: nutritionStatus,
-      summary: nutritionStatus === 'Normal' ? '營養狀態標示為正常。' : `營養狀態為「${record.nutritionStatus}」。`,
+      summary: nutritionStatus === 'Normal' ? tr(lang, 'sys.nutOk') : tr(lang, 'sys.nutOff', { value: record.nutritionStatus }),
       concerns: nutritionStatus !== 'Normal' ? [record.nutritionStatus] : [],
-      recommendations: nutritionStatus === 'Normal' ? ['維持廚房條碼紀錄合規'] : ['補充電解質與熱量', '核對水分配器流量'],
+      recommendations: nutritionStatus === 'Normal' ? [tr(lang, 'rec.kitchen')] : [tr(lang, 'rec.electrolytes'), tr(lang, 'rec.waterFlow')],
     },
   ];
 
@@ -346,10 +305,10 @@ export function packHealthPayload(
   const overallStatus = interpreted.overall;
   const overallSummary =
     overallStatus === 'Critical'
-      ? '多項或單項生理指標達危急門檻，需立即對策並通報地面。'
+      ? tr(lang, 'analysis.overallCritical')
       : overallStatus === 'Attention'
-        ? '整體注意：部分指標偏離示範門檻，尚未判定為立即危急。'
-        : '整體正常，任務適航狀態良好。';
+        ? tr(lang, 'analysis.overallCaution')
+        : tr(lang, 'analysis.overallNormal');
 
   return {
     source: TELEMETRY_SOURCE,
@@ -383,7 +342,8 @@ export function packHealthPayload(
 
 export function buildOfflineTwoLevelAnalysis(
   message: string,
-  packed: PackedHealthPayload
+  packed: PackedHealthPayload,
+  lang: string = DEFAULT_LANG
 ): TwoLevelAnalysis {
   const { overall, metrics, systems, astronaut } = packed;
   const hr = metrics.find((m) => m.id === 'restingHR');
@@ -391,24 +351,38 @@ export function buildOfflineTwoLevelAnalysis(
   const wx = packed.spaceEnvironment;
   const wxNote =
     wx?.kp && wx.goesXray
-      ? ` 官方空間天氣：Kp ${wx.kp.value}（${wx.kp.observedAt}）、GOES X 射線 ${wx.goesXray.goesClass}、輻射風險 ${wx.radiationRisk}。`
+      ? tr(lang, 'ai.wxLive', {
+          kp: wx.kp.value,
+          at: wx.kp.observedAt,
+          goes: wx.goesXray.goesClass,
+          risk: wx.radiationRisk,
+        })
       : wx
-        ? ` 空間天氣饋送狀態：${wx.overallStatus}。`
+        ? tr(lang, 'ai.wxStatus', { status: wx.overallStatus })
         : '';
 
   const needsHydration = hr && hr.status !== 'Normal';
+  const action = needsHydration ? tr(lang, 'ai.offlineHydrate') : tr(lang, 'ai.offlineContinue');
 
   return {
-    replyText: `[AURA 離線飛行外科醫師] ${astronaut.name}，已收到「${message}」。${overall.summary} 靜息心率 ${hr?.value ?? '—'}、SpO₂ ${spo2?.value ?? '—'}。${needsHydration ? '建議先完成等滲補液與恢復窗，再進行高負荷實驗。' : '目前可依處方繼續對策與實驗，並持續監看指標。'}${wxNote}（分析依固定門檻產生，非即時 Gemini。）`,
+    replyText: tr(lang, 'ai.offlineReply', {
+      name: astronaut.name,
+      message,
+      summary: overall.summary,
+      hr: hr?.value ?? '—',
+      spo2: spo2?.value ?? '—',
+      action,
+      wx: wxNote,
+    }),
     healthAssessment: overall,
     suggestedActions: needsHydration
       ? [
           {
             id: 'act-offline-hydrate',
-            label: '安排補液與電解質平衡方案',
+            label: tr(lang, 'ai.hydrate'),
             type: 'ADD_TASK',
             payload: {
-              title: '補液與電解質平衡方案',
+              title: tr(lang, 'ai.hydrateTask'),
               module: 'Tranquility ECLSS',
               priority: 'High',
               category: 'Health Countermeasure',
@@ -416,31 +390,43 @@ export function buildOfflineTwoLevelAnalysis(
           },
           {
             id: 'act-offline-log',
-            label: '記錄心血管觀測',
+            label: tr(lang, 'ai.logCardio'),
             type: 'LOG_ANOMALY',
             payload: {
-              note: `${astronaut.name} ${packed.capturedForDate}：${hr?.metric} ${hr?.value}（${hr?.status}）。來源：${TELEMETRY_SOURCE.labelZh}。`,
+              note: tr(lang, 'ai.logNote', {
+                name: astronaut.name,
+                date: packed.capturedForDate,
+                metric: hr?.metric ?? '',
+                value: hr?.value ?? '',
+                status: statusLabel(lang, hr?.status),
+                source: tr(lang, 'badge.simTelemetry'),
+              }),
             },
           },
         ]
       : [
           {
             id: 'act-offline-ack',
-            label: '記錄例行健康檢核完成',
+            label: tr(lang, 'ai.ackRoutine'),
             type: 'LOG_ANOMALY',
             payload: {
-              note: `${astronaut.name} ${packed.capturedForDate}：整體 ${STATUS_ZH[overall.status]}。來源：${TELEMETRY_SOURCE.labelZh}。`,
+              note: tr(lang, 'ai.logOverall', {
+                name: astronaut.name,
+                date: packed.capturedForDate,
+                status: statusLabel(lang, overall.status),
+                source: tr(lang, 'badge.simTelemetry'),
+              }),
             },
           },
         ],
     detailedAnalysis: { metrics, systems },
     analysisMode: 'offline_fallback',
     dataQuality: {
-      telemetry: TELEMETRY_SOURCE.labelZh,
-      cabin: packed.cabinEnvironment ? CABIN_ENV_SOURCE.labelZh : '未提供艙內讀數',
+      telemetry: tr(lang, 'badge.simTelemetry'),
+      cabin: packed.cabinEnvironment ? tr(lang, 'badge.simCabin') : tr(lang, 'ai.noCabin'),
       spaceEnvironment: wx
-        ? `官方饋送 ${wx.overallStatus}（擷取 ${wx.fetchedAt}）`
-        : '本次未附帶空間天氣快照',
+        ? tr(lang, 'ai.wxSnap', { status: wx.overallStatus, at: wx.fetchedAt })
+        : tr(lang, 'ai.noWx'),
     },
   };
 }

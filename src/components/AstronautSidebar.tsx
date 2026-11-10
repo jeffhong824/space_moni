@@ -3,6 +3,9 @@ import { User, Wind, Gauge, Thermometer, ShieldAlert, Users, ChevronDown, Check,
 import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, UserRole } from '../types';
 import { getStationClockDate, calculateMissionDuration } from '../utils/dateUtils';
 import { interpretRecord } from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey, statusLabel } from '../i18n/index';
+import { SimBadge } from './SimBadge';
 
 interface AstronautSidebarProps {
   currentAstronaut: AstronautProfile;
@@ -23,6 +26,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   currentUserRole,
   recordsByAstronaut = {},
 }) => {
+  const { t, lang } = useI18n();
   const [showRoster, setShowRoster] = useState(false);
 
   // Synchronize Today with the live station clock (UTC)
@@ -50,12 +54,12 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   const getMemberLiveStatus = (id: string) => {
     const records = recordsByAstronaut[id] || [];
     const today = records.find((r) => r.isToday) || records[0];
-    if (!today) return { hr: '—', status: '正常', isAlert: false };
+    if (!today) return { hr: '—', status: statusLabel(lang, 'Normal'), isAlert: false };
     const interp = interpretRecord(today);
     const hr = interp.metrics.find((m) => m.id === 'restingHR');
     return {
       hr: hr?.valueLabel ?? `${today.restingHR} bpm`,
-      status: interp.overallZh,
+      status: statusLabel(lang, interp.overall),
       isAlert: interp.overall !== 'Normal',
     };
   };
@@ -73,18 +77,18 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-sky-600" />
               <h3 className="text-xs font-bold tracking-wide text-slate-900">
-                站上組員名冊（{allAstronauts.length}）
+                {t('sidebar.roster', { n: allAstronauts.length })}
               </h3>
             </div>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold uppercase ${
               currentUserRole === 'NASA' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
             }`}>
-              {currentUserRole === 'NASA' ? 'NASA 監看' : '指揮官檢視'}
+              {currentUserRole === 'NASA' ? t('sidebar.nasaWatch') : t('sidebar.cmdWatch')}
             </span>
           </div>
 
           <p className="text-[11px] text-slate-500 leading-tight">
-            選擇組員以檢視其當日狀況與遙測紀錄：
+            {t('sidebar.pick')}
           </p>
 
           {/* Members List */}
@@ -140,9 +144,9 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                   {/* Active Indicator details if selected */}
                   {isSelected && (
                     <div className="mt-2.5 pt-2 border-t border-sky-200/60 flex items-center justify-between text-[10px] font-mono text-sky-900">
-                      <span>任務時長：{calculateMissionDuration(astro.missionStartDate, stationDate).durationText}</span>
+                      <span>{t('sidebar.missionLen', { v: calculateMissionDuration(astro.missionStartDate, stationDate).durationText })}</span>
                       <span className="font-semibold text-sky-700 flex items-center gap-1">
-                        <Eye className="w-3 h-3" aria-hidden /> 檢視中
+                        <Eye className="w-3 h-3" aria-hidden /> {t('sidebar.viewingNow')}
                       </span>
                     </div>
                   )}
@@ -170,32 +174,32 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             </div>
 
             <div className="px-2 py-0.5 bg-white/80 border border-sky-200 rounded text-[10px] font-mono font-semibold text-sky-900">
-              太空人
+              {t('sidebar.astronaut')}
             </div>
           </div>
 
           {/* Specialty Role Badge */}
           <div className="inline-block px-2.5 py-1 bg-white/80 border border-sky-200/90 rounded-md text-xs font-semibold text-sky-900 mb-4">
-            {currentAstronaut.role}
+            {localizeKey(lang, currentAstronaut.role)}
           </div>
 
           {/* Mission Timeline & Dates (Strictly matching wireframe) */}
           <div className="space-y-1.5 text-sm font-mono border-t border-sky-200/60 pt-3">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-600">開始：</span>
+              <span className="text-slate-600">{t('sidebar.start')}：</span>
               <span className="font-semibold text-slate-900 tabular-nums">{currentAstronaut.missionStartDate}</span>
             </div>
             <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md hover:bg-sky-100/50 transition-colors">
               <span className="text-slate-600 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Live Station Clock Sync" />
-                今日：
+                {t('sidebar.today')}：
               </span>
               <span className="font-semibold text-slate-900 tabular-nums bg-white/75 px-2 py-0.5 rounded border border-sky-200/60 shadow-2xs">
                 {stationDate}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md bg-white/60 border border-sky-200/70 shadow-2xs">
-              <span className="text-slate-600 font-medium">時長：</span>
+              <span className="text-slate-600 font-medium">{t('sidebar.duration')}：</span>
               <span className="font-bold text-sky-950 font-mono tracking-tight">
                 {calculatedDuration.durationText}
               </span>
@@ -204,8 +208,8 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
           {/* Additional contextual station telemetry */}
           <div className="mt-3 pt-2.5 border-t border-sky-200/60 flex items-center justify-between text-[11px] text-slate-600 font-mono">
-            <span>血型：{currentAstronaut.bloodType}</span>
-            <span>模組：{currentAstronaut.stationModule}</span>
+            <span>{t('sidebar.blood', { v: currentAstronaut.bloodType })}</span>
+            <span>{t('sidebar.module', { v: localizeKey(lang, currentAstronaut.stationModule) })}</span>
           </div>
         </div>
       )}
@@ -217,11 +221,11 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             <div className="flex items-center gap-2">
               <Wind className="w-4 h-4 text-sky-600" />
               <h3 className="text-sm font-bold tracking-wide text-slate-900">
-                艙內環境（示範）
+                {t('sidebar.cabin')} <SimBadge />
               </h3>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">
-              ECLSS 示範
+              {t('sidebar.eclssDemo')}
             </span>
           </div>
 
@@ -229,7 +233,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             {/* Oxygen % */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <span className="text-xs font-medium text-slate-600">氧氣 %</span>
+                <span className="text-xs font-medium text-slate-600">{t('sidebar.o2')}</span>
                 <span className="text-base font-bold font-mono text-slate-900 tabular-nums">
                   {envMetrics.oxygenPercent.toFixed(1)} %
                 </span>
@@ -241,16 +245,16 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-0.5">
-                <span>下限 19.5%</span>
-                <span className="text-emerald-600 font-medium">目標 20.9%</span>
-                <span>上限 23.5%</span>
+                <span>{t('sidebar.o2Low')}</span>
+                <span className="text-emerald-600 font-medium">{t('sidebar.o2Target')}</span>
+                <span>{t('sidebar.o2High')}</span>
               </div>
             </div>
 
             {/* Carbon Dioxide % */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <span className="text-xs font-medium text-slate-600">二氧化碳 %</span>
+                <span className="text-xs font-medium text-slate-600">{t('sidebar.co2')}</span>
                 <span className={`text-base font-bold font-mono tabular-nums ${isCO2Elevated ? 'text-amber-600' : 'text-slate-900'}`}>
                   {envMetrics.carbonDioxidePercent.toFixed(2)} %
                 </span>
@@ -262,9 +266,9 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-0.5">
-                <span>標稱 &lt;0.35%</span>
+                <span>{t('sidebar.co2Nom')}</span>
                 <span className={isCO2Elevated ? 'text-amber-600 font-medium' : 'text-slate-500'}>
-                  警示 &gt;0.50%
+                  {t('sidebar.co2Alert')}
                 </span>
               </div>
             </div>
@@ -272,19 +276,19 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             {/* Supplementary station habitat metrics */}
             <div className="pt-3 border-t border-slate-100 grid grid-cols-2 gap-3 text-xs font-mono">
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400">氣壓</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.pressure')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.cabinPressureKpa} kPa</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400">溫度</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.temp')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.cabinTempCelsius} °C</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400">艙內輻射（示範）</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.radiation')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.ambientRadiationMsvDay} mSv/d</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400">濕度</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.humidity')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.humidityPercent} %</div>
               </div>
             </div>
@@ -293,7 +297,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
         {/* Live Scrubber simulation control */}
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-          <span className="text-slate-500 text-[11px]">CO₂ 滌氣（示範控制）：</span>
+          <span className="text-slate-500 text-[11px]">{t('sidebar.scrub')}</span>
           <button
             type="button"
             onClick={() => {
@@ -302,7 +306,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             }}
             className="px-2.5 py-1 text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-sky-600"
           >
-            {envMetrics.carbonDioxidePercent > 0.35 ? '沖洗沸石床' : '模擬尖峰'}
+            {envMetrics.carbonDioxidePercent > 0.35 ? t('sidebar.flush') : t('sidebar.simSpike')}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckSquare, Plus } from 'lucide-react';
 import { StationTask, AstronautProfile } from '../types';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
   const [module, setModule] = useState<StationTask['module']>('Columbus BioLab');
   const [priority, setPriority] = useState<StationTask['priority']>('High');
   const [description, setDescription] = useState('');
+  const { t } = useI18n();
   const [assignedAstroName, setAssignedAstroName] = useState(astronauts[0]?.name || 'Alice Smith');
 
   if (!isOpen) return null;
@@ -60,7 +62,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
           <div className="flex items-center gap-2">
             <CheckSquare className="w-5 h-5 text-sky-600" />
             <h3 className="text-base font-bold text-slate-900">
-              新增太空站目標
+              {t('newTask.title')}
             </h3>
           </div>
           <button
@@ -74,7 +76,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              目標／任務名稱
+              {t('newTask.name')}
             </label>
             <input
               type="text"
@@ -89,7 +91,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                站上模組
+                {t('newTask.module')}
               </label>
               <select
                 value={module}
@@ -106,24 +108,24 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
 
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                優先等級
+                {t('newTask.priority')}
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
-                <option value="Critical">危急</option>
-                <option value="High">高</option>
-                <option value="Medium">中</option>
-                <option value="Routine">例行</option>
+                <option value="Critical">{t('priority.Critical')}</option>
+                <option value="High">{t('priority.High')}</option>
+                <option value="Medium">{t('priority.Medium')}</option>
+                <option value="Routine">{t('priority.Routine')}</option>
               </select>
             </div>
           </div>
 
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
-              指派組員
+              {t('newTask.assign')}
             </label>
             <select
               value={assignedAstroName}

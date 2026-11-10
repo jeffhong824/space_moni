@@ -2,6 +2,7 @@ import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, Station
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis, type TwoLevelAnalysis } from '../domain/healthPacking';
 import type { SelfCheckEntry } from '../domain/healthThresholds';
+import { DEFAULT_LANG } from '../i18n/index';
 
 export async function callAiDoctor(input: {
   message: string;
@@ -12,13 +13,16 @@ export async function callAiDoctor(input: {
   selfCheck?: SelfCheckEntry | null;
   tasks?: StationTask[];
   history?: Array<{ sender: string; text: string }>;
+  lang?: string;
 }): Promise<TwoLevelAnalysis> {
+  const lang = input.lang || DEFAULT_LANG;
   const packed = packHealthPayload(
     input.astronaut,
     input.telemetry,
     input.envMetrics,
     input.spaceEnvironment ?? null,
-    input.selfCheck ?? null
+    input.selfCheck ?? null,
+    lang
   );
 
   try {
@@ -39,6 +43,7 @@ export async function callAiDoctor(input: {
           status: t.status,
         })),
         history: input.history,
+        lang,
       }),
     });
 
@@ -49,6 +54,6 @@ export async function callAiDoctor(input: {
     return (await response.json()) as TwoLevelAnalysis;
   } catch (error) {
     console.error('AI Doctor API error:', error);
-    return buildOfflineTwoLevelAnalysis(input.message, packed);
+    return buildOfflineTwoLevelAnalysis(input.message, packed, lang);
   }
 }

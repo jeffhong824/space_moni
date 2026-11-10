@@ -13,6 +13,7 @@ import {
   PanelRightOpen,
 } from 'lucide-react';
 import { StationTask } from '../types';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface StationTaskPanelProps {
   tasks: StationTask[];
@@ -35,6 +36,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
   const isCollapsed = propIsCollapsed !== undefined ? propIsCollapsed : internalCollapsed;
   const toggleCollapse = onToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
 
+  const { t } = useI18n();
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -99,7 +101,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 className="text-[11px] font-bold uppercase tracking-widest text-slate-600 font-mono select-none mt-3"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
-                站務目標
+                {t('tasks.station')}
               </div>
             </div>
             <div className="pb-3 text-slate-400 hover:text-slate-800 transition-colors flex flex-col items-center gap-1">
@@ -114,7 +116,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 <div className="flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-emerald-600" />
                   <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    太空站目標
+                    {t('tasks.station')}
                   </h2>
                 </div>
               </div>
@@ -125,7 +127,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   title="Create new station task"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>新增任務</span>
+                  <span>{t('tasks.new')}</span>
                 </button>
                 <button
                   onClick={toggleCollapse}
@@ -133,7 +135,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   title="Hide right-side panel for better viewing of health & activities"
                 >
                   <PanelRightClose className="w-3.5 h-3.5 text-slate-500 group-hover:text-rose-600 transition-colors" />
-                  <span>隱藏面板</span>
+                  <span>{t('tasks.hide')}</span>
                 </button>
               </div>
             </div>
@@ -142,24 +144,24 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
             <div className="flex items-center justify-between text-[11px] font-mono px-2.5 py-1.5 bg-sky-50/80 border border-sky-200/60 rounded-lg text-sky-900 shadow-2xs">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                <span>目標面板</span>
+                <span>{t('tasks.panel')}</span>
               </span>
               <button
                 onClick={toggleCollapse}
                 className="text-sky-700 hover:text-sky-950 font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>隱藏面板以放大健康視圖</span> →
+                <span>{t('tasks.hideHint')}</span> →
               </button>
             </div>
 
             {/* Priority Filter segmented tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs font-medium">
               {([
-                ['ALL', '全部'],
-                ['Critical', '危急'],
-                ['High', '高'],
-                ['Medium', '中'],
-                ['Routine', '例行'],
+                ['ALL', t('tasks.all')],
+                ['Critical', t('priority.Critical')],
+                ['High', t('priority.High')],
+                ['Medium', t('priority.Medium')],
+                ['Routine', t('priority.Routine')],
               ] as const).map(([p, label]) => (
                 <button
                   key={p}
@@ -177,17 +179,17 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
             {/* Status filter tabs */}
             <div className="flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono">狀態：</span>
+                <span className="text-[11px] font-mono">{t('hq.status')}：</span>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer"
                 >
-                  <option value="ALL">全部狀態</option>
-                  <option value="In Progress">進行中</option>
-                  <option value="Scheduled">已排程</option>
-                  <option value="Completed">已完成</option>
-                  <option value="Pending Review">待審</option>
+                  <option value="ALL">{t('tasks.filterAll')}</option>
+                  <option value="In Progress">{t('taskStatus.In Progress')}</option>
+                  <option value="Scheduled">{t('taskStatus.Scheduled')}</option>
+                  <option value="Completed">{t('taskStatus.Completed')}</option>
+                  <option value="Pending Review">{t('taskStatus.Pending Review')}</option>
                 </select>
               </div>
               <span className="text-[11px] font-mono tabular-nums">

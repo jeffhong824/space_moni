@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, ShieldCheck, Radio, Satellite, HeartPulse, LogOut, User, Shield, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { EnvironmentalMetrics, AuthUser } from '../types';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useI18n } from '../i18n/I18nProvider';
 
-export type AppView = 'home' | 'console' | 'sources';
+export type AppView = 'home' | 'console' | 'sources' | 'hq';
 
 interface TopNavProps {
   envMetrics: EnvironmentalMetrics;
@@ -29,6 +31,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   speDemo = false,
   onToggleSpeDemo,
 }) => {
+  const { t } = useI18n();
   const [utcTime, setUtcTime] = useState<string>('');
   const [metString, setMetString] = useState<string>('T+289D:01H:00M');
 
@@ -73,7 +76,7 @@ export const TopNav: React.FC<TopNavProps> = ({
             SpaceMoni
           </span>
           <span className="text-[11px] font-mono text-slate-500 tracking-wide hidden sm:inline">
-            ISS Expedition 76 · 太空人健康與任務作業
+            {t('app.tagline')}
           </span>
         </div>
       </div>
@@ -86,17 +89,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">站時：</span>
+          <span className="text-slate-400">{t('nav.stationTime')}：</span>
           <span className="font-semibold text-slate-800 tabular-nums">{utcTime || '07:45:00 UTC'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-slate-500">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>ECLSS：標稱（示範）</span>
+          <span>{t('nav.eclssDemo')}</span>
           <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>軌道 418 km</span>
+          <span>{t('nav.orbitLeo')}</span>
           <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>7.66 km/s</span>
+          <span>{t('nav.speed')}</span>
         </div>
       </div>
 
@@ -104,9 +107,17 @@ export const TopNav: React.FC<TopNavProps> = ({
         <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
           {(
             [
-              ['home', currentUser.role === 'NASA' ? '異常佇列' : currentUser.role === 'Commander' ? '組員總覽' : '今日健康'],
-              ['console', '作業台'],
-              ['sources', '資料來源'],
+              ...(currentUser.role === 'NASA' ? [['hq', t('nav.hq')] as [AppView, string]] : []),
+              [
+                'home',
+                currentUser.role === 'NASA'
+                  ? t('nav.homeNasa')
+                  : currentUser.role === 'Commander'
+                    ? t('nav.homeCommander')
+                    : t('nav.homeAstronaut'),
+              ],
+              ['console', t('nav.console')],
+              ['sources', t('nav.sources')],
             ] as Array<[AppView, string]>
           ).map(([id, label]) => (
             <button
@@ -132,15 +143,26 @@ export const TopNav: React.FC<TopNavProps> = ({
             className={`hidden sm:flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border ${
               speDemo ? 'bg-amber-100 text-amber-950 border-amber-400' : 'bg-white text-slate-600 border-slate-200'
             }`}
-            title="疊加標示為示範的太陽質子事件，非 NOAA 即時質子讀數"
+            title={t('nav.speTitle')}
           >
-            {speDemo ? '示範 SPE 開' : '示範 SPE'}
+            {speDemo ? t('nav.speOn') : t('nav.speOff')}
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            window.history.pushState({}, '', '/sim');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }}
+          className="hidden sm:flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border border-slate-200 bg-white text-slate-700"
+        >
+          {t('nav.sim')}
+        </button>
+        <LanguageSwitcher />
         {currentUser && (
           <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getRoleBadge(currentUser.role)}`}>
-              {currentUser.role === 'NASA' ? 'NASA' : currentUser.role === 'Commander' ? '指揮官' : '太空人'}
+              {currentUser.role === 'NASA' ? t('role.nasa') : currentUser.role === 'Commander' ? t('role.commander') : t('role.astronaut')}
             </span>
             <span className="font-semibold text-slate-800 max-w-[120px] truncate hidden sm:inline">
               {currentUser.name}
@@ -157,17 +179,17 @@ export const TopNav: React.FC<TopNavProps> = ({
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
             }`}
             aria-pressed={!isRightPanelCollapsed}
-            title={isRightPanelCollapsed ? '顯示站務目標面板' : '隱藏右側面板以放大健康視圖'}
+            title={isRightPanelCollapsed ? t('nav.showTitle') : t('nav.hideTitle')}
           >
             {isRightPanelCollapsed ? (
               <>
                 <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                <span className="hidden md:inline">顯示目標</span>
+                <span className="hidden md:inline">{t('nav.showTasks')}</span>
               </>
             ) : (
               <>
                 <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden md:inline">隱藏目標</span>
+                <span className="hidden md:inline">{t('nav.hideTasks')}</span>
               </>
             )}
           </button>
@@ -176,19 +198,19 @@ export const TopNav: React.FC<TopNavProps> = ({
         <button
           onClick={onOpenAiCall}
           className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-sky-900 bg-sky-100 hover:bg-sky-200 border border-sky-300/80 rounded-lg transition-all shadow-2xs active:scale-98 cursor-pointer"
-          title="與 AURA 飛行外科醫師通話"
+          title={t('nav.aiTitle')}
         >
           <Radio className="w-3.5 h-3.5 text-sky-600 animate-pulse" />
-          <span className="hidden sm:inline">AI 飛行外科醫師</span>
+          <span className="hidden sm:inline">{t('nav.aiSurgeon')}</span>
         </button>
 
         <button
           onClick={onLogout}
           className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-          title="登出並返回登入頁"
+          title={t('nav.logoutTitle')}
         >
           <LogOut className="w-3.5 h-3.5 text-slate-500" />
-          <span className="hidden sm:inline">登出</span>
+          <span className="hidden sm:inline">{t('nav.logout')}</span>
         </button>
       </div>
     </header>

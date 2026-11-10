@@ -34,11 +34,13 @@ export function toneFromStatus(status?: string): Tone {
   if (
     status === 'Attention' ||
     status === 'Attention Required' ||
+    status === 'Caution' ||
     status === 'High' ||
     status === 'Moderate' ||
     status === 'partial' ||
     status === 'Elevated' ||
-    status === '注意'
+    status === '注意' ||
+    status === 'Precaución'
   ) {
     return 'warn';
   }

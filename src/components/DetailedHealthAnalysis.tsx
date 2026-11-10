@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import type { MetricAnalysis, SystemAnalysis } from '../types';
 import { StatusPill, toneFromStatus } from '../ui/StatusPill';
-import { statusLabelZh } from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { statusLabel } from '../i18n/index';
 
 interface DetailedHealthAnalysisProps {
   metrics?: MetricAnalysis[];
@@ -29,15 +30,6 @@ interface DetailedHealthAnalysisProps {
 }
 
 
-const systemLabel: Record<string, string> = {
-  Cardiovascular: '心血管系統',
-  Respiratory: '呼吸系統',
-  Sleep: '睡眠品質',
-  Exercise: '運動對策',
-  Mental: '心理狀態',
-  Musculoskeletal: '肌肉骨骼',
-  Nutrition: '營養攝取',
-};
 
 function StatusIcon({ status }: { status: string }) {
   if (status === 'Critical') return <XCircle className="w-4 h-4" aria-hidden />;
@@ -80,39 +72,40 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
   dataQuality,
   analysisMode,
 }) => {
+  const { t, lang } = useI18n();
   return (
     <div className="space-y-4">
       <div className={`rounded-xl p-3.5 border ${toneClass(overallStatus)}`}>
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-2">
             <StatusIcon status={overallStatus} />
-            <h3 className="font-bold text-sm">整體健康評估</h3>
+            <h3 className="font-bold text-sm">{t('ai.overall')}</h3>
           </div>
-          <StatusPill tone={toneFromStatus(overallStatus)}>{statusLabelZh(overallStatus)}</StatusPill>
+          <StatusPill tone={toneFromStatus(overallStatus)}>{statusLabel(lang, overallStatus)}</StatusPill>
         </div>
         <p className="text-xs leading-relaxed">{overallSummary}</p>
         {analysisMode === 'offline_fallback' && (
           <p className="text-[11px] font-semibold mt-2 rounded-md bg-white/70 border border-current/15 px-2 py-1">
-            AI 離線，以下為門檻引擎結果
+            {t('ai.offlineBanner')}
           </p>
         )}
         {analysisMode === 'live_gemini' && (
-          <p className="text-[10px] font-mono mt-2 opacity-80">模式：Gemini 即時</p>
+          <p className="text-[10px] font-mono mt-2 opacity-80">{t('ai.liveMode')}</p>
         )}
       </div>
 
       {dataQuality && (
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] text-slate-600 space-y-0.5">
           <p>
-            <span className="font-semibold text-slate-800">生理來源：</span>
+            <span className="font-semibold text-slate-800">{t('ai.srcPhysio')} </span>
             {dataQuality.telemetry}
           </p>
           <p>
-            <span className="font-semibold text-slate-800">艙內環境：</span>
+            <span className="font-semibold text-slate-800">{t('ai.srcCabin')} </span>
             {dataQuality.cabin}
           </p>
           <p>
-            <span className="font-semibold text-slate-800">空間天氣：</span>
+            <span className="font-semibold text-slate-800">{t('ai.srcWx')} </span>
             {dataQuality.spaceEnvironment}
           </p>
         </div>
@@ -120,7 +113,7 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
 
       {metrics.length > 0 && (
         <div>
-          <h4 className="text-[11px] font-bold text-slate-600 mb-2 tracking-wide">逐項生理指標</h4>
+          <h4 className="text-[11px] font-bold text-slate-600 mb-2 tracking-wide">{t('ai.metrics')}</h4>
           <div className="space-y-2">
             {metrics.map((metric) => (
               <article key={metric.metric} className={`rounded-xl p-3 border ${toneClass(metric.status)}`}>
@@ -132,7 +125,7 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
                   <span className="font-mono font-bold text-sm tabular-nums shrink-0">{metric.value}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-1.5">
-                  <StatusPill tone={toneFromStatus(metric.status)}>{statusLabelZh(metric.status)}</StatusPill>
+                  <StatusPill tone={toneFromStatus(metric.status)}>{statusLabel(lang, metric.status)}</StatusPill>
                   {metric.threshold && <StatusPill tone="neutral">{metric.threshold}</StatusPill>}
                 </div>
                 <p className="text-xs leading-relaxed">{metric.analysis}</p>
@@ -154,16 +147,16 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
 
       {systems.length > 0 && (
         <div>
-          <h4 className="text-[11px] font-bold text-slate-600 mb-2 tracking-wide">身體系統評估</h4>
+          <h4 className="text-[11px] font-bold text-slate-600 mb-2 tracking-wide">{t('ai.systems')}</h4>
           <div className="space-y-2">
             {systems.map((system) => (
               <article key={system.system} className={`rounded-xl p-3 border ${toneClass(system.status)}`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <SystemIcon system={system.system} />
-                    <span className="font-bold text-xs">{systemLabel[system.system] || system.system}</span>
+                    <span className="font-bold text-xs">{t(`system.${system.system}`)}</span>
                   </div>
-                  <StatusPill tone={toneFromStatus(system.status)}>{statusLabelZh(system.status)}</StatusPill>
+                  <StatusPill tone={toneFromStatus(system.status)}>{statusLabel(lang, system.status)}</StatusPill>
                 </div>
                 <p className="text-xs leading-relaxed">{system.summary}</p>
                 {system.concerns.length > 0 && (

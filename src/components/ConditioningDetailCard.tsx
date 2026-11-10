@@ -19,12 +19,13 @@ import {
   Info,
 } from 'lucide-react';
 import { DailyHealthRecord } from '../types';
+import { useI18n } from '../i18n/I18nProvider';
+import { statusI18nKey, statusLabel } from '../i18n/index';
 import {
   ConditioningCategory,
   CONDITIONING_DETAILS,
   ConditioningDetail,
 } from '../data/conditioningData';
-import { statusLabelZh } from '../domain/healthThresholds';
 
 interface ConditioningDetailCardProps {
   currentRecord: DailyHealthRecord;
@@ -37,6 +38,7 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
   initialCategory,
   onAskAi,
 }) => {
+  const { t, lang } = useI18n();
   // Currently active selected conditioning category for detailed inspection below
   const [selectedCategory, setSelectedCategory] = useState<ConditioningCategory | null>(
     initialCategory !== undefined ? initialCategory : 'sleep'
@@ -87,11 +89,11 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
   };
 
   const categories: { id: ConditioningCategory; label: string; systemTag: string }[] = [
-    { id: 'sleep', label: '睡眠時數', systemTag: 'Hibernation Pod（示範遙測）' },
-    { id: 'exercise', label: '運動對策', systemTag: 'T2 與 ARED（示範）' },
-    { id: 'mental', label: '認知與心理', systemTag: 'AURA 語音檢核日誌（示範）' },
-    { id: 'musculoskeletal', label: '肌肉骨骼韌性', systemTag: '應變與生物阻抗（示範）' },
-    { id: 'nutrition', label: '營養與熱量', systemTag: '廚房條碼紀錄（示範）' },
+    { id: 'sleep', label: t('cond.sleep'), systemTag: t('cond.sleepTag') },
+    { id: 'exercise', label: t('cond.exercise'), systemTag: t('cond.exTag') },
+    { id: 'mental', label: t('cond.mental'), systemTag: t('cond.mentalTag') },
+    { id: 'musculoskeletal', label: t('cond.msk'), systemTag: t('cond.mskTag') },
+    { id: 'nutrition', label: t('cond.nutrition'), systemTag: t('cond.nutTag') },
   ];
 
   return (
@@ -102,16 +104,16 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-sky-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              每日體能對策與設備遙測
+              {t('cond.title')}
             </h3>
           </div>
           <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-            點選指標可檢視示範硬體管線與近五日紀錄（非即時飛行硬體）
+            {t('cond.hint')}
           </p>
         </div>
 
         <span className="text-[10px] font-mono px-2 py-0.5 bg-sky-50 text-sky-700 font-semibold rounded border border-sky-200">
-          5 套示範系統
+          {t('cond.systems')}
         </span>
       </div>
 
@@ -257,14 +259,14 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                         <td className="py-2 px-3">
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              statusLabelZh(day.status) === '正常'
+                              statusI18nKey(day.status) === 'status.normal'
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : statusLabelZh(day.status) === '注意'
+                                : statusI18nKey(day.status) === 'status.caution'
                                 ? 'bg-amber-100 text-amber-800'
                                 : 'bg-rose-100 text-rose-800'
                             }`}
                           >
-                            {statusLabelZh(day.status)}
+                            {statusLabel(lang, day.status)}
                           </span>
                         </td>
                         <td className="py-2 px-3 text-slate-500 hidden sm:table-cell font-sans text-xs">

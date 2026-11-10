@@ -47,7 +47,7 @@ export function ErrorBlock({
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-rose-900 hover:underline focus-visible:outline-2 focus-visible:outline-rose-600 rounded"
             >
               <RefreshCw className="w-3 h-3" aria-hidden />
-              重試
+              Retry
             </button>
           )}
         </div>

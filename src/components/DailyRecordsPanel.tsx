@@ -38,11 +38,11 @@ import {
   BAND_NUMBERS,
   interpretHourlyPoint,
   interpretRecord,
-  qualitativeLabelZh,
-  statusLabelZh,
   THRESHOLDS,
   hourlyAbnormal,
 } from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey, statusLabel } from '../i18n/index';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
@@ -69,6 +69,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   isRightPanelCollapsed = false,
   onToggleRightPanel,
 }) => {
+  const { t, lang } = useI18n();
   // If focusedDate is set, other days are hidden and only this day's full 24-hour detail is displayed
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [showCommanderModal, setShowCommanderModal] = useState<boolean>(false);
@@ -143,7 +144,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               {hrStatus !== 'Normal' && (
                 <span className="px-2.5 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 rounded-md border border-rose-300 font-mono flex items-center gap-1 animate-pulse">
                   <AlertTriangle className="w-3 h-3 text-rose-600" />
-                  {statusLabelZh(hrStatus)} · {THRESHOLDS.restingHR.labelZh}
+                  {statusLabel(lang, hrStatus)} · {THRESHOLDS.restingHR.labelZh}
                 </span>
               )}
             </div>
@@ -224,7 +225,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-rose-800 mt-1 leading-relaxed">
-                    當日靜息心率 <strong>{currentRecord.restingHR} bpm</strong>（{statusLabelZh(hrStatus)} {THRESHOLDS.restingHR.critical}），HRV <strong>{currentRecord.hrv} ms</strong>（{statusLabelZh(hrvStatus)}）。數值來自示範遙測，請一併對照官方空間天氣。
+                    當日靜息心率 <strong>{currentRecord.restingHR} bpm</strong>（{statusLabel(lang, hrStatus)} {THRESHOLDS.restingHR.critical}），HRV <strong>{currentRecord.hrv} ms</strong>（{statusLabel(lang, hrvStatus)}）。數值來自示範遙測，請一併對照官方空間天氣。
                   </p>
                 </div>
               </div>
@@ -264,7 +265,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
                 <span className={hrStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {statusLabelZh(hrStatus)}
+                  {statusLabel(lang, hrStatus)}
                 </span>
                 <span className="text-slate-400">{THRESHOLDS.restingHR.normal}</span>
               </div>
@@ -292,7 +293,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
                 <span className={hrvStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {statusLabelZh(hrvStatus)}
+                  {statusLabel(lang, hrvStatus)}
                 </span>
                 <span className="text-slate-400">{THRESHOLDS.hrv.normal}</span>
               </div>
@@ -484,7 +485,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                             {spike ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white shadow-2xs">
                                 <AlertTriangle className="w-3 h-3" />
-                                {statusLabelZh(interpretHourlyPoint(pt))}
+                                {statusLabel(lang, interpretHourlyPoint(pt))}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
@@ -608,7 +609,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               )}
             </div>
             <p className="text-xs text-slate-500 font-mono mt-0.5">
-              對象：<strong className="text-slate-800">{currentAstronaut.name}</strong>（{currentAstronaut.role}）· 模組：{currentAstronaut.stationModule}
+              {t('records.subject', { name: currentAstronaut.name, role: localizeKey(lang, currentAstronaut.role), module: localizeKey(lang, currentAstronaut.stationModule) })}
             </p>
           </div>
           <div className="text-xs font-mono text-slate-500 flex items-center gap-3">
@@ -681,7 +682,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   {dayHr !== 'Normal' && (
                     <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold bg-rose-100 text-rose-800 rounded-md border border-rose-300">
                       <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      {statusLabelZh(dayHr)}（{record.restingHR} bpm）
+                      {statusLabel(lang, dayHr)}（{record.restingHR} bpm）
                     </span>
                   )}
                 </div>
@@ -926,7 +927,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(AURA AI)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {qualitativeLabelZh(record.mentalStatus)}
+                          {statusLabel(lang, record.mentalStatus)}
                         </span>
                       </button>
 
@@ -952,7 +953,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Strain/Bio)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {qualitativeLabelZh(record.musculoskeletalStatus)}
+                          {statusLabel(lang, record.musculoskeletalStatus)}
                         </span>
                       </button>
 
@@ -978,7 +979,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Galley Logs)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {qualitativeLabelZh(record.nutritionStatus)}
+                          {statusLabel(lang, record.nutritionStatus)}
                         </span>
                       </button>
                     </div>

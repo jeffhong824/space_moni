@@ -23,8 +23,10 @@ import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
 import { callAiDoctor } from '../api/aiDoctor';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
-import { statusLabelZh } from '../domain/healthThresholds';
 import type { SelfCheckEntry } from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey, statusLabel } from '../i18n/index';
+import { toneFromStatus } from '../ui/StatusPill';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -51,48 +53,55 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   spaceEnvironment = null,
   selfCheck = null,
 }) => {
-  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck);
+  const { t, lang } = useI18n();
+  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang);
   const buildGreeting = (): AiMessage => ({
       id: 'msg-init',
       sender: 'aura',
       timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
-      text: `AURA 上線，${astronaut.name}。任務第 ${astronaut.missionDaysElapsed} 日。${packed.overall.summary} 靜息心率 ${todayRecord.restingHR} bpm、HRV ${todayRecord.hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？`,
+      text: t('ai.greeting', {
+        name: astronaut.name,
+        day: astronaut.missionDaysElapsed,
+        summary: packed.overall.summary,
+        hr: todayRecord.restingHR,
+        hrv: todayRecord.hrv,
+      }),
       healthAssessment: packed.overall,
       detailedAnalysis: { metrics: packed.metrics, systems: packed.systems },
       analysisMode: 'offline_fallback',
       dataQuality: {
-        telemetry: packed.source.labelZh,
-        cabin: packed.cabinEnvironment?.source.labelZh || '未提供',
+        telemetry: t('badge.simTelemetry'),
+        cabin: packed.cabinEnvironment ? t('badge.simCabin') : t('ai.noCabin'),
         spaceEnvironment: packed.spaceEnvironment
-          ? `官方饋送 ${packed.spaceEnvironment.overallStatus}`
-          : '尚未載入空間天氣',
+          ? t('ai.wxOfficial', { status: packed.spaceEnvironment.overallStatus })
+          : t('ai.noWx'),
       },
       suggestedActions: packed.overall.status === 'Normal'
         ? [
             {
               id: 'sug-ack',
-              label: '記錄例行健康檢核完成',
+              label: t('ai.ackRoutine'),
               type: 'LOG_ANOMALY',
-              payload: { note: `${astronaut.name} 例行檢核：${packed.overall.status}` },
+              payload: { note: `${astronaut.name}: ${packed.overall.status}` },
             },
           ]
         : [
             {
               id: 'sug-1',
-              label: '安排補液與電解質對策',
+              label: t('ai.hydrate'),
               type: 'ADD_TASK',
               payload: {
-                title: '等滲補液與心血管方案',
+                title: t('ai.hydrateTask'),
                 module: 'Tranquility ECLSS',
                 priority: 'High',
               },
             },
             {
               id: 'sug-2',
-              label: '記錄心血管觀測',
+              label: t('ai.logCardio'),
               type: 'LOG_ANOMALY',
               payload: {
-                note: `${astronaut.name}：靜息心率 ${todayRecord.restingHR} bpm，HRV ${todayRecord.hrv} ms。`,
+                note: `${astronaut.name}: HR ${todayRecord.restingHR} bpm, HRV ${todayRecord.hrv} ms.`,
               },
             },
           ],
@@ -251,13 +260,14 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         selfCheck,
         tasks,
         history: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
+        lang,
       });
 
       const auraMessage: AiMessage = {
         id: 'aura-' + Date.now(),
         sender: 'aura',
         timestamp: new Date().toISOString().slice(11, 16) + ' UTC',
-        text: data.replyText || '遙測收訊完成。待命中。',
+        text: data.replyText || t('ai.standby'),
         suggestedActions: data.suggestedActions,
         healthAssessment: data.healthAssessment,
         detailedAnalysis: data.detailedAnalysis,
@@ -272,8 +282,8 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       }
     } catch (err) {
       console.error('Error contacting AI doctor:', err);
-      const fallbackPacked = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck);
-      const fallback = buildOfflineTwoLevelAnalysis(text, fallbackPacked);
+      const fallbackPacked = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang);
+      const fallback = buildOfflineTwoLevelAnalysis(text, fallbackPacked, lang);
       const fallbackMsg: AiMessage = {
         id: 'aura-err-' + Date.now(),
         sender: 'aura',
@@ -344,14 +354,14 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 id="aura-dialog-title" className="text-sm font-bold text-slate-900 tracking-tight">
-                  AURA · 站務 AI 醫療與任務官
+                  {t('ai.title')}
                 </h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  即時生物鏈結
+                  {t('ai.link')}
                 </span>
               </div>
               <p className="text-xs font-mono text-slate-500">
-                已連接 {astronaut.name} ({astronaut.role}) · 靜息心率：{todayRecord.restingHR} bpm
+                {t('ai.connected', { name: astronaut.name, role: localizeKey(lang, astronaut.role), hr: todayRecord.restingHR })}
               </p>
             </div>
           </div>
@@ -367,7 +377,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   ? 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100'
                   : 'bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600'
               }`}
-              title={speechSynthesisEnabled ? '語音輸出啟用' : '語音輸出靜音'}
+              title={speechSynthesisEnabled ? t('ai.speechOn') : t('ai.speechOff')}
             >
               {speechSynthesisEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -434,12 +444,12 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                         {isSpeaking ? (
                           <>
                             <Square className="w-3 h-3 text-rose-500 fill-current" />
-                            <span>停止語音</span>
+                            <span>{t('ai.stopSpeech')}</span>
                           </>
                         ) : (
                           <>
                             <Play className="w-3 h-3" />
-                            <span>重播語音</span>
+                            <span>{t('ai.replay')}</span>
                           </>
                         )}
                       </button>
@@ -448,7 +458,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 
                   {msg.analysisMode === 'offline_fallback' && (
                     <p className="text-[11px] font-semibold text-amber-950 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
-                      AI 離線，以下為門檻引擎結果
+                      {t('ai.offlineBanner')}
                     </p>
                   )}
 
@@ -456,11 +466,11 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   {msg.healthAssessment && (
                     <div className="pt-2 border-t border-slate-100">
                       <div className={`px-3 py-2 rounded-lg text-xs ${
-                        statusLabelZh(msg.healthAssessment.status) === '危急' ? 'bg-rose-50 border border-rose-200 text-rose-900' :
-                        statusLabelZh(msg.healthAssessment.status) === '注意' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
+                        toneFromStatus(msg.healthAssessment.status) === 'crit' ? 'bg-rose-50 border border-rose-200 text-rose-900' :
+                        toneFromStatus(msg.healthAssessment.status) === 'warn' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
                         'bg-emerald-50 border border-emerald-200 text-emerald-900'
                       }`}>
-                        <div className="font-bold mb-1">健康狀態：{statusLabelZh(msg.healthAssessment.status)}</div>
+                        <div className="font-bold mb-1">{t('ai.healthStatus', { status: statusLabel(lang, msg.healthAssessment.status) })}</div>
                         <div className="text-[11px] opacity-90">{msg.healthAssessment.summary}</div>
                       </div>
                     </div>
@@ -474,7 +484,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                         className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors focus-visible:outline-2 focus-visible:outline-sky-600"
                         aria-expanded={expandedAnalysisId === msg.id}
                       >
-                        <span>詳細健康分析（整體＋逐項）</span>
+                        <span>{t('ai.detailToggle')}</span>
                         {expandedAnalysisId === msg.id ? (
                           <ChevronUp className="w-4 h-4" aria-hidden />
                         ) : (
@@ -500,7 +510,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   {msg.suggestedActions && msg.suggestedActions.length > 0 && (
                     <div className="pt-2 border-t border-slate-100 space-y-2">
                       <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-                        可執行站務行動
+                        {t('ai.actions')}
                       </div>
                       <div className="flex flex-col gap-1.5">
                         {msg.suggestedActions.map((action) => (
@@ -543,7 +553,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               </div>
               <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-sky-500 animate-pulse" />
-                <span>AURA 正在合成醫療分析...</span>
+                <span>{t('ai.synthesizing')}</span>
               </div>
             </div>
           )}
@@ -553,24 +563,24 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 
         {/* Quick prompt suggestions */}
         <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0 font-mono">
-          <span className="text-slate-400 shrink-0">快速詢問：</span>
+          <span className="text-slate-400 shrink-0">{t('ai.quick')}</span>
           <button
-            onClick={() => handleSendMessage('為什麼我的靜息心率是 103 bpm？')}
+            onClick={() => handleSendMessage(t('ai.qHrPrompt'))}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            心率 103 bpm 分析
+            {t('ai.qHr')}
           </button>
           <button
-            onClick={() => handleSendMessage('我現在可以安全執行植物催化劑實驗嗎？')}
+            onClick={() => handleSendMessage(t('ai.qExpPrompt'))}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            實驗準備度評估
+            {t('ai.qExp')}
           </button>
           <button
-            onClick={() => handleSendMessage('建議補液對策方案。')}
+            onClick={() => handleSendMessage(t('ai.qHydratePrompt'))}
             className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
           >
-            補液對策建議
+            {t('ai.qHydrate')}
           </button>
         </div>
 
@@ -592,7 +602,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   ? 'bg-rose-500 border-rose-600 text-white animate-pulse'
                   : 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-800'
               }`}
-              title={isListening ? '停止麥克風' : '語音輸入'}
+              title={isListening ? t('ai.micOn') : t('ai.micOff')}
             >
               {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5 text-sky-600" />}
             </button>
@@ -603,17 +613,13 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={
-                  isListening
-                    ? '聆聽中... 請向太空站 AI 說話...'
-                    : '與 AI 對話或輸入健康/任務相關問題...'
-                }
+                placeholder={isListening ? t('ai.listen') : t('ai.placeholder')}
                 className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
               />
               {isListening && (
                 <span className="absolute right-3 top-2.5 text-[10px] font-mono text-rose-600 font-semibold flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                  錄音中
+                  {t('ai.recording')}
                 </span>
               )}
             </div>
@@ -625,7 +631,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               className="p-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-40 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">發送</span>
+              <span className="hidden sm:inline">{t('ai.send')}</span>
             </button>
           </form>
         </div>

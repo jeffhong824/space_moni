@@ -15,6 +15,15 @@ export default defineConfig(() => {
       environment: 'node',
       include: ['src/**/*.test.ts'],
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules/phaser') || id.includes('/src/sim/')) return 'sim-engine';
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.

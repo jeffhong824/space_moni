@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis, thresholdTableForPrompt } from '../domain/healthPacking.ts';
+import { DEFAULT_LANG, isLangId, translate } from '../i18n/index.ts';
 import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics } from '../types.ts';
 import { applyRateLimitHeaders, consumeRateLimit } from './rateLimit.ts';
 import { clientIp, type ApiRequest, type ApiResponse } from './http.ts';
@@ -63,7 +64,8 @@ function asPacked(reqBody: Record<string, unknown>) {
     avatarSeed: astronaut.avatarSeed || '',
   };
 
-  return packHealthPayload(profile, record, envMetrics, spaceEnvironment as never);
+  const lang = isLangId(String(reqBody.lang || '')) ? String(reqBody.lang) : DEFAULT_LANG;
+  return packHealthPayload(profile, record, envMetrics, spaceEnvironment as never, null, lang);
 }
 
 export async function handleAiDoctor(req: ApiRequest, res: ApiResponse) {
@@ -77,13 +79,14 @@ export async function handleAiDoctor(req: ApiRequest, res: ApiResponse) {
   if (!limit.ok) {
     return res.status(429).json({
       error: 'rate_limited',
-      message: `公開示範請求過於頻繁。請 ${limit.retryAfterSec} 秒後再試。`,
+      message: translate(isLangId(String((req.body as { lang?: string } | undefined)?.lang || '')) ? String((req.body as { lang?: string }).lang) : DEFAULT_LANG, 'ai.rateLimited', { s: limit.retryAfterSec }),
       retryAfterSec: limit.retryAfterSec,
     });
   }
 
   const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
-  const message = String(body.message || '請依打包後的生理與空間天氣資料進行健康檢核。');
+  const lang = isLangId(String(body.lang || '')) ? String(body.lang) : DEFAULT_LANG;
+  const message = String(body.message || translate(lang, 'astro.callAura'));
   const packed = asPacked(body);
   const history = Array.isArray(body.history) ? body.history.slice(-4) : [];
   const currentTasks = Array.isArray(body.currentTasks) ? body.currentTasks.slice(0, 8) : [];
@@ -92,34 +95,38 @@ export async function handleAiDoctor(req: ApiRequest, res: ApiResponse) {
     const ai = getGeminiClient();
 
     if (!ai) {
-      return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed));
+      return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed, lang));
     }
 
-    const systemInstruction = `你是 AURA（Autonomous Utility & Resuscitation Assistant），軌道站 AI 飛行外科醫師。
-所有對使用者可見的文字必須使用繁體中文（zh-Hant-TW）。
+    const langName =
+      lang === 'zh-Hant-TW' ? 'Traditional Chinese (zh-Hant-TW)' : lang === 'es' ? 'Spanish' : lang === 'ja' ? 'Japanese' : 'English';
 
-資料誠實性：
-- 機組生理遙測為「模擬示範資料」，不得宣稱來自真實飛行硬體。
-- 艙內 ECLSS 若標示為示範讀數，不得當成 NASA 公開 API。
-- 空間天氣只能使用請求中提供的官方觀測；沒有的欄位寫「無資料」，禁止編造 Kp、閃焰、CME 或輻射數字。
+    const systemInstruction = `You are AURA (Autonomous Utility & Resuscitation Assistant), an orbital AI flight surgeon.
+All user-visible text MUST be in ${langName} (locale ${lang}).
+Status vocabulary MUST be only: English Normal/Caution/Critical; Traditional Chinese 正常/注意/危急; Spanish Normal/Precaución/Crítico; Japanese 正常/注意/危険.
 
-示範臨床門檻（必須一致使用）：
+Data honesty:
+- Crew physiology is simulated demonstration telemetry. Never claim it is live flight hardware.
+- Cabin ECLSS readings are simulated, not a NASA public API.
+- Space weather may only use official observations in the request. Missing fields stay "no data". Never invent Kp, flares, CME, or radiation numbers.
+
+Demo clinical bands (must be used consistently):
 ${thresholdTableForPrompt()}
 
-已打包的健康資料 JSON：
+Packed health JSON:
 ${JSON.stringify(packed)}
 
-當前站務任務（摘要）：
+Current station tasks (summary):
 ${JSON.stringify(currentTasks)}
 
-回應要求：
-- replyText：2–4 句口語對話，先給整體評估再給下一步。
-- healthAssessment 必須與打包後的 overall.status 一致，除非你有明確理由調整並在 summary 說明。
-- detailedAnalysis.metrics 與 systems 必須覆蓋打包清單中的每一項，含單位與門檻解讀。
-- 提供 2–3 個可點擊行動（ADD_TASK / LOG_ANOMALY 等），標籤繁中、短於 18 字。`;
+Response:
+- replyText: 2–4 spoken sentences in ${langName}; overall assessment then next step.
+- healthAssessment must match packed overall.status unless you explain a change.
+- detailedAnalysis.metrics and systems must cover every packed item, with units and band interpretation.
+- Provide 2–3 clickable actions (ADD_TASK / LOG_ANOMALY). Labels in ${langName}, under 18 characters.`;
 
-    const prompt = `太空人訊息：「${message}」
-近期對話：${JSON.stringify(history)}`;
+    const prompt = `Crew message: "${message}"
+Recent dialogue: ${JSON.stringify(history)}`;
 
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('AI generation timed out after 8s')), 8000)
@@ -136,7 +143,7 @@ ${JSON.stringify(currentTasks)}
           properties: {
             replyText: {
               type: Type.STRING,
-              description: 'AURA spoken reply in Traditional Chinese',
+              description: `AURA spoken reply in ${langName}`,
             },
             healthAssessment: {
               type: Type.OBJECT,
@@ -230,6 +237,6 @@ ${JSON.stringify(currentTasks)}
     });
   } catch (error: unknown) {
     console.error('Gemini AI doctor error:', error);
-    return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed));
+    return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed, lang));
   }
 }
