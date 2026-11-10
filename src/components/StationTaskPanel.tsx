@@ -193,7 +193,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 </select>
               </div>
               <span className="text-[11px] font-mono tabular-nums">
-                {filteredTasks.length} 項任務
+                {t('tasks.count', { n: filteredTasks.length })}
               </span>
             </div>
           </>
@@ -205,7 +205,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 px-4 bg-white rounded-xl border border-dashed border-slate-200">
             <CheckSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs font-medium text-slate-600">沒有符合篩選的站務目標</p>
+            <p className="text-xs font-medium text-slate-600">{t('tasks.emptyFilter')}</p>
             <button
               onClick={() => {
                 setPriorityFilter('ALL');
@@ -214,7 +214,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
               }}
               className="mt-2 text-xs text-sky-600 hover:underline font-mono"
             >
-              重設篩選
+              {t('tasks.reset')}
             </button>
           </div>
         ) : (
@@ -257,7 +257,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 {/* Progress Bar & Status Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-[11px] font-mono">
-                    <span className="text-slate-500">進度</span>
+                    <span className="text-slate-500">{t('tasks.progress')}</span>
                     <span className="font-semibold text-slate-800 tabular-nums">{task.progress}%</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -328,7 +328,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-white border border-dashed border-slate-300 transition-colors shadow-2xs cursor-pointer"
             >
               <PanelRightClose className="w-3.5 h-3.5" />
-              <span>隱藏面板以寬螢幕檢視健康</span>
+              <span>{t('tasks.hideWide')}</span>
             </button>
           </div>
         )}

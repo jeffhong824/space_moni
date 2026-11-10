@@ -1,7 +1,7 @@
-import en from './locales/en.json';
-import zhHantTW from './locales/zh-Hant-TW.json';
-import es from './locales/es.json';
-import ja from './locales/ja.json';
+import en from './locales/en.json' with { type: 'json' };
+import zhHantTW from './locales/zh-Hant-TW.json' with { type: 'json' };
+import es from './locales/es.json' with { type: 'json' };
+import ja from './locales/ja.json' with { type: 'json' };
 
 export const STORAGE_KEY = 'spacemoni.lang';
 export const DEFAULT_LANG = 'en';

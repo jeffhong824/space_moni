@@ -5,7 +5,7 @@ import {
   LOCALE_TABLES,
   STORAGE_KEY,
   type LanguageDef,
-} from './registry';
+} from './registry.ts';
 
 export { DEFAULT_LANG, LANGUAGES, STORAGE_KEY, isLangId };
 export type { LanguageDef };

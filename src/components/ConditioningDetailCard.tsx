@@ -150,7 +150,7 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                       </span>
                     </div>
                     <div className="text-[10px] font-mono text-slate-500">
-                      Click to view past telemetry & sensor origin
+                      {t('cond.clickHint')}
                     </div>
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] font-mono text-sky-800 mt-0.5">
-                    Source: <strong className="text-slate-900">{activeDetail.hardwareSource}</strong>
+                    {t('cond.source')}: <strong className="text-slate-900">{activeDetail.hardwareSource}</strong>
                   </p>
                 </div>
               </div>
@@ -207,14 +207,14 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                   title="Ask AURA Flight Surgeon about this conditioning data"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-sky-200" />
-                  <span>Ask AI About {activeDetail.shortLabel}</span>
+                  <span>{t('cond.askAbout', { label: activeDetail.shortLabel })}</span>
                 </button>
               )}
             </div>
 
             {/* Context Narrative on How Data is Monitored */}
             <div className="text-[11px] text-slate-600 bg-white p-3 rounded-lg border border-slate-200/80 leading-relaxed font-sans">
-              <span className="font-bold text-slate-800">Operational Telemetry Pipeline: </span>
+              <span className="font-bold text-slate-800">{t('cond.pipeline')}: </span>
               {activeDetail.sourceDescription}
             </div>
 
@@ -224,11 +224,11 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                 <div className="flex items-center gap-1.5">
                   <History className="w-3.5 h-3.5 text-slate-500" />
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
-                    Past 5-Day Telemetry Logs
+                    {t('cond.past5')}
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-slate-400">
-                  Daily Chronological History
+                  {t('cond.history')}
                 </span>
               </div>
 
@@ -236,10 +236,10 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px]">
                     <tr>
-                      <th className="py-2 px-3">Date</th>
-                      <th className="py-2 px-3">Recorded Value</th>
-                      <th className="py-2 px-3">Status</th>
-                      <th className="py-2 px-3 hidden sm:table-cell">Station Log Note</th>
+                      <th className="py-2 px-3">{t('cond.colDate')}</th>
+                      <th className="py-2 px-3">{t('cond.colValue')}</th>
+                      <th className="py-2 px-3">{t('cond.colStatus')}</th>
+                      <th className="py-2 px-3 hidden sm:table-cell">{t('cond.colNote')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-[11px]">
@@ -270,7 +270,7 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                           </span>
                         </td>
                         <td className="py-2 px-3 text-slate-500 hidden sm:table-cell font-sans text-xs">
-                          {day.note}
+                          {t(day.note)}
                         </td>
                       </tr>
                     ))}

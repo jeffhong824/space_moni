@@ -389,7 +389,12 @@
     "hideHint": "Ocultar el panel para ampliar la salud",
     "panel": "Panel de objetivos",
     "all": "Todo",
-    "filterAll": "Todos los estados"
+    "filterAll": "Todos los estados",
+    "count": "{n} tareas",
+    "emptyFilter": "Ningún objetivo coincide con el filtro",
+    "reset": "Restablecer filtros",
+    "progress": "Progreso",
+    "hideWide": "Ocultar el panel para una vista más ancha"
   },
   "priority": {
     "Critical": "Crítico",
@@ -454,7 +459,11 @@
     "ackPolicy": "Reconocer la política de acceso",
     "normal": "Normal",
     "hrToday": "FC en reposo: {hr} bpm",
-    "critHours": "Tope crítico: {bpm} BPM"
+    "critHours": "Tope crítico: {bpm} BPM",
+    "askPrompt": "Analiza la fisiología 24 h de {date}. FC {hr} bpm, VFC {hrv} ms, {n} horas anómalas. Usa bandas de demo y clima espacial oficial (no inventes cifras NASA).",
+    "activities": "Actividades del día",
+    "viewFull24": "Ver el gráfico 24 h y marcas rojas",
+    "spo2": "SpO₂"
   },
   "newTask": {
     "title": "Nueva tarea de estación",
@@ -651,7 +660,54 @@
     "exTag": "T2 y ARED (sim)",
     "mentalTag": "Registro de voz AURA (sim)",
     "mskTag": "Deformación y bioimpedancia (sim)",
-    "nutTag": "Registro de galera (sim)"
+    "nutTag": "Registro de galera (sim)",
+    "clickHint": "Pulse para ver telemetría y origen del sensor",
+    "source": "Fuente",
+    "pipeline": "Tubería de telemetría operativa (simulación)",
+    "past5": "Registros de telemetría de 5 días",
+    "history": "Historia diaria",
+    "colDate": "Fecha",
+    "colValue": "Valor registrado",
+    "colStatus": "Estado",
+    "colNote": "Nota de bitácora",
+    "askAbout": "Preguntar a IA sobre {label}",
+    "note": {
+      "sleep": {
+        "n0": "Despertar temprano (acústica de atraque simulada)",
+        "n1": "Ciclo de ondas lentas nominal",
+        "n2": "Rebote REM profundo óptimo",
+        "n3": "Ciclo restaurador sólido",
+        "n4": "Fragmentado por presurización de esclusa (sim)"
+      },
+      "exercise": {
+        "n0": "Sentadilla ARED + sprint T2 (sim)",
+        "n1": "Aeróbico estándar + peso muerto (sim)",
+        "n2": "Sesión CEVIS (sim)",
+        "n3": "Resistencia ARED de torso y talones (sim)",
+        "n4": "Sesión de alta salida mecánica (sim)"
+      },
+      "mental": {
+        "n0": "Tono concentrado; fatiga verbal leve (sim)",
+        "n1": "Alta energía verbal y resolución rápida (sim)",
+        "n2": "Respuesta autonómica calmada (sim)",
+        "n3": "Tiempos de respuesta estables (sim)",
+        "n4": "Leve interrupción del sueño en el tono (sim)"
+      },
+      "msk": {
+        "n0": "Fuerza isométrica pico en ARED (sim)",
+        "n1": "Tono de pantorrilla estable (sim)",
+        "n2": "Rango lumbar completo (sim)",
+        "n3": "Velocidad de cuádriceps cerca de línea base (sim)",
+        "n4": "Umbral de carga ósea alcanzado (sim)"
+      },
+      "nutrition": {
+        "n0": "Registro de galera simulado: avena, fajitas, salmón",
+        "n1": "100% del objetivo con electrolitos (sim)",
+        "n2": "Alta carga de carbohidratos antes del ergómetro (sim)",
+        "n3": "Proteína y micronutrientes equilibrados (sim)",
+        "n4": "Fruta seca y electrolitos suplementarios (sim)"
+      }
+    }
   },
   "ui": {
     "retry": "Reintentar",

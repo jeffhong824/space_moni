@@ -389,7 +389,12 @@
     "hideHint": "Hide panel to enlarge the health view",
     "panel": "Objectives panel",
     "all": "All",
-    "filterAll": "All statuses"
+    "filterAll": "All statuses",
+    "count": "{n} tasks",
+    "emptyFilter": "No station objectives match the filter",
+    "reset": "Reset filters",
+    "progress": "Progress",
+    "hideWide": "Hide panel for a wider health view"
   },
   "priority": {
     "Critical": "Critical",
@@ -454,7 +459,11 @@
     "ackPolicy": "Acknowledge access policy",
     "normal": "Normal",
     "hrToday": "Resting HR: {hr} bpm",
-    "critHours": "Critical cap: {bpm} BPM"
+    "critHours": "Critical cap: {bpm} BPM",
+    "askPrompt": "Analyze {date} 24-hour physiology. Resting HR {hr} bpm, HRV {hrv} ms, {n} abnormal hours. Use demo bands and official space weather (do not invent NASA numbers).",
+    "activities": "Day activities",
+    "viewFull24": "View full 24-hour chart and red marks",
+    "spo2": "SpO₂"
   },
   "newTask": {
     "title": "New station task",
@@ -651,7 +660,54 @@
     "exTag": "T2 and ARED (sim)",
     "mentalTag": "AURA voice-check log (sim)",
     "mskTag": "Strain and bioimpedance (sim)",
-    "nutTag": "Galley barcode log (sim)"
+    "nutTag": "Galley barcode log (sim)",
+    "clickHint": "Click to view past telemetry and sensor origin",
+    "source": "Source",
+    "pipeline": "Operational telemetry pipeline (simulation)",
+    "past5": "Past 5-day telemetry logs",
+    "history": "Daily chronological history",
+    "colDate": "Date",
+    "colValue": "Recorded value",
+    "colStatus": "Status",
+    "colNote": "Station log note",
+    "askAbout": "Ask AI about {label}",
+    "note": {
+      "sleep": {
+        "n0": "Early awakening (simulated docking acoustics)",
+        "n1": "Nominal slow-wave cycle completed",
+        "n2": "Optimal deep REM rebound sleep",
+        "n3": "Solid restorative cycle",
+        "n4": "Fragmented by simulated airlock pressurization"
+      },
+      "exercise": {
+        "n0": "ARED heavy squat + T2 interval sprint (sim)",
+        "n1": "Standard aerobic + deadlift routine (sim)",
+        "n2": "CEVIS cycle ergometer session (sim)",
+        "n3": "ARED upper-body and heel-raise resistance (sim)",
+        "n4": "High mechanical output session (sim)"
+      },
+      "mental": {
+        "n0": "Focused conversational tone; slight verbal fatigue (sim)",
+        "n1": "High verbal energy and rapid problem-solving (sim)",
+        "n2": "Calm autonomic response during check-in (sim)",
+        "n3": "Steady response times across telemetry (sim)",
+        "n4": "Mild sleep disruption noted in pitch (sim)"
+      },
+      "msk": {
+        "n0": "Peak isometric squat force recorded on ARED (sim)",
+        "n1": "Calf muscle tone stable with heel-raise loads (sim)",
+        "n2": "Full lumbar extensor range of motion (sim)",
+        "n3": "Quadriceps contractile velocity near baseline (sim)",
+        "n4": "Bone compression loading threshold met (sim)"
+      },
+      "nutrition": {
+        "n0": "Simulated galley log: oatmeal, fajitas, salmon",
+        "n1": "100% target with rehydration electrolyte drink (sim)",
+        "n2": "High carbohydrate load before ergometer (sim)",
+        "n3": "Balanced protein and micronutrient pouches (sim)",
+        "n4": "Supplemental dried fruit and electrolytes (sim)"
+      }
+    }
   },
   "ui": {
     "retry": "Retry",
