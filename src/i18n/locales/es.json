@@ -50,7 +50,12 @@
     "heroCaption": "Imagen de archivo — no es vídeo de misión en vivo",
     "orbitCaption": "LEO simulado de referencia 418 km",
     "archiveCaption": "Fotograma de archivo público (no es un logo de la NASA)",
-    "accountPlaceholder": "p. ej. alice_smith"
+    "accountPlaceholder": "p. ej. alice_smith",
+    "asButton": "Entrar como {name}",
+    "confirmTitle": "¿Entrar como {name} ({role}, {ship})?",
+    "confirmHint": "Usuario y contraseña ya están rellenados. Confirmar inicia sesión; Cancelar deja el formulario. No se envía solo desde el sim de flota.",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   },
   "role": {
     "astronaut": "Astronauta",
@@ -383,6 +388,18 @@
       "simAi": {
         "used": "Exteriores de naves, Tierra/Luna/Marte, cinta, cicloergómetro y ARED",
         "note": "Arte generado por IA (equipo SpaceMoni), recortado y pixelado. Sin logos de la NASA."
+      },
+      "hrp": {
+        "used": "Los dominios del mapa corporal siguen riesgos del Programa de Investigación Humana de la NASA (SANS, hueso, músculo, cardio, radiación, BHP/sueño)",
+        "note": "HRP / Human Research Roadmap público. Las puntuaciones son simulación etiquetada, no un protocolo clínico de la NASA."
+      },
+      "sans": {
+        "used": "Región ocular asignada al síndrome neuro-ocular asociado al vuelo espacial (SANS)",
+        "note": "Resumen público de SANS de la NASA. El sim usa un análogo de desplazamiento de fluidos, no OCT de vuelo."
+      },
+      "anatomy": {
+        "used": "Mapa corporal clínico de frente y dorso en el panel del astronauta",
+        "note": "Anatomía vectorial original de SpaceMoni (estilo atlas clínico). No calcada de un atlas médico con copyright. Los colores son estado simulado, no imagen."
       }
     }
   },
@@ -634,6 +651,85 @@
       "n2": "N2",
       "n3": "N3",
       "rem": "REM"
+    }
+  },
+  "body": {
+    "title": "Anatomía · cuerpo, mente y espíritu",
+    "subtitle": "Simulación de monitorización continua · no es un diagnóstico clínico",
+    "front": "Frente",
+    "back": "Dorso",
+    "liveVitals": "Flujo wearable en vivo",
+    "overall": "Estado de la persona",
+    "radar": "Radar de dominios",
+    "trends": "Tendencias y pronóstico",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 d",
+      "mission": "Misión hasta hoy"
+    },
+    "forecast": "Pronóstico",
+    "forecastHint": "Próximas 24 h–7 d con un modelo lineal transparente de tasa de dosis, descarga ósea y FC circadiana. La banda de confianza es ruido determinista, no un IC clínico.",
+    "prediction": "SIMULACIÓN / PREDICCIÓN",
+    "confidence": "Banda de confianza",
+    "activityLog": "Registro de actividad de hoy",
+    "exerciseLog": "Registro de ejercicio (T2 / CEVIS / ARED)",
+    "done": "Hecho",
+    "upcoming": "Próximo",
+    "now": "Ahora",
+    "askAura": "Preguntar a AURA",
+    "askPrompt": "Analiza {domain} simulado de {name}: {value} (puntuación {score}). Usa umbrales demo y clima espacial oficial. No inventes cifras de la NASA.",
+    "regionDetail": "Detalle de región",
+    "credit": "Mapa corporal clínico original de SpaceMoni (vector). Colores = estado HRP simulado, no imagen médica.",
+    "score": "Puntuación {n}/100",
+    "boneLoss": "Análogo de pérdida ósea",
+    "openMap": "Mapa corporal",
+    "closeMap": "Cerrar mapa",
+    "forecastHr": "FC prevista",
+    "forecastDose": "Dosis prevista",
+    "forecastBone": "Cambio de DMO previsto",
+    "domain": {
+      "brain": "Neuro-vestibular",
+      "eyes": "Ojos (SANS)",
+      "heart": "Cardiovascular",
+      "lungs": "Respiratorio",
+      "bones": "Densidad ósea",
+      "muscles": "Músculo",
+      "skin": "Piel / térmico",
+      "kidneys": "Renal (riesgo de cálculo)",
+      "radiation": "Radiación (cuerpo entero)",
+      "sleep": "Sueño / circadiano",
+      "mind": "Mente / conductual"
+    },
+    "region": {
+      "brain": "Cerebro / vestibular",
+      "eyes": "Ojos",
+      "heart": "Corazón",
+      "lungs": "Pulmones",
+      "spine": "Columna",
+      "hips": "Caderas",
+      "quads": "Cuádriceps",
+      "calves": "Gemelos",
+      "back": "Espalda / postural",
+      "kidneys": "Riñones",
+      "skin": "Piel"
+    },
+    "hrp": {
+      "brain": "Riesgo sensoriomotor / SNC del HRP. Análogo vestibular y de carga cognitiva.",
+      "eyes": "SANS (síndrome neuro-ocular asociado al vuelo espacial) — riesgo ocular HRP de la NASA.",
+      "heart": "Adaptación cardiovascular HRP (desplazamiento de fluidos, taquicardia de reposo analog).",
+      "lungs": "Análogo respiratorio / CO₂ de cabina (ECLSS demo + SpO₂).",
+      "bones": "Riesgo de fractura HRP. Modelo: ~1,2% DMO / 30 d de descarga, reducido por ejercicio.",
+      "muscles": "Riesgo de atrofia muscular HRP. Cuádriceps, gemelos, postural.",
+      "skin": "Carga térmica / EVA de la temperatura cutánea wearable.",
+      "kidneys": "Análogo de riesgo de cálculo renal HRP (resorción ósea + fluidos).",
+      "radiation": "Riesgo de radiación espacial HRP. Dosis acumulada vs límite demo 600 mSv.",
+      "sleep": "Riesgo BHP de pérdida de sueño. Ventana tipo ISS de 8,5 h.",
+      "mind": "Salud conductual BHP: estrés, ánimo, carga cognitiva analog."
+    },
+    "ex": {
+      "t2": "Cinta T2",
+      "cevis": "Ciclo CEVIS",
+      "ared": "Resistencia ARED"
     }
   },
   "loc": {

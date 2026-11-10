@@ -40,6 +40,18 @@ const CITATIONS = [
     noteKey: 'sources.cite.ntrs.note',
     url: 'https://ntrs.nasa.gov/',
   },
+  {
+    title: 'NASA Human Research Roadmap',
+    usedKey: 'sources.cite.hrp.used',
+    noteKey: 'sources.cite.hrp.note',
+    url: 'https://humanresearchroadmap.nasa.gov/',
+  },
+  {
+    title: 'Spaceflight Associated Neuro-ocular Syndrome (SANS)',
+    usedKey: 'sources.cite.sans.used',
+    noteKey: 'sources.cite.sans.note',
+    url: 'https://www.nasa.gov/humans-in-space/spaceflight-associated-neuro-ocular-syndrome-sans/',
+  },
 ] as const;
 
 export const DataSourcesPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -109,6 +121,11 @@ export const DataSourcesPage: React.FC<{ onBack: () => void }> = ({ onBack }) =>
             <p className="text-sm font-semibold text-slate-900">AI-generated (SpaceMoni)</p>
             <p className="text-xs text-slate-700 mt-1">{t('sources.cite.simAi.used')}</p>
             <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.simAi.note')}</p>
+          </li>
+          <li className="rounded-xl border border-slate-200 px-3 py-2.5">
+            <p className="text-sm font-semibold text-slate-900">Clinical body map (SpaceMoni vector)</p>
+            <p className="text-xs text-slate-700 mt-1">{t('sources.cite.anatomy.used')}</p>
+            <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.anatomy.note')}</p>
           </li>
         </ul>
       </section>

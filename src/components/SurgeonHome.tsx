@@ -16,6 +16,8 @@ import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import { SimBadge } from './SimBadge';
+import { BodyMapDashboard } from './BodyMapDashboard';
+import { CREW } from '../world/catalog';
 
 interface SurgeonHomeProps {
   surgeonName: string;
@@ -29,6 +31,8 @@ interface SurgeonHomeProps {
   speDemo: boolean;
   onSelectAstronaut: (astro: AstronautProfile) => void;
   onOpenConsole: () => void;
+  onOpenAiCall: (prompt?: string) => void;
+  tNow: number;
 }
 
 export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
@@ -43,6 +47,8 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
   speDemo,
   onSelectAstronaut,
   onOpenConsole,
+  onOpenAiCall,
+  tNow,
 }) => {
   const { t, lang } = useI18n();
   const cases = useMemo(
@@ -246,6 +252,14 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
           )}
         </section>
       </div>
+      {selectedAstro && CREW.find((c) => c.id === selectedAstro.id) && (
+        <BodyMapDashboard
+          crew={CREW.find((c) => c.id === selectedAstro.id)!}
+          tNow={tNow}
+          wx={spaceEnvironment}
+          onOpenAiCall={onOpenAiCall}
+        />
+      )}
     </div>
   );
 };

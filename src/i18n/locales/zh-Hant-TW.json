@@ -50,7 +50,12 @@
     "heroCaption": "氛圍用檔案影像 — 非即時任務畫面",
     "orbitCaption": "示範 LEO 參考 418 km",
     "archiveCaption": "公開檔案靜照（非 NASA 標誌）",
-    "accountPlaceholder": "例如 alice_smith"
+    "accountPlaceholder": "例如 alice_smith",
+    "asButton": "以 {name} 登入",
+    "confirmTitle": "要以 {name}（{role}，{ship}）登入嗎？",
+    "confirmHint": "帳號與密碼已填入。確認即登入；取消則留在此表單。從艦隊模擬點進來不會自動送出。",
+    "confirm": "確認",
+    "cancel": "取消"
   },
   "role": {
     "astronaut": "太空人",
@@ -383,6 +388,18 @@
       "simAi": {
         "used": "船艦外觀、地球／月球／火星、跑步機、腳踏測功機與 ARED",
         "note": "AI 生成圖（SpaceMoni 團隊），去背並像素化。不含 NASA 標誌。"
+      },
+      "hrp": {
+        "used": "人體圖域對應 NASA 人體研究計畫風險（SANS、骨骼、肌肉、心血管、輻射、行為健康／睡眠）",
+        "note": "公開 HRP／Human Research Roadmap。分數為標示模擬，非 NASA 臨床協議。"
+      },
+      "sans": {
+        "used": "眼部對應太空飛航相關神經眼症候群（SANS）",
+        "note": "NASA 公開 SANS 說明。模擬使用體液轉移類比，非飛行 OCT 資料。"
+      },
+      "anatomy": {
+        "used": "太空人儀表板的正／背面臨床人體圖",
+        "note": "SpaceMoni 原創向量解剖圖（臨床圖譜風格）。非描摹受著作權保護的醫學圖譜。顏色為模擬狀態，非影像。"
       }
     }
   },
@@ -634,6 +651,85 @@
       "n2": "N2",
       "n3": "N3",
       "rem": "REM"
+    }
+  },
+  "body": {
+    "title": "解剖 · 身心靈",
+    "subtitle": "持續監測模擬 · 非臨床診斷",
+    "front": "正面",
+    "back": "背面",
+    "liveVitals": "即時穿戴串流",
+    "overall": "全人狀態",
+    "radar": "域雷達",
+    "trends": "趨勢與預測",
+    "range": {
+      "24h": "24 小時",
+      "7d": "7 日",
+      "mission": "任務迄今"
+    },
+    "forecast": "預測",
+    "forecastHint": "未來 24 小時至 7 日：劑量率、骨密度卸載與晝夜心率的透明線性模型。信賴帶為確定性雜訊，非臨床信賴區間。",
+    "prediction": "模擬／預測",
+    "confidence": "信賴帶",
+    "activityLog": "今日活動紀錄",
+    "exerciseLog": "運動紀錄（T2／CEVIS／ARED）",
+    "done": "已完成",
+    "upcoming": "即將到來",
+    "now": "進行中",
+    "askAura": "詢問 AURA",
+    "askPrompt": "請分析 {name} 的模擬{domain}：{value}（分數 {score}）。使用示範門檻與官方空間天氣。請勿捏造 NASA 數字。",
+    "regionDetail": "部位詳情",
+    "credit": "SpaceMoni 原創臨床人體圖（向量）。顏色＝模擬 HRP 域狀態，非醫學影像。",
+    "score": "分數 {n}/100",
+    "boneLoss": "骨質流失類比",
+    "openMap": "人體圖",
+    "closeMap": "關閉人體圖",
+    "forecastHr": "預測心率",
+    "forecastDose": "預測劑量",
+    "forecastBone": "預測骨密度變化",
+    "domain": {
+      "brain": "神經前庭",
+      "eyes": "眼（SANS）",
+      "heart": "心血管",
+      "lungs": "呼吸",
+      "bones": "骨密度",
+      "muscles": "肌肉",
+      "skin": "皮膚／熱負荷",
+      "kidneys": "腎（結石風險）",
+      "radiation": "輻射（全身）",
+      "sleep": "睡眠／晝夜",
+      "mind": "心理／行為"
+    },
+    "region": {
+      "brain": "腦／前庭",
+      "eyes": "眼",
+      "heart": "心臟",
+      "lungs": "肺",
+      "spine": "脊椎",
+      "hips": "髖",
+      "quads": "股四頭肌",
+      "calves": "小腿",
+      "back": "背／姿勢肌",
+      "kidneys": "腎",
+      "skin": "皮膚"
+    },
+    "hrp": {
+      "brain": "HRP 感覺運動／中樞神經風險。前庭適應與認知負荷類比。",
+      "eyes": "SANS（太空飛航相關神經眼症候群）— NASA HRP 眼部風險。",
+      "heart": "HRP 心血管適應（體液轉移、靜息心搏過速類比）。",
+      "lungs": "呼吸／艙內 CO₂ 類比（ECLSS 示範＋SpO₂）。",
+      "bones": "HRP 骨折風險。模型：卸載約 1.2% BMD／30 日，運動可減緩。",
+      "muscles": "HRP 肌萎縮風險。股四頭肌、小腿、姿勢肌類比。",
+      "skin": "熱／艙外活動皮膚負荷（穿戴皮膚溫度）。",
+      "kidneys": "HRP 腎結石風險類比（骨吸收＋體液）。",
+      "radiation": "HRP 太空輻射風險。累積劑量對 600 mSv 示範上限。",
+      "sleep": "BHP 睡眠不足風險。類 ISS 8.5 小時睡眠窗。",
+      "mind": "BHP 行為健康：壓力、情緒、認知負荷類比。"
+    },
+    "ex": {
+      "t2": "T2 跑步機",
+      "cevis": "CEVIS 腳踏",
+      "ared": "ARED 阻抗"
     }
   },
   "loc": {

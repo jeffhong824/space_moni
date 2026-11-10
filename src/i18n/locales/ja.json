@@ -50,7 +50,12 @@
     "heroCaption": "雰囲気用アーカイブ画像 — ライブ映像ではありません",
     "orbitCaption": "模擬 LEO 参考 418 km",
     "archiveCaption": "公開アーカイブ静止画（NASAロゴではありません）",
-    "accountPlaceholder": "例: alice_smith"
+    "accountPlaceholder": "例: alice_smith",
+    "asButton": "{name} としてログイン",
+    "confirmTitle": "{name}（{role}、{ship}）としてログインしますか？",
+    "confirmHint": "アカウントとパスワードは入力済みです。確認でログイン、キャンセルでこのフォームのままです。艦隊シミュから自動送信はしません。",
+    "confirm": "確認",
+    "cancel": "キャンセル"
   },
   "role": {
     "astronaut": "宇宙飛行士",
@@ -383,6 +388,18 @@
       "simAi": {
         "used": "船体、地球／月／火星、トレッドミル、サイクルエルゴメーター、ARED",
         "note": "AI生成（SpaceMoni チーム）、キーイングとピクセル化。NASAロゴなし。"
+      },
+      "hrp": {
+        "used": "ボディマップ領域は NASA ヒト研究プログラムのリスク（SANS、骨、筋、循環器、放射線、BHP／睡眠）に対応",
+        "note": "公開 HRP／Human Research Roadmap。スコアはラベル付きシミュレーションであり、NASA の臨床プロトコルではありません。"
+      },
+      "sans": {
+        "used": "眼領域を宇宙飛行関連神経眼症候群（SANS）に対応",
+        "note": "NASA 公開の SANS 概要。シミュレーションは体液移動アナログであり、飛行時 OCT ではありません。"
+      },
+      "anatomy": {
+        "used": "宇宙飛行士ダッシュボードの正面／背面の臨床ボディマップ",
+        "note": "SpaceMoni オリジナルの臨床アトラス風ベクター解剖図。著作権のある医学アトラスのトレースではありません。色は模擬ステータスであり画像ではありません。"
       }
     }
   },
@@ -634,6 +651,85 @@
       "n2": "N2",
       "n3": "N3",
       "rem": "REM"
+    }
+  },
+  "body": {
+    "title": "解剖 · 心身",
+    "subtitle": "連続モニタリングのシミュレーション · 臨床診断ではありません",
+    "front": "正面",
+    "back": "背面",
+    "liveVitals": "ライブウェアラブル",
+    "overall": "全身状態",
+    "radar": "領域レーダー",
+    "trends": "トレンドと予測",
+    "range": {
+      "24h": "24時間",
+      "7d": "7日",
+      "mission": "ミッション開始以降"
+    },
+    "forecast": "予測",
+    "forecastHint": "今後24時間〜7日：線量率・骨密度アンローディング・概日HRの透明な線形モデル。信頼帯は決定論ノイズであり臨床CIではありません。",
+    "prediction": "シミュレーション／予測",
+    "confidence": "信頼帯",
+    "activityLog": "本日の活動ログ",
+    "exerciseLog": "運動ログ（T2／CEVIS／ARED）",
+    "done": "完了",
+    "upcoming": "予定",
+    "now": "実施中",
+    "askAura": "AURA に尋ねる",
+    "askPrompt": "{name} の模擬{domain}を分析：{value}（スコア {score}）。デモ閾値と公式宇宙天気を使う。NASA数値を捏造しない。",
+    "regionDetail": "部位の詳細",
+    "credit": "SpaceMoni オリジナルの臨床ボディマップ（ベクター）。色＝模擬HRP領域ステータスであり医用画像ではありません。",
+    "score": "スコア {n}/100",
+    "boneLoss": "骨量減少アナログ",
+    "openMap": "ボディマップ",
+    "closeMap": "ボディマップを閉じる",
+    "forecastHr": "予測HR",
+    "forecastDose": "予測線量",
+    "forecastBone": "予測BMD変化",
+    "domain": {
+      "brain": "神経前庭",
+      "eyes": "眼（SANS）",
+      "heart": "循環器",
+      "lungs": "呼吸",
+      "bones": "骨密度",
+      "muscles": "筋",
+      "skin": "皮膚／熱",
+      "kidneys": "腎（結石リスク）",
+      "radiation": "放射線（全身）",
+      "sleep": "睡眠／概日",
+      "mind": "心理／行動"
+    },
+    "region": {
+      "brain": "脳／前庭",
+      "eyes": "眼",
+      "heart": "心臓",
+      "lungs": "肺",
+      "spine": "脊柱",
+      "hips": "股関節",
+      "quads": "大腿四頭筋",
+      "calves": "下腿",
+      "back": "背部／姿勢筋",
+      "kidneys": "腎",
+      "skin": "皮膚"
+    },
+    "hrp": {
+      "brain": "HRP 感覚運動／中枢神経リスク。前庭適応と認知負荷のアナログ。",
+      "eyes": "SANS（宇宙飛行関連神経眼症候群）— NASA HRP の眼リスク。",
+      "heart": "HRP 循環器適応（体液移動、安静時頻脈アナログ）。",
+      "lungs": "呼吸／船内CO₂アナログ（ECLSSデモ＋SpO₂）。",
+      "bones": "HRP 骨折リスク。モデル：アンローディング約1.2% BMD／30日、運動で軽減。",
+      "muscles": "HRP 筋萎縮リスク。大腿四頭筋、下腿、姿勢筋アナログ。",
+      "skin": "熱／EVA皮膚負荷（ウェアラブル皮膚温）。",
+      "kidneys": "HRP 腎結石リスクアナログ（骨吸収＋体液）。",
+      "radiation": "HRP 宇宙放射線リスク。累積線量対デモ上限600 mSv。",
+      "sleep": "BHP 睡眠不足リスク。ISS相当8.5時間の睡眠機会。",
+      "mind": "BHP 行動健康：ストレス、気分、認知負荷アナログ。"
+    },
+    "ex": {
+      "t2": "T2 トレッドミル",
+      "cevis": "CEVIS サイクル",
+      "ared": "ARED レジスタンス"
     }
   },
   "loc": {

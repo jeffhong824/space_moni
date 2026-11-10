@@ -117,3 +117,15 @@ SpaceMoni is a **non-commercial** NASA Space Apps 2026 hackathon demo. No NASA l
 `tools/*.py` are our own build scripts.
 
 Expanded 2026-11-10 crew (Harmony 7 / Gateway 4 / Ares 6 / Mare 4) **reuses** the existing `crew/*.png` tgstation composites by role (commander, pilot, flight_engineer, science_officer, medical_officer, mission_specialist, eva_suit). No new sprite sheets were generated; additional fictional crew members share those sheets. See `docs/crew-composition.md`.
+
+## Clinical body map (dashboard)
+
+| Asset | Source | Author | License | Notes |
+|---|---|---|---|---|
+| `src/components/AnatomicalFigure.tsx` (front/back SVG) | Original SpaceMoni vector | SpaceMoni | Original (this repo) | Clean clinical atlas style. **Not** traced from a copyrighted medical atlas. Region fills encode simulated NASA HRP-domain status (SANS, bone, muscle, cardio, radiation, BHP). Not medical imaging. |
+
+HRP domain mapping (not an asset license, cited on Data sources):
+
+- [NASA Human Research Roadmap](https://humanresearchroadmap.nasa.gov/)
+- [SANS (NASA)](https://www.nasa.gov/humans-in-space/spaceflight-associated-neuro-ocular-syndrome-sans/)
+- Bone unloading analog ~1.2% BMD / 30 d is a **transparent demo model**, not a NASA-certified rate for an individual.

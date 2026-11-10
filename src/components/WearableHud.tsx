@@ -156,6 +156,16 @@ export const WearableHud: React.FC<{
         {t('wear.device')} · {t('wear.battery')} {w.batteryPct}% · {t('wear.signal')} {w.signalPct}%
       </p>
       {live.event && <p className="text-[10px] text-amber-200">{t(live.event)}</p>}
+      <button
+        type="button"
+        onClick={() => {
+          window.history.pushState({}, '', `/?as=${encodeURIComponent(live.def.loginAccount)}`);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }}
+        className="w-full text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-cyan-600 text-cyan-100 hover:bg-cyan-950"
+      >
+        {t('login.asButton', { name: live.def.name })}
+      </button>
     </div>
   );
 };

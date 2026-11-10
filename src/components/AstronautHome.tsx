@@ -16,6 +16,8 @@ import { CrewCommsInbox } from './CrewCommsInbox';
 import { SimBadge } from './SimBadge';
 import { ShipStatusCard } from './ShipStatusCard';
 import { WearableStrip } from './WearableHud';
+import { BodyMapDashboard } from './BodyMapDashboard';
+import { CREW } from '../world/catalog';
 import type { WorldState } from '../world/worldState';
 import { findCrewLive } from '../world/worldState';
 
@@ -107,6 +109,14 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
       {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
       {live && <WearableStrip live={live.crew} />}
+      {CREW.find((c) => c.id === astronaut.id) && (
+        <BodyMapDashboard
+          crew={CREW.find((c) => c.id === astronaut.id)!}
+          tNow={world.t}
+          wx={spaceEnvironment}
+          onOpenAiCall={onOpenAiCall}
+        />
+      )}
 
       {shelter && (
         <div className="rounded-2xl border-2 border-rose-400 bg-rose-50 p-4 text-rose-950 flex gap-3">

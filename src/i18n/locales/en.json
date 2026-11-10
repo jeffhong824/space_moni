@@ -50,7 +50,12 @@
     "heroCaption": "Archive image for atmosphere — not live mission video",
     "orbitCaption": "Simulated LEO reference 418 km",
     "archiveCaption": "Public archive still (not a NASA logo)",
-    "accountPlaceholder": "e.g. alice_smith"
+    "accountPlaceholder": "e.g. alice_smith",
+    "asButton": "Log in as {name}",
+    "confirmTitle": "Log in as {name} ({role}, {ship})?",
+    "confirmHint": "Username and password are filled in. Confirm signs in; Cancel leaves the form as-is. This does not auto-submit from the fleet sim.",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   },
   "role": {
     "astronaut": "Astronaut",
@@ -383,6 +388,18 @@
       "simAi": {
         "used": "Ship exteriors, Earth/Moon/Mars, treadmill, cycle ergometer and ARED",
         "note": "AI-generated art (SpaceMoni team), keyed and pixel-downsampled. No NASA logos or insignia."
+      },
+      "hrp": {
+        "used": "Body-map domains follow NASA Human Research Program risks (SANS, bone, muscle, cardio, radiation, BHP/sleep)",
+        "note": "Public HRP / Human Research Roadmap. Scores are a labeled simulation, not a NASA clinical protocol."
+      },
+      "sans": {
+        "used": "Eye region mapped to Spaceflight Associated Neuro-ocular Syndrome (SANS)",
+        "note": "NASA public SANS overview. The sim uses a fluid-shift analog, not flight OCT data."
+      },
+      "anatomy": {
+        "used": "Front/back clinical body map on the astronaut dashboard",
+        "note": "Original SpaceMoni vector anatomy (clean clinical atlas style). Not traced from a copyrighted medical atlas. Region colors are simulation status, not imaging."
       }
     }
   },
@@ -634,6 +651,85 @@
       "n2": "N2",
       "n3": "N3",
       "rem": "REM"
+    }
+  },
+  "body": {
+    "title": "Anatomy · body, mind & spirit",
+    "subtitle": "Continuous monitoring simulation · not a clinical diagnosis",
+    "front": "Front",
+    "back": "Back",
+    "liveVitals": "Live wearable stream",
+    "overall": "Whole-person state",
+    "radar": "Domain radar",
+    "trends": "Trends & forecast",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 d",
+      "mission": "Mission to date"
+    },
+    "forecast": "Forecast",
+    "forecastHint": "Next 24 h–7 d from a transparent linear model of dose rate, BMD unloading, and circadian HR. Confidence band is deterministic noise, not a clinical CI.",
+    "prediction": "SIMULATION / PREDICTION",
+    "confidence": "Confidence band",
+    "activityLog": "Today’s activity log",
+    "exerciseLog": "Exercise log (T2 / CEVIS / ARED)",
+    "done": "Done",
+    "upcoming": "Upcoming",
+    "now": "Now",
+    "askAura": "Ask AURA",
+    "askPrompt": "Analyze simulated {domain} for {name}: {value} (score {score}). Use demo bands and official space weather. Do not invent NASA numbers.",
+    "regionDetail": "Region detail",
+    "credit": "Original SpaceMoni clinical body map (vector). Colors = simulated HRP-domain status, not medical imaging.",
+    "score": "Score {n}/100",
+    "boneLoss": "Bone-loss analog",
+    "openMap": "Body map",
+    "closeMap": "Close body map",
+    "forecastHr": "Predicted HR",
+    "forecastDose": "Predicted dose",
+    "forecastBone": "Predicted BMD change",
+    "domain": {
+      "brain": "Neuro-vestibular",
+      "eyes": "Eyes (SANS)",
+      "heart": "Cardiovascular",
+      "lungs": "Respiratory",
+      "bones": "Bone density",
+      "muscles": "Muscle",
+      "skin": "Skin / thermal",
+      "kidneys": "Renal (stone risk)",
+      "radiation": "Radiation (whole body)",
+      "sleep": "Sleep / circadian",
+      "mind": "Mind / behavioral"
+    },
+    "region": {
+      "brain": "Brain / vestibular",
+      "eyes": "Eyes",
+      "heart": "Heart",
+      "lungs": "Lungs",
+      "spine": "Spine",
+      "hips": "Hips",
+      "quads": "Quadriceps",
+      "calves": "Calves",
+      "back": "Back / postural",
+      "kidneys": "Kidneys",
+      "skin": "Skin"
+    },
+    "hrp": {
+      "brain": "HRP sensorimotor / CNS risk. Vestibular adaptation and cognitive load analog.",
+      "eyes": "SANS (Spaceflight Associated Neuro-ocular Syndrome) — NASA HRP ocular risk.",
+      "heart": "HRP cardiovascular adaptation (fluid shift, resting tachycardia analog).",
+      "lungs": "Respiratory / cabin CO₂ analog from ECLSS demo + SpO₂.",
+      "bones": "HRP bone-fracture risk. Model: ~1.2% BMD / 30 d unloading, reduced by exercise.",
+      "muscles": "HRP muscle atrophy risk. Quads, calves, postural muscle analog.",
+      "skin": "Thermal / EVA skin load from wearable skin temperature.",
+      "kidneys": "HRP renal-stone risk analog (bone resorption + fluid).",
+      "radiation": "HRP space-radiation risk. Cumulative dose vs 600 mSv demo limit.",
+      "sleep": "BHP sleep-loss risk. ISS-like 8.5 h sleep opportunity.",
+      "mind": "BHP behavioral health: stress, mood, cognitive load analog."
+    },
+    "ex": {
+      "t2": "T2 treadmill",
+      "cevis": "CEVIS cycle",
+      "ared": "ARED resistive"
     }
   },
   "loc": {

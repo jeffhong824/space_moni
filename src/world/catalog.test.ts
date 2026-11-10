@@ -23,6 +23,11 @@ describe('research-based crew composition', () => {
     expect(crewByLogin('kenji_sato')?.shipId).toBe('ship-gateway');
   });
 
+  it('assigns a loginAccount to every crew member', () => {
+    expect(CREW.every((c) => typeof c.loginAccount === 'string' && c.loginAccount.length > 0)).toBe(true);
+    expect(new Set(CREW.map((c) => c.loginAccount)).size).toBe(CREW.length);
+  });
+
   it('gives each ship a commander and mixed duties', () => {
     for (const ship of SHIPS) {
       const crew = CREW.filter((c) => c.shipId === ship.id);

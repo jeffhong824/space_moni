@@ -88,7 +88,7 @@ export function taipeiHour(t: number): number {
   return new Date(t + TAIPEI_OFFSET_MS).getUTCHours() + new Date(t + TAIPEI_OFFSET_MS).getUTCMinutes() / 60;
 }
 
-function activityAtHour(hour: number, shipKind: ShipDef['kind'], day: number, crewId: string): ActivityKey {
+export function activityAtHour(hour: number, shipKind: ShipDef['kind'], day: number, crewId: string): ActivityKey {
   const slot = Math.floor(hour) % 24;
   const evaDay = hash32(shipKind, day, 'eva') % 7 === 2;
   const evaCrew = hash32(crewId, day, 'evaSlot') % 4 < 2;
@@ -367,6 +367,92 @@ export function worldStateAt(t: number, wx: SpaceEnvironmentPayload | null = nul
     taipeiIsoDate: taipeiDateString(t),
     ships,
   };
+}
+
+export interface CrewSnapshot {
+  def: CrewDef;
+  ship: ShipDef;
+  activityKey: ActivityKey;
+  event: ScriptedEvent;
+  vitals: CrewLive['vitals'];
+  wearable: WearableSample;
+  radiationMsvDay: number;
+}
+
+/** One crew member at t — cheaper than worldStateAt when sampling trends. */
+export function snapshotCrewAt(crew: CrewDef, t: number, wx: SpaceEnvironmentPayload | null = null): CrewSnapshot {
+  const ship = SHIPS.find((s) => s.id === crew.shipId)!;
+  const day = missionDayAt(t);
+  const hour = taipeiHour(t);
+  const event = scriptedEvent(ship.id, crew.id, day);
+  const activityKey = activityAtHour(hour, ship.kind, day, crew.id);
+  const rad = modeledRadiation(ship, wx);
+  return {
+    def: crew,
+    ship,
+    activityKey,
+    event,
+    vitals: vitalsFor(crew, t, event),
+    wearable: wearableAt(t, {
+      crew,
+      ship,
+      activity: activityKey,
+      event,
+      cabinMsvDay: rad.msv,
+      wx,
+    }),
+    radiationMsvDay: rad.msv,
+  };
+}
+
+export interface ScheduleBlock {
+  startHour: number;
+  endHour: number;
+  activityKey: ActivityKey;
+  done: boolean;
+  current: boolean;
+  upcoming: boolean;
+}
+
+export function daySchedule(crew: CrewDef, t: number): ScheduleBlock[] {
+  const ship = SHIPS.find((s) => s.id === crew.shipId)!;
+  const day = missionDayAt(t);
+  const hourNow = taipeiHour(t);
+  const blocks: ScheduleBlock[] = [];
+  let start = 0;
+  let cur = activityAtHour(0, ship.kind, day, crew.id);
+  for (let h = 1; h <= 24; h++) {
+    const next = h === 24 ? null : activityAtHour(h, ship.kind, day, crew.id);
+    if (next !== cur) {
+      blocks.push({
+        startHour: start,
+        endHour: h,
+        activityKey: cur,
+        done: h <= hourNow,
+        current: hourNow >= start && hourNow < h,
+        upcoming: start > hourNow,
+      });
+      start = h;
+      if (next) cur = next;
+    }
+  }
+  return blocks;
+}
+
+export type ExerciseDevice = 't2' | 'cevis' | 'ared';
+
+export function exerciseLog(_crew: CrewDef, t: number): { device: ExerciseDevice; startHour: number; endHour: number; done: boolean; current: boolean }[] {
+  const hourNow = taipeiHour(t);
+  const blocks: { device: ExerciseDevice; startHour: number; endHour: number }[] = [
+    { device: 't2', startHour: 13, endHour: 13.7 },
+    { device: 'cevis', startHour: 13.7, endHour: 14.3 },
+    { device: 'ared', startHour: 14.3, endHour: 15 },
+  ];
+  return blocks.map((b) => ({
+    ...b,
+    done: b.endHour <= hourNow,
+    current: hourNow >= b.startHour && hourNow < b.endHour,
+  }));
 }
 
 export function findCrewLive(world: WorldState, crewId: string): { ship: ShipLive; crew: CrewLive } | null {

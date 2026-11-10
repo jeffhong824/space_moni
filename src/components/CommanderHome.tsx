@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, Users } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import { interpretRecord, type SelfCheckEntry } from '../domain/healthThresholds';
@@ -11,6 +11,8 @@ import { CrewCommsInbox } from './CrewCommsInbox';
 import { SimBadge } from './SimBadge';
 import { ShipStatusCard } from './ShipStatusCard';
 import type { WorldState } from '../world/worldState';
+import { BodyMapDashboard } from './BodyMapDashboard';
+import { CREW } from '../world/catalog';
 import { findCrewLive } from '../world/worldState';
 
 interface CommanderHomeProps {
@@ -22,6 +24,7 @@ interface CommanderHomeProps {
   speDemo: boolean;
   onSelectAstronaut: (astro: AstronautProfile) => void;
   onOpenConsole: () => void;
+  onOpenAiCall: (prompt?: string) => void;
   world: WorldState;
   commanderId?: string;
 }
@@ -37,10 +40,13 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   speDemo,
   onSelectAstronaut,
   onOpenConsole,
+  onOpenAiCall,
   world,
   commanderId,
 }) => {
   const { t, lang } = useI18n();
+  const [inspectId, setInspectId] = useState<string | null>(null);
+  const inspectCrew = inspectId ? CREW.find((c) => c.id === inspectId) : null;
   const rows = astronauts
     .map((astro) => {
       const records = recordsByAstronaut[astro.id] || [];
@@ -111,7 +117,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
                 type="button"
                 onClick={() => {
                   onSelectAstronaut(astro);
-                  onOpenConsole();
+                  setInspectId(astro.id);
                 }}
                 className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3"
               >
@@ -144,6 +150,17 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
           ))}
         </ul>
       </section>
+      {inspectCrew && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold text-slate-900">{t('body.openMap')} · {inspectCrew.name}</h2>
+            <button type="button" onClick={() => setInspectId(null)} className="text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 bg-white">
+              {t('common.close')}
+            </button>
+          </div>
+          <BodyMapDashboard crew={inspectCrew} tNow={world.t} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} />
+        </div>
+      )}
       {astronauts[0]?.assignedStation && <CrewCommsInbox shipId={astronauts[0].assignedStation} />}
     </div>
   );

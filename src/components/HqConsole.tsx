@@ -15,10 +15,15 @@ import {
   visibleToCrew,
   type HqMessage,
 } from '../world/comms';
+import { BodyMapDashboard } from './BodyMapDashboard';
+import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import type { CrewDef } from '../world/catalog';
 
 interface HqConsoleProps {
   world: WorldState;
   now: number;
+  wx: SpaceEnvironmentPayload | null;
+  onOpenAiCall: (prompt?: string) => void;
 }
 
 function locLine(ship: ShipLive, t: (k: string, v?: Record<string, string | number>) => string) {
@@ -26,11 +31,12 @@ function locLine(ship: ShipLive, t: (k: string, v?: Record<string, string | numb
   return t(loc.key, loc.vars);
 }
 
-export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
+export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCall }) => {
   const { t, lang } = useI18n();
   const [shipId, setShipId] = useState(world.ships[0]?.def.id ?? '');
   const [draft, setDraft] = useState('');
   const [tick, setTick] = useState(0);
+  const [inspect, setInspect] = useState<CrewDef | null>(null);
   const ship = world.ships.find((s) => s.def.id === shipId) ?? world.ships[0];
 
   useEffect(() => {
@@ -107,22 +113,29 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
           </p>
           <ul className="divide-y divide-slate-100">
             {ship.crew.map((c) => (
-              <li key={c.def.id} className="py-2 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold">{c.def.name}</p>
-                  <p className="text-[11px] text-slate-500">
-                    {t(c.def.occupationKey)} · {t(c.activityKey)}
-                    {c.event ? ` · ${t(c.event)}` : ''}
-                  </p>
-                </div>
-                <div className="text-right text-[11px] font-mono">
-                  <StatusPill tone={toneFromStatus(['Normal', 'Attention', 'Critical'][overallRank(c)])}>
-                    {statusLabel(lang, ['Normal', 'Attention', 'Critical'][overallRank(c)])}
-                  </StatusPill>
-                  <p className="mt-1">
-                    ♥ {c.wearable.hr} · RR {c.wearable.respRate} · SpO₂ {c.wearable.spo2} · {c.wearable.doseMsv} mSv
-                  </p>
-                </div>
+              <li key={c.def.id}>
+                <button
+                  type="button"
+                  onClick={() => setInspect(c.def)}
+                  className="w-full py-2 flex items-center justify-between gap-2 text-left hover:bg-slate-50 rounded-lg px-1"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{c.def.name}</p>
+                    <p className="text-[11px] text-slate-500">
+                      {t(c.def.occupationKey)} · {t(c.activityKey)}
+                      {c.event ? ` · ${t(c.event)}` : ''}
+                    </p>
+                  </div>
+                  <div className="text-right text-[11px] font-mono">
+                    <StatusPill tone={toneFromStatus(['Normal', 'Attention', 'Critical'][overallRank(c)])}>
+                      {statusLabel(lang, ['Normal', 'Attention', 'Critical'][overallRank(c)])}
+                    </StatusPill>
+                    <p className="mt-1">
+                      ♥ {c.wearable.hr} · RR {c.wearable.respRate} · SpO₂ {c.wearable.spo2} · {c.wearable.doseMsv} mSv
+                    </p>
+                    <p className="text-[10px] text-sky-700 font-semibold mt-0.5">{t('body.openMap')}</p>
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
@@ -156,6 +169,17 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
           </div>
         </section>
       </div>
+      {inspect && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold">{t('body.openMap')} · {inspect.name}</h2>
+            <button type="button" onClick={() => setInspect(null)} className="text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 bg-white">
+              {t('common.close')}
+            </button>
+          </div>
+          <BodyMapDashboard crew={inspect} tNow={now} wx={wx} onOpenAiCall={onOpenAiCall} />
+        </div>
+      )}
     </div>
   );
 };

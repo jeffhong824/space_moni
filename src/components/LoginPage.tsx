@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthUser, UserRole } from '../types';
-import { PRESET_ACCOUNTS } from '../data/mockData';
 import { AlertCircle, ArrowRight, Satellite } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { SimBadge } from './SimBadge';
 import { useI18n } from '../i18n/I18nProvider';
+import {
+  DEMO_PASSWORD,
+  NASA_ACCOUNT,
+  accountByLogin,
+  allDemoAccounts,
+  loginConfirmVars,
+  parseLoginQuery,
+} from '../world/accounts';
 
 interface LoginPageProps {
   onLogin: (user: AuthUser) => void;
@@ -14,25 +21,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const { t } = useI18n();
   const [role, setRole] = useState<UserRole>('Astronaut');
   const [account, setAccount] = useState<string>('alice_smith');
-  const [password, setPassword] = useState<string>('12345');
+  const [password, setPassword] = useState<string>(DEMO_PASSWORD);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ name: string; roleKey: string; shipNameKey: string } | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validate password (default demo password is 12345)
-    if (password !== '12345') {
+    if (password !== DEMO_PASSWORD) {
       setError(t('login.errorPassword'));
       return;
     }
 
     const cleanAccount = account.trim().toLowerCase();
-
-    // Check if account matches preset or custom
-    const matched = PRESET_ACCOUNTS.find(
-      (p) => p.account.toLowerCase() === cleanAccount && p.role === role
-    ) || PRESET_ACCOUNTS.find((p) => p.account.toLowerCase() === cleanAccount);
+    const accounts = allDemoAccounts();
+    const matched =
+      accounts.find((p) => p.account.toLowerCase() === cleanAccount && p.role === role) ||
+      accountByLogin(cleanAccount);
 
     if (matched) {
       onLogin({
@@ -60,9 +66,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const handleQuickLogin = (preset: AuthUser) => {
     setRole(preset.role);
     setAccount(preset.account);
-    setPassword('12345');
+    setPassword(DEMO_PASSWORD);
     onLogin(preset);
   };
+
+  useEffect(() => {
+    const parsed = parseLoginQuery(window.location.search);
+    if (!parsed) return;
+    const user = accountByLogin(parsed.account);
+    const vars = loginConfirmVars(parsed.account);
+    setAccount(parsed.account);
+    setPassword(DEMO_PASSWORD);
+    if (user) setRole(user.role);
+    if (vars && parsed.showConfirm) setConfirm(vars);
+  }, []);
 
   return (
     <div className="h-screen w-screen flex flex-col md:flex-row bg-black text-white font-sans overflow-hidden select-none relative">
@@ -192,7 +209,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="grid grid-cols-1 gap-1.5">
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[0])}
+                onClick={() => handleQuickLogin(accountByLogin('alice_smith')!)}
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
@@ -206,7 +223,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[1])}
+                onClick={() => handleQuickLogin(accountByLogin('marcus_vance')!)}
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
@@ -220,7 +237,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[2])}
+                onClick={() => handleQuickLogin(NASA_ACCOUNT)}
                 className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
               >
                 <div>
@@ -267,6 +284,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </div>
         </div>
       </div>
+
+      {confirm && (
+        <div className="absolute inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-2xl border border-sky-700 bg-neutral-950 p-5 space-y-4">
+            <p className="text-sm font-semibold text-white">
+              {t('login.confirmTitle', { name: confirm.name, role: t(confirm.roleKey), ship: t(confirm.shipNameKey) })}
+            </p>
+            <p className="text-[11px] text-neutral-400">{t('login.confirmHint')}</p>
+            <p className="text-[11px] font-mono text-sky-300">
+              {account} · {t('login.passwordHint')}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const user = accountByLogin(account);
+                  setConfirm(null);
+                  if (user) onLogin(user);
+                }}
+                className="flex-1 h-10 rounded-xl bg-sky-500 text-black text-sm font-bold"
+              >
+                {t('login.confirm')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirm(null)}
+                className="flex-1 h-10 rounded-xl border border-neutral-700 text-sm font-semibold text-white"
+              >
+                {t('login.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

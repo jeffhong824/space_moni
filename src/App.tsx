@@ -270,6 +270,7 @@ export default function App() {
         speDemo={speDemo}
         onSelectAstronaut={handleSelectAstronaut}
         onOpenConsole={() => setView('console')}
+        onOpenAiCall={handleOpenAiCall}
         world={world}
         commanderId={myCrew?.id}
       />
@@ -294,6 +295,8 @@ export default function App() {
         speDemo={speDemo}
         onSelectAstronaut={handleSelectAstronaut}
         onOpenConsole={() => setView('console')}
+        onOpenAiCall={handleOpenAiCall}
+        tNow={now}
       />
     ) : (
       <AstronautHome
@@ -336,7 +339,7 @@ export default function App() {
         onToggleSpeDemo={() => setSpeDemo((v) => !v)}
       />
 
-      {view === 'hq' && <HqConsole world={world} now={now} />}
+      {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
       {view === 'home' && roleHome}
       {view === 'sources' && <DataSourcesPage onBack={() => setView(currentUser.role === 'NASA' ? 'hq' : 'home')} />}
       {view === 'console' && (
