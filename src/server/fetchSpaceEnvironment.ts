@@ -12,7 +12,7 @@ import {
   type SourceStatus,
   type SpaceEnvironmentPayload,
   type SwpcAlert,
-} from '../domain/spaceWeather';
+} from '../domain/spaceWeather.ts';
 
 const CACHE_TTL_MS = 60_000;
 let cache: { expiresAt: number; payload: SpaceEnvironmentPayload } | null = null;

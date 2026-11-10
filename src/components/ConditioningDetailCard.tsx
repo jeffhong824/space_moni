@@ -24,6 +24,7 @@ import {
   CONDITIONING_DETAILS,
   ConditioningDetail,
 } from '../data/conditioningData';
+import { statusLabelZh } from '../domain/healthThresholds';
 
 interface ConditioningDetailCardProps {
   currentRecord: DailyHealthRecord;
@@ -256,14 +257,14 @@ export const ConditioningDetailCard: React.FC<ConditioningDetailCardProps> = ({
                         <td className="py-2 px-3">
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              day.status === 'Optimal'
+                              statusLabelZh(day.status) === '正常'
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : day.status === 'Nominal'
-                                ? 'bg-sky-100 text-sky-800'
+                                : statusLabelZh(day.status) === '注意'
+                                ? 'bg-amber-100 text-amber-800'
                                 : 'bg-rose-100 text-rose-800'
                             }`}
                           >
-                            {day.status}
+                            {statusLabelZh(day.status)}
                           </span>
                         </td>
                         <td className="py-2 px-3 text-slate-500 hidden sm:table-cell font-sans text-xs">

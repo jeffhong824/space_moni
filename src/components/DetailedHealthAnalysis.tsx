@@ -13,11 +13,12 @@ import {
 } from 'lucide-react';
 import type { MetricAnalysis, SystemAnalysis } from '../types';
 import { StatusPill, toneFromStatus } from '../ui/StatusPill';
+import { statusLabelZh } from '../domain/healthThresholds';
 
 interface DetailedHealthAnalysisProps {
   metrics?: MetricAnalysis[];
   systems?: SystemAnalysis[];
-  overallStatus: 'Nominal' | 'Attention Required' | 'Critical';
+  overallStatus: string;
   overallSummary: string;
   dataQuality?: {
     telemetry: string;
@@ -27,17 +28,6 @@ interface DetailedHealthAnalysisProps {
   analysisMode?: 'live_gemini' | 'offline_fallback';
 }
 
-const overallZh: Record<string, string> = {
-  Nominal: '正常',
-  'Attention Required': '需注意',
-  Critical: '危急',
-};
-
-const metricZh: Record<string, string> = {
-  Normal: '正常',
-  Attention: '注意',
-  Critical: '危急',
-};
 
 const systemLabel: Record<string, string> = {
   Cardiovascular: '心血管系統',
@@ -98,13 +88,16 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
             <StatusIcon status={overallStatus} />
             <h3 className="font-bold text-sm">整體健康評估</h3>
           </div>
-          <StatusPill tone={toneFromStatus(overallStatus)}>{overallZh[overallStatus] || overallStatus}</StatusPill>
+          <StatusPill tone={toneFromStatus(overallStatus)}>{statusLabelZh(overallStatus)}</StatusPill>
         </div>
         <p className="text-xs leading-relaxed">{overallSummary}</p>
-        {analysisMode && (
-          <p className="text-[10px] font-mono mt-2 opacity-80">
-            模式：{analysisMode === 'live_gemini' ? 'Gemini 即時' : 'AURA 離線門檻引擎'}
+        {analysisMode === 'offline_fallback' && (
+          <p className="text-[11px] font-semibold mt-2 rounded-md bg-white/70 border border-current/15 px-2 py-1">
+            AI 離線，以下為門檻引擎結果
           </p>
+        )}
+        {analysisMode === 'live_gemini' && (
+          <p className="text-[10px] font-mono mt-2 opacity-80">模式：Gemini 即時</p>
         )}
       </div>
 
@@ -139,7 +132,7 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
                   <span className="font-mono font-bold text-sm tabular-nums shrink-0">{metric.value}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-1.5">
-                  <StatusPill tone={toneFromStatus(metric.status)}>{metricZh[metric.status]}</StatusPill>
+                  <StatusPill tone={toneFromStatus(metric.status)}>{statusLabelZh(metric.status)}</StatusPill>
                   {metric.threshold && <StatusPill tone="neutral">{metric.threshold}</StatusPill>}
                 </div>
                 <p className="text-xs leading-relaxed">{metric.analysis}</p>
@@ -170,7 +163,7 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
                     <SystemIcon system={system.system} />
                     <span className="font-bold text-xs">{systemLabel[system.system] || system.system}</span>
                   </div>
-                  <StatusPill tone={toneFromStatus(system.status)}>{metricZh[system.status]}</StatusPill>
+                  <StatusPill tone={toneFromStatus(system.status)}>{statusLabelZh(system.status)}</StatusPill>
                 </div>
                 <p className="text-xs leading-relaxed">{system.summary}</p>
                 {system.concerns.length > 0 && (

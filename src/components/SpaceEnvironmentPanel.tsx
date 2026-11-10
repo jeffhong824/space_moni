@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { Activity, ExternalLink, RefreshCw, Sun, Wind, Zap } from 'lucide-react';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../ui/DataState';
@@ -48,38 +48,28 @@ function sourceStatusZh(status: string) {
   }
 }
 
-export const SpaceEnvironmentPanel: React.FC = () => {
-  const [data, setData] = useState<SpaceEnvironmentPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (refresh = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/nasa/space-environment${refresh ? '?refresh=1' : ''}`);
-      const json = (await response.json()) as SpaceEnvironmentPayload & { error?: string };
-      if (!response.ok && json.overallStatus === 'unavailable') {
-        setData(json);
-        setError(json.error || '官方饋送無法使用');
-        return;
-      }
-      setData(json);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '無法連接空間天氣服務');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load(false);
-    const id = window.setInterval(() => void load(false), 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
-
+export const SpaceEnvironmentPanel: React.FC<{
+  payload?: SpaceEnvironmentPayload | null;
+  loading?: boolean;
+  error?: string | null;
+  onRefresh?: () => void;
+  speDemo?: boolean;
+}> = ({ payload = null, loading = false, error = null, onRefresh, speDemo = false }) => {
+  const data = payload;
   const obs = data?.observations;
   const demoKey = data?.nasaKeyMode === 'demo_key';
+  const donkiSources = data?.sources.filter((s) => s.id.startsWith('nasa-donki')) ?? [];
+  const donkiAllTimeout = donkiSources.length > 0 && donkiSources.every((s) => s.status === 'timeout');
+  const donkiAnyTimeout = donkiSources.some((s) => s.status === 'timeout');
+  const donkiEmptyOk =
+    donkiSources.length > 0 &&
+    donkiSources.every((s) => s.status === 'empty' || s.status === 'ok') &&
+    !donkiAnyTimeout;
+  const donkiNoEvents =
+    !!data &&
+    data.events.solarFlares.length === 0 &&
+    data.events.geomagneticStorms.length === 0 &&
+    data.events.coronalMassEjections.length === 0;
 
   return (
     <section
@@ -102,8 +92,8 @@ export const SpaceEnvironmentPanel: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => void load(true)}
-          disabled={loading}
+          onClick={() => onRefresh?.()}
+          disabled={loading || !onRefresh}
           className="p-1.5 rounded-lg text-slate-600 hover:bg-white/80 hover:text-slate-900 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-sky-600"
           aria-label="重新整理空間環境資料"
         >
@@ -115,7 +105,13 @@ export const SpaceEnvironmentPanel: React.FC = () => {
         {loading && !data && <LoadingBlock label="正在向 NOAA SWPC 與 NASA DONKI 擷取…" />}
 
         {error && !data && (
-          <ErrorBlock title="空間環境饋送失敗" detail={error} onRetry={() => void load(true)} />
+          <ErrorBlock title="空間環境饋送失敗" detail={error} onRetry={() => onRefresh?.()} />
+        )}
+
+        {speDemo && (
+          <p className="text-[11px] leading-relaxed rounded-lg border border-amber-300 bg-amber-50 text-amber-950 px-2.5 py-2 font-semibold">
+            示範太陽質子事件已疊加：S 尺度與質子通量不是 NOAA 即時觀測。
+          </p>
         )}
 
         {demoKey && data && (
@@ -208,13 +204,28 @@ export const SpaceEnvironmentPanel: React.FC = () => {
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                 NASA DONKI 7 日事件
               </h4>
-              {data.events.solarFlares.length === 0 &&
-              data.events.geomagneticStorms.length === 0 &&
-              data.events.coronalMassEjections.length === 0 ? (
-                <EmptyBlock
-                  title="目錄無事件或無法連線"
-                  detail="未填補閃焰／CME。若來源為空窗，代表該視窗確實沒有 DONKI 紀錄。"
-                />
+              {donkiNoEvents ? (
+                donkiAllTimeout ? (
+                  <EmptyBlock
+                    title="NASA DONKI 連線逾時"
+                    detail="這是逾時，不是確認無事件。未填補閃焰／CME。"
+                  />
+                ) : donkiAnyTimeout ? (
+                  <EmptyBlock
+                    title="NASA DONKI 部分逾時"
+                    detail="部分目錄逾時，其餘為空窗或成功。未填補事件；逾時≠確認無事件。"
+                  />
+                ) : donkiEmptyOk ? (
+                  <EmptyBlock
+                    title="視窗內確實無 DONKI 事件"
+                    detail="來源回報空窗或已連線且無紀錄，非逾時，亦未填補。"
+                  />
+                ) : (
+                  <EmptyBlock
+                    title="目錄無事件"
+                    detail="未填補閃焰／CME。"
+                  />
+                )
               ) : (
                 <ul className="space-y-1.5 max-h-28 overflow-y-auto">
                   {data.events.solarFlares.slice(0, 5).map((flare) => (

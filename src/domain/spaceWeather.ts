@@ -141,12 +141,40 @@ export function fluxToGoesClass(flux: number): string {
   return 'A0.0';
 }
 
-export function goesClassToRScale(goesClass: string): { code: string; labelZh: string } {
-  const letter = (goesClass || 'A').charAt(0).toUpperCase();
-  if (letter === 'X') return { code: 'R3+', labelZh: '強或以上無線電黑障（X 級閃焰通量）' };
-  if (letter === 'M') return { code: 'R2', labelZh: '中等無線電黑障（M 級閃焰通量）' };
-  if (letter === 'C') return { code: 'R1', labelZh: '輕微無線電黑障（C 級閃焰通量）' };
-  return { code: 'R0', labelZh: '低於無線電黑障門檻' };
+export function parseGoesClass(goesClass: string | null | undefined): { letter: string; magnitude: number } | null {
+  if (goesClass == null) return null;
+  const trimmed = String(goesClass).trim();
+  if (!trimmed) return null;
+  const match = trimmed.toUpperCase().match(/^([ABCMX])\s*([0-9]+(?:\.[0-9]+)?)/);
+  if (!match) return null;
+  return { letter: match[1], magnitude: Number(match[2]) };
+}
+
+/**
+ * NOAA R-scale from GOES X-ray peak class
+ * (https://www.swpc.noaa.gov/noaa-scales-explanation):
+ * M1 = R1, M5 = R2, X1 = R3, X10 = R4, X20 = R5.
+ * C-class and weaker is below R1 → R0. Empty input → R?.
+ */
+export function goesClassToRScale(goesClass: string | null | undefined): { code: string; labelZh: string } {
+  if (goesClass == null || String(goesClass).trim() === '') {
+    return { code: 'R?', labelZh: '無 GOES X 射線峰值，無法判定 R 尺度' };
+  }
+  const parsed = parseGoesClass(goesClass);
+  if (!parsed) {
+    return { code: 'R?', labelZh: '無法解析 GOES 等級' };
+  }
+  const { letter, magnitude } = parsed;
+  if (letter === 'X') {
+    if (magnitude >= 20) return { code: 'R5', labelZh: '極端無線電黑障（X20 級以上）' };
+    if (magnitude >= 10) return { code: 'R4', labelZh: '強烈無線電黑障（X10 級以上）' };
+    return { code: 'R3', labelZh: '強無線電黑障（X1 級以上）' };
+  }
+  if (letter === 'M') {
+    if (magnitude >= 5) return { code: 'R2', labelZh: '中等無線電黑障（M5 級以上）' };
+    return { code: 'R1', labelZh: '輕微無線電黑障（M1 級以上）' };
+  }
+  return { code: 'R0', labelZh: '低於無線電黑障門檻（C 級或更弱）' };
 }
 
 /** NOAA S-scale from ≥10 MeV proton flux (pfu). */
@@ -159,6 +187,18 @@ export function protonToSScale(pfu: number): { code: string; labelZh: string } {
   return { code: 'S0', labelZh: '低於太陽輻射暴門檻' };
 }
 
+export function scaleNumber(code: string | null | undefined, prefix: 'G' | 'R' | 'S'): number | null {
+  if (!code || code.endsWith('?')) return null;
+  const match = new RegExp(`^${prefix}(\\d)`).exec(code);
+  if (!match) return null;
+  return Number(match[1]);
+}
+
+export function sScaleElevated(code: string | null | undefined): boolean {
+  const n = scaleNumber(code, 'S');
+  return n != null && n >= 1;
+}
+
 export function combineRadiationRisk(kp: number | null, goesClass: string | null, pfu: number | null): {
   risk: RadiationRisk;
   basisZh: string;
@@ -166,19 +206,81 @@ export function combineRadiationRisk(kp: number | null, goesClass: string | null
   const g = kp != null ? kpToGScale(kp).code : 'G?';
   const r = goesClass ? goesClassToRScale(goesClass).code : 'R?';
   const s = pfu != null ? protonToSScale(pfu).code : 'S?';
-  const gN = Number(g.slice(1)) || 0;
-  const rN = r.startsWith('R3') ? 3 : Number(r.slice(1)) || 0;
-  const sN = Number(s.slice(1)) || 0;
-  const letter = (goesClass || 'A').charAt(0);
+  const gN = scaleNumber(g, 'G') ?? 0;
+  const rN = scaleNumber(r, 'R') ?? 0;
+  const sN = scaleNumber(s, 'S') ?? 0;
 
   let risk: RadiationRisk = 'Low';
-  if (gN >= 3 || sN >= 2 || letter === 'X') risk = 'Severe';
-  else if (gN >= 2 || sN >= 1 || letter === 'M') risk = 'High';
-  else if (gN >= 1 || letter === 'C') risk = 'Moderate';
+  if (gN >= 3 || sN >= 2 || rN >= 3) risk = 'Severe';
+  else if (gN >= 2 || sN >= 1 || rN >= 2) risk = 'High';
+  else if (gN >= 1 || rN >= 1) risk = 'Moderate';
 
   return {
     risk,
     basisZh: `依 NOAA 尺度推估：地磁 ${g}、無線電 ${r}、太陽輻射 ${s}。以 GOES / SWPC 觀測為準，非推估填補。`,
+  };
+}
+
+export const DEMO_SPE_NOTICE =
+  '示範太陽質子事件（SPE）情境：≥10 MeV 質子通量為示範疊加，不是 NOAA 即時觀測。Kp／X 射線若存在仍為官方讀數。';
+
+const DEMO_SPE_PFU = 120; // S2 (≥100 pfu) — labeled 示範, not a live NOAA number
+
+function emptyDemoPayload(now: string): SpaceEnvironmentPayload {
+  return {
+    fetchedAt: now,
+    windowStart: now,
+    windowEnd: now,
+    overallStatus: 'unavailable',
+    nasaKeyMode: 'demo_key',
+    cache: { hit: false, ttlSeconds: 0 },
+    sources: [],
+    observations: { kp: null, goesXray: null, solarWind: null, protons: null },
+    scales: {
+      gScale: 'G?',
+      rScale: 'R?',
+      sScale: 'S?',
+      radiationRisk: 'Unknown',
+      basisZh: '官方饋送尚未載入。',
+    },
+    events: { solarFlares: [], geomagneticStorms: [], coronalMassEjections: [], swpcAlerts: [] },
+    notices: [],
+  };
+}
+
+/** Overlay a labeled 示範 SPE. Does not invent NOAA Kp / X-ray numbers. */
+export function overlayDemoSpe(payload: SpaceEnvironmentPayload | null): SpaceEnvironmentPayload {
+  const now = new Date().toISOString();
+  const base = payload ?? emptyDemoPayload(now);
+  const demoProtons: ProtonObservation = {
+    flux: DEMO_SPE_PFU,
+    unit: 'pfu',
+    energy: '≥10 MeV',
+    satellite: '示範 SPE',
+    observedAt: now,
+    sourceId: 'demo-spe-scenario',
+  };
+  const s = protonToSScale(DEMO_SPE_PFU);
+  const g = base.observations.kp ? kpToGScale(base.observations.kp.value) : { code: 'G?', labelZh: '無 Kp' };
+  const r = base.observations.goesXray
+    ? goesClassToRScale(base.observations.goesXray.goesClass)
+    : { code: 'R?', labelZh: '無 X 射線' };
+  const combined = combineRadiationRisk(
+    base.observations.kp?.value ?? null,
+    base.observations.goesXray?.goesClass ?? null,
+    DEMO_SPE_PFU
+  );
+  return {
+    ...base,
+    observations: { ...base.observations, protons: demoProtons },
+    scales: {
+      gScale: g.code,
+      rScale: r.code,
+      sScale: s.code,
+      radiationRisk: combined.risk,
+      basisZh: `${DEMO_SPE_NOTICE} ${combined.basisZh}`,
+    },
+    notices: [DEMO_SPE_NOTICE, ...base.notices.filter((n) => n !== DEMO_SPE_NOTICE)],
   };
 }
 

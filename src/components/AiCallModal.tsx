@@ -23,6 +23,8 @@ import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
 import { callAiDoctor } from '../api/aiDoctor';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import { statusLabelZh } from '../domain/healthThresholds';
+import type { SelfCheckEntry } from '../domain/healthThresholds';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ interface AiCallModalProps {
   onExecuteAction: (action: { type: string; label: string; payload?: Record<string, string> }) => void;
   initialPrompt?: string;
   spaceEnvironment?: SpaceEnvironmentPayload | null;
+  selfCheck?: SelfCheckEntry | null;
 }
 
 export const AiCallModal: React.FC<AiCallModalProps> = ({
@@ -46,8 +49,9 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   onExecuteAction,
   initialPrompt,
   spaceEnvironment = null,
+  selfCheck = null,
 }) => {
-  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment);
+  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck);
   const buildGreeting = (): AiMessage => ({
       id: 'msg-init',
       sender: 'aura',
@@ -63,7 +67,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
           ? `官方饋送 ${packed.spaceEnvironment.overallStatus}`
           : '尚未載入空間天氣',
       },
-      suggestedActions: packed.overall.status === 'Nominal'
+      suggestedActions: packed.overall.status === 'Normal'
         ? [
             {
               id: 'sug-ack',
@@ -244,6 +248,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         telemetry: todayRecord,
         envMetrics,
         spaceEnvironment,
+        selfCheck,
         tasks,
         history: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
       });
@@ -267,7 +272,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       }
     } catch (err) {
       console.error('Error contacting AI doctor:', err);
-      const fallbackPacked = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment);
+      const fallbackPacked = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck);
       const fallback = buildOfflineTwoLevelAnalysis(text, fallbackPacked);
       const fallbackMsg: AiMessage = {
         id: 'aura-err-' + Date.now(),
@@ -441,15 +446,21 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                     </div>
                   )}
 
+                  {msg.analysisMode === 'offline_fallback' && (
+                    <p className="text-[11px] font-semibold text-amber-950 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                      AI 離線，以下為門檻引擎結果
+                    </p>
+                  )}
+
                   {/* Health Assessment Summary */}
                   {msg.healthAssessment && (
                     <div className="pt-2 border-t border-slate-100">
                       <div className={`px-3 py-2 rounded-lg text-xs ${
-                        msg.healthAssessment.status === 'Critical' ? 'bg-rose-50 border border-rose-200 text-rose-900' :
-                        msg.healthAssessment.status === 'Attention Required' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
+                        statusLabelZh(msg.healthAssessment.status) === '危急' ? 'bg-rose-50 border border-rose-200 text-rose-900' :
+                        statusLabelZh(msg.healthAssessment.status) === '注意' ? 'bg-amber-50 border border-amber-200 text-amber-900' :
                         'bg-emerald-50 border border-emerald-200 text-emerald-900'
                       }`}>
-                        <div className="font-bold mb-1">健康狀態：{msg.healthAssessment.status === 'Critical' ? '危急' : msg.healthAssessment.status === 'Attention Required' ? '需注意' : '正常'}</div>
+                        <div className="font-bold mb-1">健康狀態：{statusLabelZh(msg.healthAssessment.status)}</div>
                         <div className="text-[11px] opacity-90">{msg.healthAssessment.summary}</div>
                       </div>
                     </div>
@@ -475,7 +486,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                           <DetailedHealthAnalysis
                             metrics={msg.detailedAnalysis.metrics}
                             systems={msg.detailedAnalysis.systems}
-                            overallStatus={msg.healthAssessment?.status || 'Nominal'}
+                            overallStatus={msg.healthAssessment?.status || 'Normal'}
                             overallSummary={msg.healthAssessment?.summary || ''}
                             dataQuality={msg.dataQuality}
                             analysisMode={msg.analysisMode}

@@ -114,7 +114,7 @@ export interface AiMessage {
     executed?: boolean;
   }[];
   healthAssessment?: {
-    status: 'Nominal' | 'Attention Required' | 'Critical';
+    status: 'Normal' | 'Attention' | 'Critical' | 'Nominal' | 'Attention Required';
     summary: string;
   };
   detailedAnalysis?: {

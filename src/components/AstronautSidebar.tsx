@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, Wind, Gauge, Thermometer, ShieldAlert, Users, ChevronDown, Check, Zap, Eye, ShieldCheck, Heart } from 'lucide-react';
-import { AstronautProfile, EnvironmentalMetrics, UserRole } from '../types';
+import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, UserRole } from '../types';
 import { getStationClockDate, calculateMissionDuration } from '../utils/dateUtils';
+import { interpretRecord } from '../domain/healthThresholds';
 
 interface AstronautSidebarProps {
   currentAstronaut: AstronautProfile;
@@ -10,6 +11,7 @@ interface AstronautSidebarProps {
   envMetrics: EnvironmentalMetrics;
   onUpdateEnvMetrics: (updated: Partial<EnvironmentalMetrics>) => void;
   currentUserRole: UserRole;
+  recordsByAstronaut?: Record<string, DailyHealthRecord[]>;
 }
 
 export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
@@ -19,6 +21,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   envMetrics,
   onUpdateEnvMetrics,
   currentUserRole,
+  recordsByAstronaut = {},
 }) => {
   const [showRoster, setShowRoster] = useState(false);
 
@@ -45,18 +48,16 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
   // Helper for member live status preview
   const getMemberLiveStatus = (id: string) => {
-    switch (id) {
-      case 'astro-alice':
-        return { hr: '103 bpm', status: '心率偏高', isAlert: true };
-      case 'astro-marcus':
-        return { hr: '74 bpm', status: '正常', isAlert: false };
-      case 'astro-elena':
-        return { hr: '82 bpm', status: '正常', isAlert: false };
-      case 'astro-kenji':
-        return { hr: '70 bpm', status: '正常', isAlert: false };
-      default:
-        return { hr: '75 bpm', status: '正常', isAlert: false };
-    }
+    const records = recordsByAstronaut[id] || [];
+    const today = records.find((r) => r.isToday) || records[0];
+    if (!today) return { hr: '—', status: '正常', isAlert: false };
+    const interp = interpretRecord(today);
+    const hr = interp.metrics.find((m) => m.id === 'restingHR');
+    return {
+      hr: hr?.valueLabel ?? `${today.restingHR} bpm`,
+      status: interp.overallZh,
+      isAlert: interp.overall !== 'Normal',
+    };
   };
 
   return (

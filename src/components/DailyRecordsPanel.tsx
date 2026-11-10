@@ -31,9 +31,18 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react';
-import { DailyHealthRecord, DailyActivityItem, HourlyVitalPoint, UserRole, AstronautProfile } from '../types';
+import { DailyHealthRecord, DailyActivityItem, UserRole, AstronautProfile } from '../types';
 import { ConditioningDetailCard } from './ConditioningDetailCard';
 import { ConditioningCategory } from '../data/conditioningData';
+import {
+  BAND_NUMBERS,
+  interpretHourlyPoint,
+  interpretRecord,
+  qualitativeLabelZh,
+  statusLabelZh,
+  THRESHOLDS,
+  hourlyAbnormal,
+} from '../domain/healthThresholds';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
@@ -89,7 +98,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
 
   // Helper to trigger AI with pre-filled question based on abnormal metrics of that day
   const handleDirectAskAi = (record: DailyHealthRecord) => {
-    const abnormalHours = record.hourlyTimeline?.filter((p) => p.isAbnormal) || [];
+    const abnormalHours = record.hourlyTimeline?.filter((p) => hourlyAbnormal(p)) || [];
     const prompt = `請分析 ${record.date} 的 24 小時生理遙測。靜息心率 ${record.restingHR} bpm、HRV ${record.hrv} ms，共 ${abnormalHours.length} 筆異常時段。請依示範門檻給出整體與逐項建議，並對照官方空間天氣（勿編造 NASA 數字）。`;
     onOpenAiCall(prompt);
   };
@@ -98,8 +107,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // SINGLE DAY FOCUSED DETAIL VIEW
   // ==========================================
   if (focusedDate && currentRecord) {
-    const abnormalPoints = currentRecord.hourlyTimeline.filter((p) => p.isAbnormal);
-    const hasElevatedHR = currentRecord.restingHR > 100;
+    const abnormalPoints = currentRecord.hourlyTimeline.filter((p) => p.isAbnormal || hourlyAbnormal(p));
+    const interp = interpretRecord(currentRecord);
+    const hrStatus = interp.metrics.find((m) => m.id === 'restingHR')?.status ?? 'Normal';
+    const hrvStatus = interp.metrics.find((m) => m.id === 'hrv')?.status ?? 'Normal';
+    const hasCriticalVitals = interp.overall === 'Critical';
     const currentIndex = records.findIndex((r) => r.date === focusedDate);
     const prevRecord = records[currentIndex + 1]; // Older date
     const nextRecord = records[currentIndex - 1]; // Newer date
@@ -128,10 +140,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   今日
                 </span>
               )}
-              {hasElevatedHR && (
+              {hrStatus !== 'Normal' && (
                 <span className="px-2.5 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 rounded-md border border-rose-300 font-mono flex items-center gap-1 animate-pulse">
                   <AlertTriangle className="w-3 h-3 text-rose-600" />
-                  異常心搏過速
+                  {statusLabelZh(hrStatus)} · {THRESHOLDS.restingHR.labelZh}
                 </span>
               )}
             </div>
@@ -196,7 +208,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
         {/* Scrollable Detailed Dashboard */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-28">
           {/* 1. Red Alert Banner for Abnormal Biometrics (If Present) */}
-          {hasElevatedHR && (
+          {hasCriticalVitals && (
             <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-4 sm:p-5 text-rose-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
@@ -205,14 +217,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                      生理警示：靜息心搏過速與自主神經負荷
+                      生理警示：{interp.reasonZh}
                     </h3>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-200 text-rose-900 uppercase">
-                      需處置
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-200 text-rose-900">
+                      {interp.overallZh}
                     </span>
                   </div>
                   <p className="text-xs text-rose-800 mt-1 leading-relaxed">
-                    當日靜息心率 <strong>{currentRecord.restingHR} bpm</strong>（示範危急門檻 &gt;100），HRV <strong>{currentRecord.hrv} ms</strong>。數值來自示範遙測，請一併對照官方空間天氣。
+                    當日靜息心率 <strong>{currentRecord.restingHR} bpm</strong>（{statusLabelZh(hrStatus)} {THRESHOLDS.restingHR.critical}），HRV <strong>{currentRecord.hrv} ms</strong>（{statusLabelZh(hrvStatus)}）。數值來自示範遙測，請一併對照官方空間天氣。
                   </p>
                 </div>
               </div>
@@ -233,56 +245,56 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             {/* Resting HR (RED-HIGHLIGHTED IF >100) */}
             <div
               className={`rounded-2xl p-4 border transition-all ${
-                hasElevatedHR
+                hrStatus !== 'Normal'
                   ? 'bg-rose-50/90 border-2 border-rose-500 text-rose-900 shadow-sm'
                   : 'bg-white border-slate-200 text-slate-800'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className={hasElevatedHR ? 'text-rose-700 font-bold' : 'text-slate-500'}>
+                <span className={hrStatus !== 'Normal' ? 'text-rose-700 font-bold' : 'text-slate-500'}>
                   靜息心率
                 </span>
-                <Heart className={`w-4 h-4 ${hasElevatedHR ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
+                <Heart className={`w-4 h-4 ${hrStatus !== 'Normal' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hasElevatedHR ? 'text-rose-700' : 'text-slate-900'}`}>
+                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hrStatus !== 'Normal' ? 'text-rose-700' : 'text-slate-900'}`}>
                   {currentRecord.restingHR}
                 </span>
                 <span className="text-xs font-mono font-medium text-slate-500">bpm</span>
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
-                <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {hasElevatedHR ? '▲ 超過示範正常上限' : '● 示範正常區間'}
+                <span className={hrStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
+                  {statusLabelZh(hrStatus)}
                 </span>
-                <span className="text-slate-400">注意門檻 90 · 危急 &gt;100</span>
+                <span className="text-slate-400">{THRESHOLDS.restingHR.normal}</span>
               </div>
             </div>
 
             {/* HRV (RED-HIGHLIGHTED IF <20) */}
             <div
               className={`rounded-2xl p-4 border transition-all ${
-                currentRecord.hrv < 20
+                hrvStatus !== 'Normal'
                   ? 'bg-rose-50/90 border-2 border-rose-500 text-rose-900 shadow-sm'
                   : 'bg-white border-slate-200 text-slate-800'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className={currentRecord.hrv < 20 ? 'text-rose-700 font-bold' : 'text-slate-500'}>
+                <span className={hrvStatus !== 'Normal' ? 'text-rose-700 font-bold' : 'text-slate-500'}>
                   HRV（自主神經）
                 </span>
-                <Activity className={`w-4 h-4 ${currentRecord.hrv < 20 ? 'text-rose-600' : 'text-slate-400'}`} />
+                <Activity className={`w-4 h-4 ${hrvStatus !== 'Normal' ? 'text-rose-600' : 'text-slate-400'}`} />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className={`text-3xl font-extrabold font-mono tabular-nums ${currentRecord.hrv < 20 ? 'text-rose-700' : 'text-slate-900'}`}>
+                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hrvStatus !== 'Normal' ? 'text-rose-700' : 'text-slate-900'}`}>
                   {currentRecord.hrv}
                 </span>
                 <span className="text-xs font-mono font-medium text-slate-500">ms</span>
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
-                <span className={currentRecord.hrv < 20 ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {currentRecord.hrv < 20 ? '▼ 嚴重抑制' : '● 變異性正常'}
+                <span className={hrvStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
+                  {statusLabelZh(hrvStatus)}
                 </span>
-                <span className="text-slate-400">目標 ≥25 ms</span>
+                <span className="text-slate-400">{THRESHOLDS.hrv.normal}</span>
               </div>
             </div>
 
@@ -334,7 +346,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 font-mono mt-0.5">
-                  超過 100 bpm 的時段以紅色標示為異常心搏過速
+                  超過示範危急門檻（{BAND_NUMBERS.restingHR.criticalHigh} bpm）的時段以紅色標示
                 </p>
               </div>
 
@@ -342,11 +354,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               <div className="flex items-center gap-4 text-xs font-mono">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-rose-600 inline-block"></span>
-                  <span className="font-semibold text-rose-700">異常／危急（&gt;100 bpm）</span>
+                  <span className="font-semibold text-rose-700">危急（&gt;{BAND_NUMBERS.restingHR.criticalHigh} bpm）</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-sky-400 inline-block"></span>
-                  <span className="text-slate-600">標稱（≤100 bpm）</span>
+                  <span className="text-slate-600">正常（≤{BAND_NUMBERS.restingHR.criticalHigh} bpm）</span>
                 </div>
               </div>
             </div>
@@ -360,7 +372,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   style={{ top: '35%' }}
                 >
                   <span className="bg-rose-100 text-rose-800 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold shadow-2xs">
-                    異常上限：100 BPM
+                    危急上限：{BAND_NUMBERS.restingHR.criticalHigh} BPM
                   </span>
                 </div>
 
@@ -378,6 +390,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <div className="flex-1 flex items-end gap-2 justify-between z-20 pt-6">
                   {currentRecord.hourlyTimeline.map((pt) => {
                     const heightPct = Math.min(100, Math.max(15, ((pt.hr - 50) / 80) * 100));
+                    const spike = hourlyAbnormal(pt);
 
                     return (
                       <div
@@ -392,7 +405,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         </div>
 
                         {/* Top tag for abnormal points */}
-                        {pt.isAbnormal && (
+                        {spike && (
                           <span className="text-[9px] font-mono font-bold text-rose-700 bg-rose-100 px-1 rounded animate-pulse">
                             {pt.hr}
                           </span>
@@ -401,7 +414,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         {/* The Bar: Red-highlighted if abnormal! */}
                         <div
                           className={`w-full rounded-t-md transition-all duration-300 ${
-                            pt.isAbnormal
+                            spike
                               ? 'bg-rose-600 ring-2 ring-rose-400 shadow-md shadow-rose-200 animate-pulse'
                               : 'bg-sky-400 hover:bg-sky-500'
                           }`}
@@ -409,7 +422,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         />
 
                         {/* Time label */}
-                        <span className={`text-[10px] font-mono ${pt.isAbnormal ? 'font-bold text-rose-700' : 'text-slate-500'}`}>
+                        <span className={`text-[10px] font-mono ${spike ? 'font-bold text-rose-700' : 'text-slate-500'}`}>
                           {pt.hour.slice(0, 2)}h
                         </span>
                       </div>
@@ -444,11 +457,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {currentRecord.hourlyTimeline.map((pt) => {
+                      const spike = hourlyAbnormal(pt);
                       return (
                         <tr
                           key={pt.hour}
                           className={`transition-colors ${
-                            pt.isAbnormal
+                            spike
                               ? 'bg-rose-50/90 text-rose-950 font-medium border-l-4 border-l-rose-600'
                               : 'bg-white hover:bg-slate-50/80 text-slate-700'
                           }`}
@@ -457,7 +471,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <td className="py-2.5 px-3">
                             <span
                               className={`tabular-nums px-1.5 py-0.5 rounded ${
-                                pt.isAbnormal ? 'bg-rose-200 text-rose-900 font-bold' : 'text-slate-900'
+                                spike ? 'bg-rose-200 text-rose-900 font-bold' : 'text-slate-900'
                               }`}
                             >
                               {pt.hr} bpm
@@ -467,15 +481,15 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <td className="py-2.5 px-3 tabular-nums">{pt.hrv || 22} ms</td>
                           <td className="py-2.5 px-3 font-sans text-xs">{pt.activityNote}</td>
                           <td className="py-2.5 px-3">
-                            {pt.isAbnormal ? (
+                            {spike ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white shadow-2xs">
                                 <AlertTriangle className="w-3 h-3" />
-                                ABNORMAL TACHYCARDIA
+                                {statusLabelZh(interpretHourlyPoint(pt))}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                NOMINAL
+                                正常
                               </span>
                             )}
                           </td>
@@ -633,7 +647,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
         {records.map((record) => {
           const isExpanded = expandedDates[record.date] ?? false;
           const isToday = record.date === '2026/11/22';
-          const hasElevatedHR = record.restingHR > 100;
+          const dayInterp = interpretRecord(record);
+          const dayHr = dayInterp.metrics.find((m) => m.id === 'restingHR')?.status ?? 'Normal';
+          const dayHrv = dayInterp.metrics.find((m) => m.id === 'hrv')?.status ?? 'Normal';
+          const hasCriticalVitals = dayInterp.overall === 'Critical';
 
           return (
             <div
@@ -661,16 +678,16 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       今日
                     </span>
                   )}
-                  {hasElevatedHR && (
+                  {dayHr !== 'Normal' && (
                     <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold bg-rose-100 text-rose-800 rounded-md border border-rose-300">
                       <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      心率偏高（{record.restingHR} bpm）
+                      {statusLabelZh(dayHr)}（{record.restingHR} bpm）
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
-                  <span className={hasElevatedHR ? 'text-rose-700 font-bold' : ''}>
+                  <span className={dayHr !== 'Normal' ? 'text-rose-700 font-bold' : ''}>
                     靜息心率：{record.restingHR} bpm
                   </span>
                   <span aria-hidden="true">·</span>
@@ -739,7 +756,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={`font-bold tabular-nums text-sm ${
-                              hasElevatedHR ? 'text-rose-700 bg-rose-100 px-1 rounded font-bold' : 'text-slate-900'
+                              dayHr !== 'Normal' ? 'text-rose-700 bg-rose-100 px-1 rounded font-bold' : 'text-slate-900'
                             }`}
                           >
                             {record.restingHR} bpm
@@ -751,7 +768,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         <span className="text-slate-600">HRV:</span>
                         <span
                           className={`font-semibold tabular-nums ${
-                            record.hrv < 20 ? 'text-rose-700 font-bold bg-rose-50 px-1 rounded' : 'text-slate-900'
+                            dayHrv !== 'Normal' ? 'text-rose-700 font-bold bg-rose-50 px-1 rounded' : 'text-slate-900'
                           }`}
                         >
                           {record.hrv} ms
@@ -909,7 +926,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(AURA AI)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.mentalStatus}
+                          {qualitativeLabelZh(record.mentalStatus)}
                         </span>
                       </button>
 
@@ -935,7 +952,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Strain/Bio)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.musculoskeletalStatus}
+                          {qualitativeLabelZh(record.musculoskeletalStatus)}
                         </span>
                       </button>
 
@@ -961,7 +978,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Galley Logs)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.nutritionStatus}
+                          {qualitativeLabelZh(record.nutritionStatus)}
                         </span>
                       </button>
                     </div>
@@ -984,8 +1001,8 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
                     <span>24 小時測點：{record.hourlyTimeline.length}</span>
                     <span aria-hidden="true">·</span>
-                    <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-emerald-600'}>
-                      {hasElevatedHR ? '⚠ 含異常尖峰' : '● 測點標稱'}
+                    <span className={hasCriticalVitals ? 'text-rose-600 font-bold' : 'text-emerald-600'}>
+                      {hasCriticalVitals ? '⚠ 含異常尖峰' : '● 測點正常'}
                     </span>
                   </div>
 

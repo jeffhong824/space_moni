@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TopNav } from './components/TopNav';
+import React, { useState, useEffect, useCallback } from 'react';
+import { TopNav, type AppView } from './components/TopNav';
 import { AstronautSidebar } from './components/AstronautSidebar';
 import { DailyRecordsPanel } from './components/DailyRecordsPanel';
 import { StationTaskPanel } from './components/StationTaskPanel';
@@ -8,22 +8,40 @@ import { NewTaskModal } from './components/NewTaskModal';
 import { AddActivityModal } from './components/AddActivityModal';
 import { LoginPage } from './components/LoginPage';
 import { SpaceEnvironmentPanel } from './components/SpaceEnvironmentPanel';
+import { AstronautHome } from './components/AstronautHome';
+import { CommanderHome } from './components/CommanderHome';
+import { SurgeonHome } from './components/SurgeonHome';
+import { DataSourcesPage } from './components/DataSourcesPage';
 import {
   INITIAL_ASTRONAUTS,
   INITIAL_ENVIRONMENT,
-  INITIAL_DAILY_RECORDS,
   INITIAL_STATION_TASKS,
   getAstronautDailyRecords,
 } from './data/mockData';
-import { AstronautProfile, EnvironmentalMetrics, DailyHealthRecord, StationTask, DailyActivityItem, AuthUser } from './types';
+import {
+  AstronautProfile,
+  EnvironmentalMetrics,
+  DailyHealthRecord,
+  StationTask,
+  DailyActivityItem,
+  AuthUser,
+} from './types';
 import { CheckCircle2 } from 'lucide-react';
-import type { SpaceEnvironmentPayload } from './domain/spaceWeather';
+import { overlayDemoSpe, type SpaceEnvironmentPayload } from './domain/spaceWeather';
+import type { SelfCheckEntry } from './domain/healthThresholds';
+import type { CaseMeta } from './domain/clinicalCases';
+
+function initialRecordsMap(): Record<string, DailyHealthRecord[]> {
+  const map: Record<string, DailyHealthRecord[]> = {};
+  for (const astro of INITIAL_ASTRONAUTS) {
+    map[astro.id] = getAstronautDailyRecords(astro.id);
+  }
+  return map;
+}
 
 export default function App() {
-  // Login State - Default to null so Log-in page is displayed first by default
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-
-  // Astronauts Roster
+  const [view, setView] = useState<AppView>('home');
   const [astronauts] = useState<AstronautProfile[]>(INITIAL_ASTRONAUTS);
   const [selectedAstronaut, setSelectedAstronaut] = useState<AstronautProfile>(INITIAL_ASTRONAUTS[0]);
 
@@ -32,9 +50,9 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_ENVIRONMENT;
   });
 
-  const [dailyRecords, setDailyRecords] = useState<DailyHealthRecord[]>(() => {
-    return INITIAL_DAILY_RECORDS;
-  });
+  const [recordsByAstronaut, setRecordsByAstronaut] = useState<Record<string, DailyHealthRecord[]>>(initialRecordsMap);
+  const [selfChecks, setSelfChecks] = useState<Record<string, SelfCheckEntry | undefined>>({});
+  const [caseMeta, setCaseMeta] = useState<Record<string, CaseMeta>>({});
 
   const [stationTasks, setStationTasks] = useState<StationTask[]>(() => {
     const saved = localStorage.getItem('orbital_station_tasks');
@@ -49,6 +67,18 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState<boolean>(false);
   const [spaceEnvironment, setSpaceEnvironment] = useState<SpaceEnvironmentPayload | null>(null);
+  const [spaceEnvLoading, setSpaceEnvLoading] = useState(true);
+  const [spaceEnvError, setSpaceEnvError] = useState<string | null>(null);
+  const [speDemo, setSpeDemo] = useState(false);
+
+  const dailyRecords = recordsByAstronaut[selectedAstronaut.id] || [];
+
+  const patchRecords = (astronautId: string, updater: (prev: DailyHealthRecord[]) => DailyHealthRecord[]) => {
+    setRecordsByAstronaut((prev) => ({
+      ...prev,
+      [astronautId]: updater(prev[astronautId] || getAstronautDailyRecords(astronautId)),
+    }));
+  };
 
   const handleOpenAiCall = (prompt?: string) => {
     setAiCallInitialPrompt(prompt || '');
@@ -57,12 +87,11 @@ export default function App() {
 
   const handleSelectAstronaut = (astro: AstronautProfile) => {
     setSelectedAstronaut(astro);
-    const records = getAstronautDailyRecords(astro.id);
-    setDailyRecords(records);
   };
 
   const handleLogin = (user: AuthUser) => {
     setCurrentUser(user);
+    setView('home');
     if (user.role === 'Astronaut') {
       const astro = astronauts.find((a) => a.id === user.astronautId) || astronauts[0];
       handleSelectAstronaut(astro);
@@ -70,7 +99,6 @@ export default function App() {
       const commanderAstro = astronauts.find((a) => a.id === 'astro-marcus') || astronauts[1];
       handleSelectAstronaut(commanderAstro);
     } else {
-      // NASA starts by monitoring Alice Smith
       handleSelectAstronaut(astronauts[0]);
     }
     const roleZh = user.role === 'NASA' ? 'NASA 飛行外科醫師' : user.role === 'Commander' ? '指揮官' : '太空人';
@@ -79,9 +107,9 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setView('home');
   };
 
-  // Sync state to localStorage
   useEffect(() => {
     localStorage.setItem('orbital_env_metrics', JSON.stringify(envMetrics));
   }, [envMetrics]);
@@ -95,9 +123,8 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Activity toggles
   const handleToggleActivity = (date: string, activityId: string) => {
-    setDailyRecords((prev) =>
+    patchRecords(selectedAstronaut.id, (prev) =>
       prev.map((rec) => {
         if (rec.date === date) {
           return {
@@ -113,13 +140,10 @@ export default function App() {
   };
 
   const handleAddActivity = (date: string, item: DailyActivityItem) => {
-    setDailyRecords((prev) =>
+    patchRecords(selectedAstronaut.id, (prev) =>
       prev.map((rec) => {
         if (rec.date === date) {
-          return {
-            ...rec,
-            dailyActivities: [...rec.dailyActivities, item],
-          };
+          return { ...rec, dailyActivities: [...rec.dailyActivities, item] };
         }
         return rec;
       })
@@ -127,7 +151,6 @@ export default function App() {
     showToast(`已新增活動至 ${date}`);
   };
 
-  // Station Task toggles & updates
   const handleToggleTaskStatus = (taskId: string) => {
     setStationTasks((prev) =>
       prev.map((tsk) => {
@@ -164,15 +187,14 @@ export default function App() {
     showToast(`已新增任務：「${newTask.title}」`);
   };
 
-  // Action execution from Call with AI
-  const handleExecuteAiAction = (action: any) => {
+  const handleExecuteAiAction = (action: { type: string; label: string; payload?: Record<string, string> }) => {
     if (action.type === 'ADD_TASK') {
       const payload = action.payload || {};
       const newTask: StationTask = {
         id: 'tsk-' + Date.now(),
         title: payload.title || action.label,
-        module: payload.module || 'Tranquility ECLSS',
-        priority: payload.priority || 'High',
+        module: (payload.module as StationTask['module']) || 'Tranquility ECLSS',
+        priority: (payload.priority as StationTask['priority']) || 'High',
         status: 'In Progress',
         progress: 0,
         assignedCrew: [
@@ -183,13 +205,13 @@ export default function App() {
           },
         ],
         deadline: 'Today, +1h',
-        description: payload.description || `Auto-scheduled by AURA Flight Surgeon: ${action.label}`,
+        description: payload.description || `AURA 排程對策：${action.label}`,
       };
       setStationTasks((prev) => [newTask, ...prev]);
       showToast(`AURA 已排程任務：「${newTask.title}」`);
     } else if (action.type === 'LOG_ANOMALY') {
       const note = action.payload?.note || action.label;
-      setDailyRecords((prev) =>
+      patchRecords(selectedAstronaut.id, (prev) =>
         prev.map((rec) => {
           if (rec.isToday || rec.date === '2026/11/22') {
             return {
@@ -206,7 +228,37 @@ export default function App() {
     }
   };
 
-  // If user is not logged in, show Log-in page by default (as requested)
+  const loadWx = useCallback(async (refresh = false) => {
+    setSpaceEnvLoading(true);
+    setSpaceEnvError(null);
+    try {
+      const res = await fetch(`/api/nasa/space-environment${refresh ? '?refresh=1' : ''}`);
+      const json = (await res.json()) as SpaceEnvironmentPayload & { error?: string };
+      if (!res.ok && json.overallStatus === 'unavailable') {
+        setSpaceEnvironment(json);
+        setSpaceEnvError(json.error || '官方饋送無法使用');
+        return;
+      }
+      if (!res.ok) {
+        setSpaceEnvError(json.error || `HTTP ${res.status}`);
+        return;
+      }
+      setSpaceEnvironment(json);
+    } catch (err: unknown) {
+      setSpaceEnvError(err instanceof Error ? err.message : '無法連接空間天氣服務');
+    } finally {
+      setSpaceEnvLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadWx(false);
+    const id = window.setInterval(() => void loadWx(false), 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [loadWx]);
+
+  const displayWx = speDemo ? overlayDemoSpe(spaceEnvironment) : spaceEnvironment;
+
   if (!currentUser) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -214,25 +266,58 @@ export default function App() {
   const todayRecord =
     dailyRecords.find((r) => r.isToday || r.date === '2026/11/22') || dailyRecords[0];
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadWx = async () => {
-      try {
-        const res = await fetch('/api/nasa/space-environment');
-        if (!res.ok) return;
-        const json = (await res.json()) as SpaceEnvironmentPayload;
-        if (!cancelled) setSpaceEnvironment(json);
-      } catch {
-        /* panel handles its own error state; AI still runs without snapshot */
-      }
-    };
-    void loadWx();
-    const id = window.setInterval(() => void loadWx(), 60 * 1000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
+  const roleHome =
+    currentUser.role === 'Commander' ? (
+      <CommanderHome
+        astronauts={astronauts}
+        recordsByAstronaut={recordsByAstronaut}
+        selfChecks={selfChecks}
+        tasks={stationTasks}
+        spaceEnvironment={displayWx}
+        speDemo={speDemo}
+        onSelectAstronaut={handleSelectAstronaut}
+        onOpenConsole={() => setView('console')}
+      />
+    ) : currentUser.role === 'NASA' ? (
+      <SurgeonHome
+        surgeonName={currentUser.name}
+        astronauts={astronauts}
+        recordsByAstronaut={recordsByAstronaut}
+        selfChecks={selfChecks}
+        caseMeta={caseMeta}
+        onUpdateCase={(id, patch) =>
+          setCaseMeta((prev) => ({
+            ...prev,
+            [id]: {
+              state: patch.state ?? prev[id]?.state ?? 'open',
+              physicianNotes: patch.physicianNotes ?? prev[id]?.physicianNotes ?? [],
+            },
+          }))
+        }
+        envMetrics={envMetrics}
+        spaceEnvironment={displayWx}
+        speDemo={speDemo}
+        onSelectAstronaut={handleSelectAstronaut}
+        onOpenConsole={() => setView('console')}
+      />
+    ) : (
+      <AstronautHome
+        astronaut={selectedAstronaut}
+        todayRecord={todayRecord}
+        selfCheck={selfChecks[selectedAstronaut.id] ?? null}
+        onSaveSelfCheck={(entry) => {
+          setSelfChecks((prev) => ({ ...prev, [selectedAstronaut.id]: entry }));
+          showToast('自我檢核已寫入分析');
+        }}
+        tasks={stationTasks}
+        onToggleActivity={handleToggleActivity}
+        onToggleTaskStatus={handleToggleTaskStatus}
+        onOpenAiCall={handleOpenAiCall}
+        onOpenConsole={() => setView('console')}
+        spaceEnvironment={displayWx}
+        speDemo={speDemo}
+      />
+    );
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
@@ -242,7 +327,6 @@ export default function App() {
       >
         跳到健康紀錄
       </a>
-      {/* Top Telemetry Header */}
       <TopNav
         envMetrics={envMetrics}
         onOpenAiCall={() => handleOpenAiCall()}
@@ -250,51 +334,61 @@ export default function App() {
         onLogout={handleLogout}
         isRightPanelCollapsed={isRightPanelCollapsed}
         onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
+        view={view}
+        onChangeView={setView}
+        speDemo={speDemo}
+        onToggleSpeDemo={() => setSpeDemo((v) => !v)}
       />
 
-      {/* Main 3-Column Responsive Workstation Layout (Matching wireframe) */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        {/* Left Sidebar: Astronaut Personal Info & Env Metrics (Different for Commander/NASA) */}
-        <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto bg-slate-50/90 border-r border-slate-200/90">
-          <AstronautSidebar
-            currentAstronaut={selectedAstronaut}
-            allAstronauts={astronauts}
-            onSelectAstronaut={handleSelectAstronaut}
-            envMetrics={envMetrics}
-            onUpdateEnvMetrics={(updated) => setEnvMetrics((prev) => ({ ...prev, ...updated }))}
+      {view === 'home' && roleHome}
+      {view === 'sources' && <DataSourcesPage onBack={() => setView('home')} />}
+      {view === 'console' && (
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+          <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto bg-slate-50/90 border-r border-slate-200/90">
+            <AstronautSidebar
+              currentAstronaut={selectedAstronaut}
+              allAstronauts={astronauts}
+              onSelectAstronaut={handleSelectAstronaut}
+              envMetrics={envMetrics}
+              onUpdateEnvMetrics={(updated) => setEnvMetrics((prev) => ({ ...prev, ...updated }))}
+              currentUserRole={currentUser.role}
+              recordsByAstronaut={recordsByAstronaut}
+            />
+            <div className="px-4 pb-5">
+              <SpaceEnvironmentPanel
+                payload={displayWx}
+                loading={spaceEnvLoading}
+                error={spaceEnvError}
+                onRefresh={() => void loadWx(true)}
+                speDemo={speDemo}
+              />
+            </div>
+          </aside>
+
+          <DailyRecordsPanel
+            records={dailyRecords}
+            onToggleActivity={handleToggleActivity}
+            onOpenAddActivity={(date) => setActivityModalDate(date)}
+            onOpenAiCall={handleOpenAiCall}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
             currentUserRole={currentUser.role}
+            currentAstronaut={selectedAstronaut}
+            isRightPanelCollapsed={isRightPanelCollapsed}
+            onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
           />
-          <div className="px-4 pb-5">
-            <SpaceEnvironmentPanel />
-          </div>
-        </aside>
 
-        {/* Center Panel: 24-Hour Daily Records & Activities + Call with AI button */}
-        <DailyRecordsPanel
-          records={dailyRecords}
-          onToggleActivity={handleToggleActivity}
-          onOpenAddActivity={(date) => setActivityModalDate(date)}
-          onOpenAiCall={handleOpenAiCall}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          currentUserRole={currentUser.role}
-          currentAstronaut={selectedAstronaut}
-          isRightPanelCollapsed={isRightPanelCollapsed}
-          onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
-        />
+          <StationTaskPanel
+            tasks={stationTasks}
+            onToggleTaskStatus={handleToggleTaskStatus}
+            onUpdateTaskProgress={handleUpdateTaskProgress}
+            onOpenNewTaskModal={() => setIsNewTaskModalOpen(true)}
+            isCollapsed={isRightPanelCollapsed}
+            onToggleCollapse={() => setIsRightPanelCollapsed((prev) => !prev)}
+          />
+        </div>
+      )}
 
-        {/* Right Panel: Whole Space Station Task Objectives */}
-        <StationTaskPanel
-          tasks={stationTasks}
-          onToggleTaskStatus={handleToggleTaskStatus}
-          onUpdateTaskProgress={handleUpdateTaskProgress}
-          onOpenNewTaskModal={() => setIsNewTaskModalOpen(true)}
-          isCollapsed={isRightPanelCollapsed}
-          onToggleCollapse={() => setIsRightPanelCollapsed((prev) => !prev)}
-        />
-      </div>
-
-      {/* Voice-Enabled Call with AI Modal */}
       <AiCallModal
         isOpen={isAiCallOpen}
         onClose={() => {
@@ -307,10 +401,10 @@ export default function App() {
         tasks={stationTasks}
         onExecuteAction={handleExecuteAiAction}
         initialPrompt={aiCallInitialPrompt}
-        spaceEnvironment={spaceEnvironment}
+        spaceEnvironment={displayWx}
+        selfCheck={selfChecks[selectedAstronaut.id] ?? null}
       />
 
-      {/* New Station Task Modal */}
       <NewTaskModal
         isOpen={isNewTaskModalOpen}
         onClose={() => setIsNewTaskModalOpen(false)}
@@ -318,7 +412,6 @@ export default function App() {
         astronauts={astronauts}
       />
 
-      {/* Add Daily Activity Modal */}
       <AddActivityModal
         isOpen={activityModalDate !== null}
         onClose={() => setActivityModalDate(null)}
@@ -326,7 +419,6 @@ export default function App() {
         onAddActivity={handleAddActivity}
       />
 
-      {/* Floating Action Feedback Toast */}
       {toastMessage && (
         <div className="fixed top-16 right-6 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 text-xs font-medium animate-in slide-in-from-top-2 duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

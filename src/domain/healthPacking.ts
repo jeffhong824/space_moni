@@ -1,12 +1,11 @@
-import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics } from '../types';
-import type { SpaceEnvironmentPayload } from './spaceWeather';
-import { snapshotForAi } from './spaceWeather';
+import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics } from '../types.ts';
+import type { SpaceEnvironmentPayload } from './spaceWeather.ts';
+import { snapshotForAi } from './spaceWeather.ts';
 import {
   CABIN_ENV_SOURCE,
   THRESHOLDS,
   TELEMETRY_SOURCE,
   formatSleep,
-  rollupOverall,
   statusExercise,
   statusHrv,
   statusRestingHR,
@@ -15,7 +14,10 @@ import {
   statusVo2,
   type MetricStatus,
   type OverallStatus,
-} from './healthThresholds';
+  interpretRecord,
+  STATUS_ZH,
+  type SelfCheckEntry,
+} from './healthThresholds.ts';
 
 export interface PackedMetric {
   metric: string;
@@ -183,7 +185,8 @@ export function packHealthPayload(
   astronaut: AstronautProfile,
   record: DailyHealthRecord,
   envMetrics?: EnvironmentalMetrics | null,
-  spaceEnvironment?: SpaceEnvironmentPayload | null
+  spaceEnvironment?: SpaceEnvironmentPayload | null,
+  selfCheck?: SelfCheckEntry | null
 ): PackedHealthPayload {
   const hr = statusRestingHR(record.restingHR);
   const hrv = statusHrv(record.hrv);
@@ -290,8 +293,8 @@ export function packHealthPayload(
           ? '心血管系統適應良好，靜息心率與 HRV 均在示範門檻內。'
           : '心血管系統顯示微重力適應壓力：心率與／或 HRV 偏離示範門檻。',
       concerns: [
-        ...(hr !== 'Normal' ? [`靜息心率 ${record.restingHR} bpm（${hr}）`] : []),
-        ...(hrv !== 'Normal' ? [`HRV ${record.hrv} ms（${hrv}）`] : []),
+        ...(hr !== 'Normal' ? [`靜息心率 ${record.restingHR} bpm（${STATUS_ZH[hr]}）`] : []),
+        ...(hrv !== 'Normal' ? [`HRV ${record.hrv} ms（${STATUS_ZH[hrv]}）`] : []),
       ],
       recommendations: cardioStatus === 'Normal' ? ['維持 ARED／T2 常規'] : ['執行補液與降低峰值負荷', '記錄異常供地面飛行外科醫師'],
     },
@@ -339,13 +342,14 @@ export function packHealthPayload(
     },
   ];
 
-  const overallStatus = rollupOverall(metrics.map((m) => m.status));
+  const interpreted = interpretRecord(record, selfCheck);
+  const overallStatus = interpreted.overall;
   const overallSummary =
     overallStatus === 'Critical'
       ? '多項或單項生理指標達危急門檻，需立即對策並通報地面。'
-      : overallStatus === 'Attention Required'
-        ? '整體需注意：部分指標偏離示範門檻，尚未判定為立即危急。'
-        : '整體標稱為正常，任務適航狀態良好。';
+      : overallStatus === 'Attention'
+        ? '整體注意：部分指標偏離示範門檻，尚未判定為立即危急。'
+        : '整體正常，任務適航狀態良好。';
 
   return {
     source: TELEMETRY_SOURCE,
@@ -425,7 +429,7 @@ export function buildOfflineTwoLevelAnalysis(
             label: '記錄例行健康檢核完成',
             type: 'LOG_ANOMALY',
             payload: {
-              note: `${astronaut.name} ${packed.capturedForDate}：整體 ${overall.status}。來源：${TELEMETRY_SOURCE.labelZh}。`,
+              note: `${astronaut.name} ${packed.capturedForDate}：整體 ${STATUS_ZH[overall.status]}。來源：${TELEMETRY_SOURCE.labelZh}。`,
             },
           },
         ],

@@ -30,17 +30,18 @@ export function StatusPill({
 
 export function toneFromStatus(status?: string): Tone {
   if (!status) return 'neutral';
-  if (status === 'Critical' || status === 'Severe' || status === 'unavailable') return 'crit';
+  if (status === 'Critical' || status === 'Severe' || status === 'unavailable' || status === '危急') return 'crit';
   if (
     status === 'Attention' ||
     status === 'Attention Required' ||
     status === 'High' ||
     status === 'Moderate' ||
     status === 'partial' ||
-    status === 'Elevated'
+    status === 'Elevated' ||
+    status === '注意'
   ) {
     return 'warn';
   }
-  if (status === 'Nominal' || status === 'Normal' || status === 'Low' || status === 'ok') return 'ok';
+  if (status === 'Nominal' || status === 'Normal' || status === 'Low' || status === 'ok' || status === '正常') return 'ok';
   return 'info';
 }

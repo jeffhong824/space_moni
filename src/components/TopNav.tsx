@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Activity, ShieldCheck, Radio, Satellite, HeartPulse, LogOut, User, Shield, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { EnvironmentalMetrics, AuthUser } from '../types';
 
+export type AppView = 'home' | 'console' | 'sources';
+
 interface TopNavProps {
   envMetrics: EnvironmentalMetrics;
   onOpenAiCall: () => void;
@@ -9,6 +11,10 @@ interface TopNavProps {
   onLogout: () => void;
   isRightPanelCollapsed?: boolean;
   onToggleRightPanel?: () => void;
+  view?: AppView;
+  onChangeView?: (view: AppView) => void;
+  speDemo?: boolean;
+  onToggleSpeDemo?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -18,6 +24,10 @@ export const TopNav: React.FC<TopNavProps> = ({
   onLogout,
   isRightPanelCollapsed = false,
   onToggleRightPanel,
+  view = 'home',
+  onChangeView,
+  speDemo = false,
+  onToggleSpeDemo,
 }) => {
   const [utcTime, setUtcTime] = useState<string>('');
   const [metString, setMetString] = useState<string>('T+289D:01H:00M');
@@ -90,8 +100,43 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
       </div>
 
+      {onChangeView && currentUser && (
+        <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
+          {(
+            [
+              ['home', currentUser.role === 'NASA' ? '異常佇列' : currentUser.role === 'Commander' ? '組員總覽' : '今日健康'],
+              ['console', '作業台'],
+              ['sources', '資料來源'],
+            ] as Array<[AppView, string]>
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChangeView(id)}
+              className={`px-2.5 py-1 rounded-lg border ${
+                view === id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+
       {/* Zone 3: User Info, Primary Action & Logout */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {onToggleSpeDemo && (
+          <button
+            type="button"
+            onClick={onToggleSpeDemo}
+            className={`hidden sm:flex items-center px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border ${
+              speDemo ? 'bg-amber-100 text-amber-950 border-amber-400' : 'bg-white text-slate-600 border-slate-200'
+            }`}
+            title="疊加標示為示範的太陽質子事件，非 NOAA 即時質子讀數"
+          >
+            {speDemo ? '示範 SPE 開' : '示範 SPE'}
+          </button>
+        )}
         {currentUser && (
           <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getRoleBadge(currentUser.role)}`}>

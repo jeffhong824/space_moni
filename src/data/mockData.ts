@@ -1,4 +1,5 @@
 import { AstronautProfile, EnvironmentalMetrics, DailyHealthRecord, StationTask, HourlyVitalPoint, AuthUser } from '../types';
+import { BAND_NUMBERS, hourlyAbnormal } from '../domain/healthThresholds';
 
 export const PRESET_ACCOUNTS: AuthUser[] = [
   {
@@ -145,14 +146,16 @@ const generate24HrVitals = (baseHr: number, spikeHours: number[] = [14, 16]) => 
   for (let i = 0; i < 24; i += 2) {
     const isSpike = spikeHours.includes(i);
     const hrVal = isSpike ? baseHr + 20 + Math.floor(Math.random() * 6) : baseHr + Math.floor(Math.random() * 6) - 3;
-    const isAbnormal = hrVal > 100;
-    points.push({
+    const point = {
       hour: `${String(i).padStart(2, '0')}:00`,
       hr: hrVal,
       spo2: isSpike ? 94 : 96 + (Math.random() > 0.5 ? 1 : 0),
-      hrv: isAbnormal ? 15 : 26 + Math.floor(Math.random() * 6),
+      hrv: hrVal > BAND_NUMBERS.restingHR.criticalHigh ? 15 : 26 + Math.floor(Math.random() * 6),
       activityNote: routineNotes[i / 2] || 'Station operation',
-      isAbnormal,
+    };
+    points.push({
+      ...point,
+      isAbnormal: hourlyAbnormal(point),
     });
   }
   return points;
@@ -177,6 +180,8 @@ export const INITIAL_DAILY_RECORDS: DailyHealthRecord[] = [
       { id: 'act-1', title: 'Plant molecular observation', completed: true, timeSlot: '08:30 - 11:00', category: 'Research' },
       { id: 'act-2', title: 'Microgravity experiment of plant cells', completed: true, timeSlot: '12:00 - 14:30', category: 'Research' },
       { id: 'act-3', title: 'Plant catalyst in space experiment', completed: false, timeSlot: '16:00 - 18:30', category: 'Research' },
+      { id: 'act-cm-1', title: '等滲補液與電解質平衡', completed: false, timeSlot: '19:00 - 19:20', category: 'Health Countermeasure' },
+      { id: 'act-cm-2', title: '恢復窗：降低 T2 峰值負荷', completed: false, timeSlot: '晚班', category: 'Health Countermeasure' },
     ],
     hourlyTimeline: TODAY_24H_VITALS,
   },
@@ -316,6 +321,33 @@ export const INITIAL_STATION_TASKS: StationTask[] = [
     ],
     deadline: 'Tomorrow, 08:00 UTC',
     description: 'Inspect signal attenuation during tracking and data relay satellite handoff.',
+  },
+  {
+    id: 'tsk-eva',
+    title: 'Quest Airlock EVA 艙外活動',
+    module: 'Station Exterior',
+    priority: 'High',
+    status: 'Scheduled',
+    progress: 10,
+    assignedCrew: [
+      { name: 'Marcus Vance', role: 'Commander', avatarBg: 'bg-slate-700' },
+      { name: 'Kenji Sato', role: 'Avionics', avatarBg: 'bg-indigo-600' },
+    ],
+    deadline: 'Today, 20:00 UTC',
+    description: 'Scheduled EVA from Quest Airlock. Pause if NOAA S-scale is S1 or higher.',
+  },
+  {
+    id: 'tsk-t2',
+    title: 'T2 高強度有氧對策（峰值負荷）',
+    module: 'Tranquility ECLSS',
+    priority: 'Medium',
+    status: 'Scheduled',
+    progress: 0,
+    assignedCrew: [
+      { name: 'Alice Smith', role: 'Botanist', avatarBg: 'bg-cyan-600' },
+    ],
+    deadline: 'Today, 17:00 UTC',
+    description: 'Peak-load T2 treadmill countermeasure. Defer when cardiovascular status is 危急 or S-scale is elevated.',
   },
   {
     id: 'tsk-05',
