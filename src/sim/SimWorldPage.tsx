@@ -145,7 +145,11 @@ export const SimWorldPage: React.FC = () => {
       </header>
 
       <div className="flex-1 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,22rem)] grid-rows-[minmax(8rem,1fr)_minmax(10rem,1fr)] lg:grid-rows-[minmax(0,1fr)] min-h-0 overflow-hidden">
-        <div className="relative min-h-0 overflow-hidden" ref={host}>
+        <div className="relative min-h-0 overflow-hidden bg-stone-950">
+          <div className="absolute inset-3 rounded-[16px] overflow-hidden" ref={host} />
+          <p className="pointer-events-none absolute top-5 left-5 z-10 max-w-[min(100%-2.5rem,28rem)] rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium text-white/90">
+            {t('sim.notNasa')}
+          </p>
           {loading && (
             <p className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">{t('sim.loadingEngine')}</p>
           )}
@@ -211,7 +215,7 @@ export const SimWorldPage: React.FC = () => {
                 <h2 className="text-sm font-bold">{t(detail.def.nameKey)}</h2>
                 <SimBadge />
               </div>
-              <p className="text-[11px] text-slate-400">{t('sim.day', { n: world.missionDay })}</p>
+              <p className="text-[11px] text-slate-400">{t('sim.day', { n: world.missionDay + 1 })}</p>
               {detail.crew.map((c) => {
                 const st = ['Normal', 'Attention', 'Critical'][overallRank(c)];
                 return (

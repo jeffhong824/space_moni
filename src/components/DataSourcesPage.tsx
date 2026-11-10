@@ -109,7 +109,7 @@ export const DataSourcesPage: React.FC<{
   const sleepH = BAND_NUMBERS.sleepMinutes.attentionBelow / 60;
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
       <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.sourcesKicker')}</p>
       <h1 className="font-display text-4xl sm:text-5xl mt-1">{t('ui.sourcesHeadline')}</h1>
       <p className="text-sm text-stone-500 mt-2">{t('sources.hint')}</p>

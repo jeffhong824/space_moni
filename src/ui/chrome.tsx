@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { LANGUAGES } from '../i18n/registry';
 import { allDemoAccounts } from '../world/accounts';
 import type { AuthUser } from '../types';
+import { taipeiHour } from '../world/worldState';
 
 export type AppView = 'home' | 'console' | 'sources' | 'hq';
 
@@ -45,8 +46,8 @@ export function toneFromRank(status?: string): RankTone {
   return 'info';
 }
 
-export function greetingKey(): 'ui.goodMorning' | 'ui.goodAfternoon' | 'ui.goodEvening' {
-  const h = new Date().getHours();
+export function greetingKey(nowMs: number = Date.now()): 'ui.goodMorning' | 'ui.goodAfternoon' | 'ui.goodEvening' {
+  const h = Math.floor(taipeiHour(nowMs));
   if (h < 12) return 'ui.goodMorning';
   if (h < 18) return 'ui.goodAfternoon';
   return 'ui.goodEvening';
@@ -57,19 +58,71 @@ export function firstName(name: string): string {
 }
 
 export function initials(name: string, seed?: string): string {
-  if (seed && seed.length <= 3) return seed;
-  return name
+  const fromSeed = (seed ?? '').replace(/[^A-Za-z]/g, '').toUpperCase();
+  if (fromSeed.length >= 2) return fromSeed.slice(0, 2);
+  const letters = name
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0])
     .join('')
     .toUpperCase();
+  return (letters || '??').slice(0, 2);
+}
+
+const BUBBLE = ['#2b3bff', '#1c1b18', '#0f9f8a', '#c45c2a', '#6d4fd6', '#c43c3c', '#3d4fd8', '#4a6a1f'];
+
+export function avatarTone(id: string): string {
+  let h = 0;
+  for (const ch of id) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
+  return BUBBLE[h % BUBBLE.length];
+}
+
+export function AvatarBubble({
+  name,
+  seed,
+  id,
+  size = 36,
+  className = '',
+}: {
+  name: string;
+  seed?: string;
+  id?: string;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full text-white font-semibold shrink-0 leading-none ${className}`}
+      style={{
+        width: size,
+        height: size,
+        background: avatarTone(id || name),
+        fontSize: Math.max(10, size * 0.34),
+      }}
+      aria-hidden
+    >
+      {initials(name, seed)}
+    </span>
+  );
 }
 
 export function formatDelay(sec: number, t: (k: string, v?: Record<string, string | number>) => string): string {
   if (sec >= 60) return t('ui.lightDelay', { n: Math.round(sec / 60) });
   return t('ui.lightDelaySec', { n: Math.round(sec) });
+}
+
+export function DelayCaption({ sec, className = '' }: { sec: number; className?: string }) {
+  const { t } = useI18n();
+  const minutes = sec >= 60;
+  const n = minutes ? Math.round(sec / 60) : Math.round(sec);
+  return (
+    <span className={`inline-flex items-baseline gap-1.5 font-sans ${className}`}>
+      <span className="text-4xl font-semibold tabular-nums tracking-tight">{n}</span>
+      <span className="text-lg font-medium text-stone-500 tabular-nums">{minutes ? t('ui.minUnit') : t('ui.secUnit')}</span>
+      <span className="text-base font-medium text-stone-500">{t('ui.delayCaption')}</span>
+    </span>
+  );
 }
 
 export const SimChip: React.FC<{ live?: boolean; className?: string }> = ({ live = false, className = '' }) => {
@@ -209,11 +262,11 @@ export const Sheet: React.FC<{
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[70] flex justify-end" role="presentation">
+        <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
           <button
             type="button"
             aria-label="Close"
-            className="absolute inset-0 bg-stone-900/20"
+            className="absolute inset-0 sm-scrim"
             onClick={onClose}
           />
           <motion.aside
@@ -223,7 +276,7 @@ export const Sheet: React.FC<{
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 24, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-            className={`relative h-full ${wide ? 'w-full max-w-xl' : 'w-full max-w-md'} sm-glass rounded-l-[32px] p-5 overflow-y-auto`}
+            className={`relative h-full ${wide ? 'w-full max-w-[38.75rem]' : 'w-full max-w-md'} sm-sheet-panel rounded-l-[32px] p-5 overflow-y-auto`}
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="min-w-0">{title}</div>
@@ -472,9 +525,10 @@ export const AskAuraOrb: React.FC<{ onClick: () => void; label?: string }> = ({ 
     <button
       type="button"
       onClick={onClick}
-      className="fixed z-30 right-5 bottom-20 md:bottom-6 inline-flex items-center gap-3 pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
+      aria-label={label ?? t('ui.askAura')}
+      className="fixed z-30 right-4 bottom-[5.75rem] md:right-5 md:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
     >
-      <span className="font-display text-lg italic">{label ?? t('ui.askAura')}</span>
+      <span className="hidden sm:inline font-display text-lg italic">{label ?? t('ui.askAura')}</span>
       <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 via-violet-200 to-fuchsia-200 shadow-inner" />
     </button>
   );
@@ -564,7 +618,7 @@ export function WaveScrubber({
     <div className="relative">
       <div
         ref={wrap}
-        className="relative h-44 cursor-ew-resize select-none"
+        className="relative h-32 cursor-ew-resize select-none"
         onPointerDown={(e) => {
           dragging.current = true;
           setFromClientX(e.clientX);
@@ -622,7 +676,7 @@ export function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium ${
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium shrink-0 ${
         active ? 'bg-white shadow-[var(--sm-shadow-soft)] text-stone-800' : 'text-stone-500 hover:text-stone-800'
       }`}
     >

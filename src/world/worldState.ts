@@ -76,12 +76,25 @@ export function missionDayAt(t: number): number {
   return Math.floor(Math.max(0, t - WORLD_EPOCH_MS) / DAY_MS);
 }
 
+/** 1-indexed mission calendar day. Day 1 = 2026-11-10 Asia/Taipei. */
+export function calendarDayNumber(missionDay: number): number {
+  return missionDay + 1;
+}
+
 export function taipeiDateString(t: number): string {
   const d = new Date(t + TAIPEI_OFFSET_MS);
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, '0');
   const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}/${m}/${day}`;
+}
+
+export function taipeiClockHms(t: number): string {
+  const d = new Date(t + TAIPEI_OFFSET_MS);
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  const ss = String(d.getUTCSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
 }
 
 export function taipeiHour(t: number): number {

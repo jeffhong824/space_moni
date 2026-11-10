@@ -26,7 +26,7 @@ import type { SelfCheckEntry } from './domain/healthThresholds';
 import type { CaseMeta } from './domain/clinicalCases';
 import { useI18n } from './i18n/I18nProvider';
 import { CREW, crewByLogin } from './world/catalog';
-import { historyRecords, tasksForShip, worldStateAt } from './world/worldState';
+import { calendarDayNumber, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
 import { allProfiles, crewToProfile, enrichUser, profilesForShip } from './world/toProfiles';
 
 const SimWorldPage = lazy(() => import('./sim/SimWorldPage').then((m) => ({ default: m.SimWorldPage })));
@@ -338,6 +338,7 @@ export default function App() {
         onChangeView={setView}
         speDemo={speDemo}
         onToggleSpeDemo={() => setSpeDemo((v) => !v)}
+        clockLabel={t('ui.clockMet', { n: calendarDayNumber(world.missionDay), time: taipeiClockHms(now) })}
       />
 
       {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
@@ -347,7 +348,7 @@ export default function App() {
       )}
       {view === 'console' && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-          <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto">
+          <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto sm-page-pad">
             <AstronautSidebar
               currentAstronaut={selectedAstronaut}
               allAstronauts={astronauts}
@@ -425,7 +426,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

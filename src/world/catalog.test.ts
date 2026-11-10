@@ -28,6 +28,17 @@ describe('research-based crew composition', () => {
     expect(new Set(CREW.map((c) => c.loginAccount)).size).toBe(CREW.length);
   });
 
+  it('gives unique 2-letter avatar seeds per ship and globally', () => {
+    expect(CREW.every((c) => /^[A-Z]{2}$/.test(c.avatarSeed))).toBe(true);
+    expect(new Set(CREW.map((c) => c.avatarSeed)).size).toBe(CREW.length);
+    for (const ship of SHIPS) {
+      const seeds = CREW.filter((c) => c.shipId === ship.id).map((c) => c.avatarSeed);
+      expect(new Set(seeds).size).toBe(seeds.length);
+    }
+    expect(CREW.find((c) => c.id === 'astro-irina')?.avatarSeed).toBe('IK');
+    expect(CREW.find((c) => c.id === 'astro-ines')?.avatarSeed).toBe('IV');
+  });
+
   it('gives each ship a commander and mixed duties', () => {
     for (const ship of SHIPS) {
       const crew = CREW.filter((c) => c.shipId === ship.id);

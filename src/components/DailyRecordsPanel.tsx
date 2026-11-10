@@ -44,6 +44,7 @@ import {
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { RingGauge, Segmented, WaveScrubber } from '../ui/chrome';
+import { taipeiWeekdayLong } from '../utils/dateUtils';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
@@ -181,10 +182,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 lg:px-8 space-y-6 pb-28">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-8 space-y-6 sm-page-pad">
           <div>
             <h2 className="font-display text-4xl">
-              {new Date(currentRecord.date.replace(/\//g, '-')).toLocaleDateString(lang, { weekday: 'long' })}, {t('ui.steadyDay')}
+              {taipeiWeekdayLong(currentRecord.date, lang)}, {currentRecord.date}
             </h2>
             <p className="mt-2 text-sm text-stone-500">
               {abnormalPoints[0]
@@ -236,6 +237,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               label={t('ui.restingHr')}
               unit="bpm"
               tone={hrStatus === 'Normal' ? 'ok' : hrStatus === 'Critical' ? 'crit' : 'warn'}
+              size={72}
             />
             <RingGauge
               value={currentRecord.hrv}
@@ -243,6 +245,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               label={t('records.hrvLabel')}
               unit="ms"
               tone={hrvStatus === 'Normal' ? 'warn' : 'warn'}
+              size={72}
             />
             <RingGauge
               value={currentRecord.spo2}
@@ -250,6 +253,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               label={t('records.spo2')}
               unit="%"
               tone="lilac"
+              size={72}
             />
           </div>
 
@@ -470,7 +474,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-slate-100/90 text-slate-600 border-b border-slate-200 text-[11px]">
                     <tr>
-                      <th className="py-2.5 px-3 font-semibold">TIME (UTC)</th>
+                      <th className="py-2.5 px-3 font-semibold">TIME ({t('ui.zoneTaipei')})</th>
                       <th className="py-2.5 px-3 font-semibold">HEART RATE</th>
                       <th className="py-2.5 px-3 font-semibold">SPO2</th>
                       <th className="py-2.5 px-3 font-semibold">HRV</th>
@@ -596,7 +600,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   return (
     <section id="main-records" className="flex-1 flex flex-col h-full overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 sm-page-pad">
         {/* Header bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>

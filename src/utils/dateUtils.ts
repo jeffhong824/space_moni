@@ -1,12 +1,19 @@
 /**
  * Utility functions for Space Station date, clock sync, and mission duration calculations.
+ * Station clock follows the mission calendar in Asia/Taipei (same as worldStateAt).
  */
 
-export const getStationClockDate = (dateObj: Date = new Date()): string => {
-  const y = dateObj.getUTCFullYear();
-  const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getUTCDate()).padStart(2, '0');
-  return `${y}/${m}/${d}`;
+import { taipeiDateString } from '../world/worldState';
+
+export const getStationClockDate = (dateObj: Date = new Date()): string => taipeiDateString(dateObj.getTime());
+
+/** Weekday for a Taipei calendar date `YYYY/MM/DD` (avoids UTC-midnight locale shifts). */
+export const taipeiWeekdayLong = (dateStr: string, locale: string): string => {
+  const [y, m, d] = dateStr.split(/[/\-]/).map(Number);
+  if (!y || !m || !d) return dateStr;
+  return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'Asia/Taipei' }).format(
+    new Date(Date.UTC(y, m - 1, d, 4, 0, 0))
+  );
 };
 
 export interface MissionDurationResult {

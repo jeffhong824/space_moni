@@ -16,13 +16,13 @@ export const CrewCommsInbox: React.FC<{ shipId: string }> = ({ shipId }) => {
   void tick;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4">
+    <section className="rounded-[24px] bg-white/90 p-3.5 shadow-[var(--sm-shadow-soft)]">
       <div className="flex items-center gap-2">
         <Radio className="w-4 h-4 text-emerald-700" />
         <h2 className="text-sm font-bold">{t('inbox.title')}</h2>
         <SimBadge />
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-2 space-y-1.5 max-h-36 overflow-y-auto">
         {messages.length === 0 && <li className="text-xs text-slate-500">{t('inbox.empty')}</li>}
         {messages.map((m) => (
           <li key={m.id} className="rounded-lg border border-slate-200 px-2.5 py-2 text-xs">

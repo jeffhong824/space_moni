@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { AuthUser } from '../types';
 import { useI18n } from '../i18n/I18nProvider';
 import {
@@ -27,6 +27,7 @@ interface TopNavProps {
   speDemo?: boolean;
   onToggleSpeDemo?: () => void;
   wordmark?: string;
+  clockLabel?: string;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -41,16 +42,9 @@ export const TopNav: React.FC<TopNavProps> = ({
   speDemo = false,
   onToggleSpeDemo,
   wordmark,
+  clockLabel,
 }) => {
   const { t } = useI18n();
-  const [utcTime, setUtcTime] = useState('');
-
-  useEffect(() => {
-    const tick = () => setUtcTime(new Date().toUTCString().slice(17, 25) + ' UTC');
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, []);
 
   return (
     <>
@@ -58,7 +52,11 @@ export const TopNav: React.FC<TopNavProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <PageWordmark title={wordmark} />
           <SimChip />
-          <span className="hidden xl:inline text-[11px] text-stone-400 tabular-nums">{utcTime}</span>
+          {clockLabel && (
+            <span className="hidden md:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[16rem] lg:max-w-none">
+              {clockLabel}
+            </span>
+          )}
         </div>
 
         {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}

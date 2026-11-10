@@ -12,7 +12,7 @@ export function crewToProfile(crew: CrewDef, t: number): AstronautProfile {
     role: crew.occupationKey,
     missionStartDate: start,
     missionCurrentDate: taipeiDateString(t),
-    missionDuration: `D+${missionDayAt(t)}`,
+    missionDuration: `D+${missionDayAt(t) + 1}`,
     missionDaysElapsed: missionDayAt(t),
     bloodType: crew.bloodType,
     assignedStation: crew.shipId,

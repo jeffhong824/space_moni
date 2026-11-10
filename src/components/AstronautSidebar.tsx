@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Wind, Gauge, Thermometer, ShieldAlert, Users, ChevronDown, Check, Zap, Eye, ShieldCheck, Heart } from 'lucide-react';
 import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, UserRole } from '../types';
 import { getStationClockDate, calculateMissionDuration } from '../utils/dateUtils';
+import { AvatarBubble } from '../ui/chrome';
 import { interpretRecord } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
@@ -109,11 +110,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center shadow-2xs ${
-                        isSelected ? 'bg-sky-600 text-white' : 'bg-white border border-slate-200 text-slate-700'
-                      }`}>
-                        {astro.avatarSeed}
-                      </div>
+                      <AvatarBubble name={astro.name} seed={astro.avatarSeed} id={astro.id} size={32} />
                       <div>
                         <div className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
                           <span>{astro.name}</span>
@@ -160,9 +157,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
         <div className="bg-[#dcf3f8] border border-[#b2e5ef] rounded-2xl p-5 text-slate-800 shadow-xs relative">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/90 border border-sky-300 flex items-center justify-center font-bold text-sky-800 text-lg shadow-2xs">
-                {currentAstronaut.avatarSeed}
-              </div>
+              <AvatarBubble name={currentAstronaut.name} seed={currentAstronaut.avatarSeed} id={currentAstronaut.id} size={48} />
               <div>
                 <h2 className="text-xl font-bold text-slate-900 leading-tight">
                   {currentAstronaut.name}

@@ -39,7 +39,7 @@ export const ShipStatusCard: React.FC<ShipStatusCardProps> = ({ world, ship, me,
           <p className="text-[11px] text-slate-500 mt-0.5">{t(ship.def.kindKey)}</p>
         </div>
         <p className="text-[11px] font-mono text-slate-500">
-          {t('sim.day', { n: world.missionDay })} · {t('shipCard.since')}
+          {t('sim.day', { n: world.missionDay + 1 })} · {t('shipCard.since')}
         </p>
       </div>
 

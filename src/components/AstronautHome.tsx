@@ -117,14 +117,44 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
     { t: '18:00', title: t('astro.selfCheck'), icon: <Moon className="w-4 h-4" />, self: true },
   ];
 
+  const gauges = (
+    <>
+      <RingGauge
+        value={hr}
+        max={120}
+        label={t('wear.hr')}
+        unit="bpm"
+        tone={hr > BAND_NUMBERS.restingHR.attentionHigh ? 'warn' : 'ok'}
+        size={72}
+      />
+      <RingGauge
+        value={spo2}
+        max={100}
+        label="SpO2"
+        unit="%"
+        tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
+        size={72}
+      />
+      <RingGauge
+        value={hrv}
+        max={50}
+        label={t('wear.hrv')}
+        unit="ms"
+        tone={hrv < BAND_NUMBERS.hrv.attentionBelow ? 'warn' : 'lilac'}
+        size={72}
+      />
+      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={72} />
+    </>
+  );
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
-      <div className="grid lg:grid-cols-[1fr_minmax(240px,320px)_auto] gap-6 items-start">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(200px,280px)_auto] lg:grid-rows-[auto_auto] gap-4 lg:gap-6 items-start">
         <div className="min-w-0">
-          <h1 className="font-display text-4xl sm:text-[2.7rem] text-stone-900">
-            {t(greetingKey(), { name: firstName(astronaut.name) })}
+          <h1 className="font-display text-3xl sm:text-[2.5rem] text-stone-900">
+            {t(greetingKey(world.t), { name: firstName(astronaut.name) })}
           </h1>
-          <p className="mt-2 text-sm text-stone-500 flex items-center gap-2">
+          <p className="mt-1.5 text-sm text-stone-500 flex items-center gap-2">
             {headline}
             {off && <StatusDot tone={toneFromRank(off.status)} />}
           </p>
@@ -139,7 +169,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             </p>
           )}
 
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-nowrap gap-2 overflow-x-auto sm-snap sm-chip-fade pb-1 -mx-1 px-1">
             <FilterChip
               active={filter === 'vitals'}
               onClick={() => setFilter('vitals')}
@@ -246,35 +276,11 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             </section>
           )}
 
-          <div className="mt-8 sm-snap flex gap-3 overflow-x-auto pb-2">
-            {timeline.map((item, i) => (
-              <button
-                key={`${item.t}-${i}`}
-                type="button"
-                onClick={() => {
-                  if ('self' in item && item.self) setSleepOpen(true);
-                  else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
-                  else onOpenConsole();
-                }}
-                className="min-w-[11.5rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)]"
-              >
-                <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
-                <p className="mt-2 text-[11px] font-mono text-stone-400">{item.t}</p>
-                <p className="text-sm font-medium">{item.title}</p>
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={onOpenConsole}
-              className="min-w-[3rem] shrink-0 rounded-full bg-white/80 flex items-center justify-center text-stone-400"
-              aria-label={t('common.next')}
-            >
-              →
-            </button>
-          </div>
         </div>
 
-        <div className="flex justify-center">
+        <div className="grid grid-cols-2 gap-2 lg:hidden order-2">{gauges}</div>
+
+        <div className="flex justify-center order-4 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2">
           {crew && (
             <BodyMapDashboard
               crew={crew}
@@ -287,37 +293,45 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           )}
         </div>
 
-        <div className="hidden lg:flex flex-col gap-5 pt-2">
-          <RingGauge
-            value={hr}
-            max={120}
-            label={t('wear.hr')}
-            unit="bpm"
-            tone={hr > BAND_NUMBERS.restingHR.attentionHigh ? 'warn' : 'ok'}
-          />
-          <RingGauge
-            value={spo2}
-            max={100}
-            label="SpO2"
-            unit="%"
-            tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
-          />
-          <RingGauge
-            value={hrv}
-            max={50}
-            label={t('wear.hrv')}
-            unit="ms"
-            tone={hrv < BAND_NUMBERS.hrv.attentionBelow ? 'warn' : 'lilac'}
-          />
-          <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" />
+        <div className="hidden lg:flex flex-col gap-4 pt-1 lg:col-start-3 lg:row-start-1 lg:row-span-2">{gauges}</div>
+
+        <div className="min-w-0 order-3 lg:order-none lg:col-start-1">
+          <div className="sm-snap flex gap-3 overflow-x-auto pb-1">
+            {timeline.map((item, i) => (
+              <button
+                key={`${item.t}-${i}`}
+                type="button"
+                onClick={() => {
+                  if ('self' in item && item.self) setSleepOpen(true);
+                  else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
+                  else onOpenConsole();
+                }}
+                className="min-w-[11.5rem] max-w-[14rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] whitespace-normal"
+              >
+                <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
+                <p className="mt-2 text-[11px] font-mono text-stone-400 tabular-nums">{item.t}</p>
+                <p className="text-sm font-medium leading-snug break-words whitespace-normal line-clamp-2 min-h-[2.5rem]">
+                  {item.title}
+                </p>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={onOpenConsole}
+              className="min-w-[3rem] shrink-0 rounded-full bg-white/80 flex items-center justify-center text-stone-400"
+              aria-label={t('common.next')}
+            >
+              →
+            </button>
+          </div>
+
+          {astronaut.assignedStation && (
+            <div className="mt-4">
+              <CrewCommsInbox shipId={astronaut.assignedStation} />
+            </div>
+          )}
         </div>
       </div>
-
-      {astronaut.assignedStation && (
-        <div className="mt-6">
-          <CrewCommsInbox shipId={astronaut.assignedStation} />
-        </div>
-      )}
 
       <Sheet open={sleepOpen} onClose={() => setSleepOpen(false)} title={<h2 className="font-display text-2xl">{t('astro.selfCheck')}</h2>}>
         <p className="text-[12px] text-stone-500 mb-3">{t('astro.selfCheckHint')}</p>

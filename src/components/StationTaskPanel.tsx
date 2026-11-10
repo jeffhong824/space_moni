@@ -114,16 +114,14 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
           </>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4 text-emerald-600" />
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    {t('tasks.station')}
-                  </h2>
-                </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
+                <h2 className="text-sm font-bold tracking-wide text-slate-900 truncate">
+                  {t('tasks.station')}
+                </h2>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={onOpenNewTaskModal}
                   className="p-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white shadow-2xs transition-colors flex items-center gap-1 text-xs px-2.5 font-medium cursor-pointer"
@@ -138,24 +136,12 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   title="Hide right-side panel for better viewing of health & activities"
                 >
                   <PanelRightClose className="w-3.5 h-3.5 text-slate-500 group-hover:text-rose-600 transition-colors" />
-                  <span>{t('tasks.hide')}</span>
+                  <span className="whitespace-nowrap">{t('tasks.hide')}</span>
                 </button>
               </div>
             </div>
 
-            {/* Quick viewing hint banner */}
-            <div className="flex items-center justify-between text-[11px] font-mono px-2.5 py-1.5 bg-sky-50/80 border border-sky-200/60 rounded-lg text-sky-900 shadow-2xs">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                <span>{t('tasks.panel')}</span>
-              </span>
-              <button
-                onClick={toggleCollapse}
-                className="text-sky-700 hover:text-sky-950 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>{t('tasks.hideHint')}</span> →
-              </button>
-            </div>
+            <p className="text-[11px] text-sky-900 truncate">{t('tasks.panel')}</p>
 
             {/* Priority Filter segmented tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs font-medium">
@@ -204,7 +190,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
       </div>
 
       {/* Task List */}
-      <div className={`flex-1 overflow-y-auto p-4 space-y-3 ${isCollapsed ? 'hidden' : ''}`}>
+      <div className={`flex-1 overflow-y-auto p-4 space-y-3 sm-page-pad ${isCollapsed ? 'hidden' : ''}`}>
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 px-4 bg-white rounded-xl border border-dashed border-slate-200">
             <CheckSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
@@ -325,7 +311,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
 
         {/* Footer Collapse Shortcut */}
         {filteredTasks.length > 0 && (
-          <div className="pt-2 pb-6 text-center">
+          <div className="pt-2 pb-20 text-center">
             <button
               onClick={toggleCollapse}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-white border border-dashed border-slate-300 transition-colors shadow-2xs cursor-pointer"

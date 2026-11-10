@@ -189,12 +189,12 @@ export const AnatomicalFigure: React.FC<{
 
   return (
     <div
-      className="relative mx-auto select-none overflow-visible bodymap-frost"
+      className={`relative mx-auto select-none overflow-visible bodymap-frost ${
+        hero ? 'max-h-56 sm:max-h-80 lg:max-h-[26rem]' : 'max-h-72'
+      }`}
       style={{
         aspectRatio: '9 / 16',
-        width: hero
-          ? 'min(100%, 22rem, calc((100dvh - 12rem) * 9 / 16))'
-          : 'min(100%, 22rem, calc((100vh - 12rem) * 9 / 16))',
+        width: hero ? 'min(100%, 16.5rem)' : 'min(100%, 13.5rem)',
         height: 'auto',
       }}
     >

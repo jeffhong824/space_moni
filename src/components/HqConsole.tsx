@@ -16,7 +16,7 @@ import {
 import { BodyMapDashboard } from './BodyMapDashboard';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import type { CrewDef } from '../world/catalog';
-import { formatDelay, initials, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
+import { AvatarBubble, DelayCaption, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 
 interface HqConsoleProps {
@@ -71,7 +71,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   const r = wx?.scales.rScale ?? 'R?';
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
       <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.missionControl')}</p>
       <h1 className="font-display text-4xl sm:text-5xl mt-1">{t('ui.fourShips')}</h1>
       <p className="mt-2 text-sm text-stone-500 flex items-center gap-2">
@@ -123,14 +123,9 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
           <p className="text-sm font-semibold">
             {t(ship.def.nameKey)} · {ship.crew.length} {t('hq.crew').toLowerCase()}
           </p>
-          <div className="flex -space-x-2 mt-3">
-            {ship.crew.slice(0, 6).map((c) => (
-              <span
-                key={c.def.id}
-                className="w-9 h-9 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center text-[10px] font-bold"
-              >
-                {initials(c.def.name, c.def.avatarSeed)}
-              </span>
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {ship.crew.map((c) => (
+              <AvatarBubble key={c.def.id} name={c.def.name} seed={c.def.avatarSeed} id={c.def.id} size={36} />
             ))}
           </div>
           <div className="mt-5">
@@ -144,7 +139,9 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
               ]}
             />
           </div>
-          <p className="mt-5 font-display text-4xl tabular-nums">{formatDelay(ship.commLatencySec, t)}</p>
+          <p className="mt-5">
+            <DelayCaption sec={ship.commLatencySec} />
+          </p>
           <div className="mt-4 flex gap-2">
             <input
               className="flex-1 h-11 rounded-full bg-stone-50 px-4 text-sm"

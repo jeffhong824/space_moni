@@ -15,7 +15,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
-import { initials, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
+import { AvatarBubble, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 
 interface SurgeonHomeProps {
@@ -104,7 +104,7 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
       <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
       <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
 
@@ -132,9 +132,12 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
                   openId === c.id ? 'bg-white shadow-[var(--sm-shadow)]' : 'bg-white/70'
                 }`}
               >
-                <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-[11px] font-bold">
-                  {initials(c.astronautName)}
-                </span>
+                <AvatarBubble
+                  name={c.astronautName}
+                  seed={astronauts.find((a) => a.id === c.astronautId)?.avatarSeed}
+                  id={c.astronautId}
+                  size={40}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{c.astronautName}</p>
                   <p className="text-[11px] text-stone-400">

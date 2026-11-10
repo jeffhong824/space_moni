@@ -73,7 +73,7 @@ export const BodyMapDashboard: React.FC<{
       .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
   const radar = health.domains.map((d) => ({
-    key: t(`body.domain.${d.id}`),
+    key: t(`body.radarShort.${d.id}`),
     score: d.score,
   }));
 
@@ -123,31 +123,42 @@ export const BodyMapDashboard: React.FC<{
         )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div className="h-48 rounded-[28px] bg-white/80 p-2">
+      <div className="space-y-3">
+        <div className="h-64 rounded-[28px] bg-white/80 p-3">
           <p className="text-[10px] font-semibold text-stone-400 px-2 flex items-center gap-1">
             <Brain className="w-3 h-3" /> {t('body.radar')}
           </p>
           <ResponsiveContainer width="100%" height="90%">
-            <RadarChart data={radar}>
+            <RadarChart data={radar} cx="50%" cy="50%" outerRadius="68%">
               <PolarGrid stroke="#e7e5e0" />
-              <PolarAngleAxis dataKey="key" tick={{ fill: '#6b6a66', fontSize: 9 }} />
+              <PolarAngleAxis dataKey="key" tick={{ fill: '#4b4a46', fontSize: 11, fontWeight: 600 }} />
               <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
               <Radar dataKey="score" stroke="#2b3bff" fill="#c4b5fd" fillOpacity={0.35} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
-        <div className="rounded-[28px] bg-white/80 p-3 space-y-1.5">
-          <p className="text-[10px] font-semibold text-stone-400">{t('body.liveVitals')}</p>
-          <p className="text-[12px] font-mono">
-            {t('wear.hr')} {w.hr} · {t('wear.hrv')} {w.hrv} · {t('wear.resp')} {w.respRate} · SpO₂ {w.spo2}%
-          </p>
-          <p className="text-[11px] font-mono text-stone-500">
-            {t('wear.bp')} {w.bpSys}/{w.bpDia} · {t('wear.core')} {w.coreTempC}°C · {t('wear.skin')} {w.skinTempC}°C
-          </p>
-          <p className="text-[11px] font-mono text-stone-500">
-            {t('wear.dose')} {w.doseMsv} / {health.doseLimitMsv} mSv · {t('body.boneLoss')} −{health.boneLossPct}%
-          </p>
+        <div className="rounded-[28px] bg-white/80 p-3">
+          <p className="text-[10px] font-semibold text-stone-400 mb-2">{t('body.liveVitals')}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              [t('wear.hr'), `${w.hr}`, 'bpm'],
+              [t('wear.hrv'), `${w.hrv}`, 'ms'],
+              [t('wear.resp'), `${w.respRate}`, '/min'],
+              ['SpO₂', `${w.spo2}`, '%'],
+              [t('wear.bp'), `${w.bpSys}/${w.bpDia}`, ''],
+              [t('wear.core'), `${w.coreTempC}`, '°C'],
+              [t('wear.skin'), `${w.skinTempC}`, '°C'],
+              [t('wear.dose'), `${w.doseMsv}`, 'mSv'],
+            ].map(([k, v, u]) => (
+              <div key={String(k)} className="rounded-full bg-white px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+                <span className="text-[10px] text-stone-500 truncate">{k}</span>
+                <span className="text-[12px] font-semibold tabular-nums font-sans shrink-0">
+                  {v}
+                  {u ? <span className="ml-0.5 text-[10px] font-medium text-stone-400">{u}</span> : null}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -269,7 +280,7 @@ export const BodyMapDashboard: React.FC<{
         </header>
       )}
 
-      <div className={`grid ${compact || figureOnly ? 'grid-cols-1' : hero ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(240px,320px)_1fr]'} gap-4`}>
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <div className="flex justify-center mb-2">
             <Segmented
@@ -292,7 +303,9 @@ export const BodyMapDashboard: React.FC<{
             labelFor={(id) => t(`body.region.${id}`)}
             hero={hero}
           />
-          <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
+          {!figureOnly && (
+            <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
+          )}
         </div>
         {!hero && !figureOnly && !compact && details}
       </div>

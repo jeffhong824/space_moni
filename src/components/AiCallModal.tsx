@@ -342,13 +342,13 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   const offline = lastAi?.analysisMode === 'offline_fallback' || !lastAi;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
-      <button type="button" className="absolute inset-0 bg-stone-900/20" aria-label={t('common.close')} onClick={onClose} />
+    <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
+      <button type="button" className="absolute inset-0 sm-scrim" aria-label={t('common.close')} onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="aura-dialog-title"
-        className="relative h-full w-full max-w-md sm-glass rounded-l-[32px] flex flex-col overflow-hidden sm-sheet-in"
+        className="relative h-full w-full max-w-md sm-sheet-panel rounded-l-[32px] flex flex-col overflow-hidden sm-sheet-in"
       >
         <div className="px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -602,27 +602,28 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick prompt suggestions */}
-        <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0">
-          <span className="text-stone-400 shrink-0">{t('ai.quick')}</span>
-          <button
-            onClick={() => handleSendMessage(t('ai.qHrPrompt'))}
-            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
-          >
-            {t('ai.qHr')}
-          </button>
-          <button
-            onClick={() => handleSendMessage(t('ai.qExpPrompt'))}
-            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
-          >
-            {t('ai.qExp')}
-          </button>
-          <button
-            onClick={() => handleSendMessage(t('ai.qHydratePrompt'))}
-            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
-          >
-            {t('ai.qHydrate')}
-          </button>
+        <div className="relative shrink-0 overflow-hidden">
+          <p className="px-5 pt-2 text-[11px] text-stone-400">{t('ai.quick')}</p>
+          <div className="px-5 pb-2 flex items-center gap-2 overflow-x-auto sm-snap sm-chip-fade text-[11px] min-w-0">
+            <button
+              onClick={() => handleSendMessage(t('ai.qHrPrompt'))}
+              className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap shrink-0 snap-start"
+            >
+              {t('ai.qHr')}
+            </button>
+            <button
+              onClick={() => handleSendMessage(t('ai.qExpPrompt'))}
+              className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap shrink-0 snap-start"
+            >
+              {t('ai.qExp')}
+            </button>
+            <button
+              onClick={() => handleSendMessage(t('ai.qHydratePrompt'))}
+              className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap shrink-0 snap-start"
+            >
+              {t('ai.qHydrate')}
+            </button>
+          </div>
         </div>
 
         <div className="p-4 shrink-0">

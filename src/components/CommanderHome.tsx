@@ -8,11 +8,10 @@ import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
 import { ShipStatusCard } from './ShipStatusCard';
-import type { WorldState } from '../world/worldState';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
-import { findCrewLive } from '../world/worldState';
-import { initials, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
+import { calendarDayNumber, findCrewLive, type WorldState } from '../world/worldState';
+import { AvatarBubble, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 
 interface CommanderHomeProps {
@@ -79,17 +78,17 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-4xl sm:text-5xl">
             {t('ui.crewAboard', { n })}
           </h1>
           <p className="text-sm text-stone-400 mt-1">
-            {t('ui.leoDay', { n: world.missionDay })} · {t('cmd.hint')}
+            {t('ui.leoDay', { n: calendarDayNumber(world.missionDay) })} · {t('cmd.hint')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${inspectId ? 'lg:invisible lg:pointer-events-none' : ''}`}>
           <Segmented
             value={mode}
             onChange={setMode}
@@ -130,7 +129,13 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
       )}
 
       {mode === 'orbit' ? (
-        <div className="relative mx-auto mt-6 w-full max-w-3xl aspect-square max-h-[min(68vh,640px)]">
+        <div
+          className={`relative mt-6 aspect-square max-h-[min(68vh,640px)] transition-all duration-300 ${
+            inspectId
+              ? 'w-[min(100%,calc(100%-min(38.75rem,52vw)))] ml-0 mr-auto'
+              : 'w-full max-w-3xl mx-auto'
+          }`}
+        >
           <div className="absolute inset-[12%] rounded-full border border-stone-200/80" />
           {rows.map((row, i) => {
             const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
@@ -146,7 +151,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
                 key={row.astro.id}
                 type="button"
                 onClick={() => openCrew(row.astro.id)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center font-semibold text-sm bg-white shadow-[var(--sm-shadow-soft)]"
+                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
@@ -156,7 +161,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
                 }}
                 aria-label={`${row.astro.name} ${row.interp ? statusLabel(lang, row.interp.overall) : ''}`}
               >
-                {initials(row.astro.name, row.astro.avatarSeed)}
+                <AvatarBubble name={row.astro.name} seed={row.astro.avatarSeed} id={row.astro.id} size={size} />
               </button>
             );
           })}
@@ -170,9 +175,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
                 onClick={() => openCrew(astro.id)}
                 className="w-full text-left px-4 py-3 rounded-[28px] bg-white/90 flex items-center gap-3"
               >
-                <span className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold">
-                  {initials(astro.name, astro.avatarSeed)}
-                </span>
+                <AvatarBubble name={astro.name} seed={astro.avatarSeed} id={astro.id} size={44} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold">{astro.name}</span>
@@ -227,16 +230,6 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
               {' · '}
               {t('body.askAura')}
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                onOpenConsole();
-                setInspectId(null);
-              }}
-              className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
-            >
-              {t('cmd.openConsole')}
-            </button>
           </div>
         )}
         {inspectCrew && (
