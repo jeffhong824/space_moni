@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Inbox, LoaderCircle, RefreshCw } from 'lucide-react';
+import { useI18n } from '../i18n/I18nProvider';
 
 export function LoadingBlock({ label }: { label: string }) {
   return (
@@ -28,11 +29,14 @@ export function ErrorBlock({
   title,
   detail,
   onRetry,
+  retryLabel,
 }: {
   title: string;
   detail: string;
   onRetry?: () => void;
+  retryLabel?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
       <div className="flex items-start gap-2">
@@ -47,7 +51,7 @@ export function ErrorBlock({
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-rose-900 hover:underline focus-visible:outline-2 focus-visible:outline-rose-600 rounded"
             >
               <RefreshCw className="w-3 h-3" aria-hidden />
-              Retry
+              {retryLabel ?? t('common.retry')}
             </button>
           )}
         </div>

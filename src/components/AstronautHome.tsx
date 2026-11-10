@@ -130,7 +130,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
       <RingGauge
         value={spo2}
         max={100}
-        label="SpO2"
+        label={t('wear.spo2')}
         unit="%"
         tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
         size={72}
@@ -178,10 +178,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             />
             <FilterChip
               active={filter === 'sleep'}
-              onClick={() => {
-                setFilter('sleep');
-                setSleepOpen(true);
-              }}
+              onClick={() => setFilter('sleep')}
               icon={<Moon className="w-3.5 h-3.5 text-sky-400" />}
               label={t('ui.filterSleep')}
             />
@@ -197,6 +194,13 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
               icon={<Leaf className="w-3.5 h-3.5 text-emerald-500" />}
               label={t('ui.filterEnvironment')}
             />
+            <button
+              type="button"
+              onClick={() => setSleepOpen(true)}
+              className="h-8 px-3.5 rounded-full bg-[var(--sm-cobalt)] text-white text-[12px] font-semibold"
+            >
+              {t('ui.logSelfCheck')}
+            </button>
           </div>
 
           {shelter && (
@@ -204,6 +208,17 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
               <p className="text-sm font-semibold">{t('astro.shelterTitle', { scale: sScale })}</p>
               <p className="text-xs">{t('astro.shelterBody')}{speDemo ? t('astro.shelterSpe') : ''}</p>
             </div>
+          )}
+
+          {filter === 'sleep' && (
+            <section className="mt-6 space-y-3">
+              <p className="text-sm text-stone-600">
+                {t('ui.sleepLastNight')}: {Math.floor(todayRecord.avgSleepMinutes / 60)} h {todayRecord.avgSleepMinutes % 60} m
+              </p>
+              {selfCheck && (
+                <p className="text-[12px] text-stone-500">{t('ui.sleepQualityNow', { n: selfCheck.sleepQuality })}</p>
+              )}
+            </section>
           )}
 
           {filter === 'activity' && (

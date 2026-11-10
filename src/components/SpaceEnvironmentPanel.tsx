@@ -35,13 +35,35 @@ function sourceStatusKey(status: string) {
   return '';
 }
 
+export function feedImpact(
+  data: SpaceEnvironmentPayload | null,
+  t: (k: string, v?: Record<string, string | number>) => string
+): string {
+  if (!data || data.overallStatus === 'unavailable') return t('wx.impactDown');
+  if (data.overallStatus === 'ok') return t('wx.impactOk');
+  const noaaLive = data.sources.some((s) => s.agency === 'NOAA' && (s.status === 'ok' || s.status === 'empty'));
+  const donkiDown = data.sources.some(
+    (s) => (s.id.includes('donki') || s.agency === 'NASA') && s.status !== 'ok' && s.status !== 'empty'
+  );
+  if (noaaLive && donkiDown) {
+    return t('wx.impactPartial', { live: t('wx.noaaData'), down: t('wx.donkiFlares') });
+  }
+  const live = [...new Set(data.sources.filter((s) => s.status === 'ok' || s.status === 'empty').map((s) => s.agency))]
+    .join(', ') || t('wx.noaaData');
+  const down =
+    [...new Set(data.sources.filter((s) => s.status !== 'ok' && s.status !== 'empty').map((s) => s.name))].join(', ') ||
+    t('wx.donkiFlares');
+  return t('wx.impactPartial', { live, down });
+}
+
 export const SpaceEnvironmentPanel: React.FC<{
   payload?: SpaceEnvironmentPayload | null;
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
   speDemo?: boolean;
-}> = ({ payload = null, loading = false, error = null, onRefresh, speDemo = false }) => {
+  lastOk?: string | null;
+}> = ({ payload = null, loading = false, error = null, onRefresh, speDemo = false, lastOk = null }) => {
   const { t } = useI18n();
   const data = payload;
   const obs = data?.observations;
@@ -93,7 +115,27 @@ export const SpaceEnvironmentPanel: React.FC<{
         {loading && !data && <LoadingBlock label={t('wx.loading')} />}
 
         {error && !data && (
-          <ErrorBlock title={t('wx.fail')} detail={error} onRetry={() => onRefresh?.()} />
+          <ErrorBlock title={t('wx.fail')} detail={error} onRetry={() => onRefresh?.()} retryLabel={t('common.retry')} />
+        )}
+
+        {(error || data?.overallStatus === 'partial' || data?.overallStatus === 'unavailable') && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1.5">
+            <p className="text-[12px] font-semibold text-amber-950 leading-snug">{feedImpact(data, t)}</p>
+            <p className="text-[11px] text-amber-800 font-mono">
+              {t('wx.lastOk', { time: fmtTime(lastOk || data?.fetchedAt) })}
+            </p>
+            {onRefresh && (
+              <button
+                type="button"
+                onClick={() => onRefresh()}
+                disabled={loading}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-white text-[11px] font-semibold text-amber-950 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} aria-hidden />
+                {t('common.retry')}
+              </button>
+            )}
+          </div>
         )}
 
         {speDemo && (
@@ -118,7 +160,9 @@ export const SpaceEnvironmentPanel: React.FC<{
                 {t('wx.radRisk', { risk: t(riskKey(data.scales.radiationRisk)) })}
               </StatusPill>
               <StatusPill tone="info">
-                {data.scales.gScale} · {data.scales.rScale} · {data.scales.sScale}
+                <span title={`${t('glossary.gScale')} ${t('glossary.sScale')} ${t('glossary.rScale')}`}>
+                  {data.scales.gScale} · {data.scales.rScale} · {data.scales.sScale}
+                </span>
               </StatusPill>
             </div>
 
@@ -126,6 +170,7 @@ export const SpaceEnvironmentPanel: React.FC<{
               <MetricTile
                 icon={<Activity className="w-3.5 h-3.5 text-indigo-600" aria-hidden />}
                 label={t('wx.kp')}
+                title={t('glossary.kp')}
                 value={obs?.kp ? obs.kp.value.toFixed(2) : '—'}
                 unit="Kp"
                 time={obs?.kp?.observedAt}
@@ -155,7 +200,9 @@ export const SpaceEnvironmentPanel: React.FC<{
               />
             </div>
 
-            <p className="text-[11px] text-slate-600 leading-relaxed">{data.scales.basisZh}</p>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              {t('wx.basis', { g: data.scales.gScale, r: data.scales.rScale, s: data.scales.sScale })}
+            </p>
 
             {data.notices.map((note) => (
               <p
@@ -239,7 +286,10 @@ export const SpaceEnvironmentPanel: React.FC<{
                         {sourceStatusKey(src.status) ? t(sourceStatusKey(src.status)) : src.status} · {src.latencyMs} ms
                       </StatusPill>
                     </div>
-                    <p>{src.noteZh}{src.observedAt ? ` · 觀測 ${fmtTime(src.observedAt)}` : ''}</p>
+                    <p>
+                      {sourceStatusKey(src.status) ? t(sourceStatusKey(src.status)) : src.status}
+                      {src.observedAt ? ` · ${t('wx.observedAt', { time: fmtTime(src.observedAt) })}` : ''}
+                    </p>
                     <a
                       href={src.docsUrl}
                       target="_blank"
@@ -271,6 +321,7 @@ function MetricTile({
   unit,
   time,
   sub,
+  title,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -278,9 +329,10 @@ function MetricTile({
   unit: string;
   time?: string | null;
   sub?: string;
+  title?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 min-w-0">
+    <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 min-w-0" title={title}>
       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
         {icon}
         <span className="truncate">{label}</span>

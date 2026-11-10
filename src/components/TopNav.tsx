@@ -5,6 +5,7 @@ import {
   AppView,
   AskAuraOrb,
   AvatarMenu,
+  GlossaryButton,
   LanguageGlobe,
   PageWordmark,
   PillDock,
@@ -28,6 +29,7 @@ interface TopNavProps {
   onToggleSpeDemo?: () => void;
   wordmark?: string;
   clockLabel?: string;
+  onGoHome?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -37,12 +39,13 @@ export const TopNav: React.FC<TopNavProps> = ({
   onSwitchUser,
   isRightPanelCollapsed = false,
   onToggleRightPanel,
-  view = 'home',
+  view = 'today',
   onChangeView,
   speDemo = false,
   onToggleSpeDemo,
   wordmark,
   clockLabel,
+  onGoHome,
 }) => {
   const { t } = useI18n();
 
@@ -50,10 +53,13 @@ export const TopNav: React.FC<TopNavProps> = ({
     <>
       <header className="relative shrink-0 px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-2 min-w-0">
-          <PageWordmark title={wordmark} />
+          <PageWordmark title={wordmark} onHome={onGoHome} />
           <SimChip />
           {clockLabel && (
-            <span className="hidden md:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[16rem] lg:max-w-none">
+            <span
+              title={t('glossary.met')}
+              className="hidden xl:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[22rem]"
+            >
               {clockLabel}
             </span>
           )}
@@ -62,6 +68,7 @@ export const TopNav: React.FC<TopNavProps> = ({
         {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}
 
         <div className="flex items-center gap-2 shrink-0">
+          <GlossaryButton />
           <LanguageGlobe />
           {currentUser && (
             <AvatarMenu
@@ -83,7 +90,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           onAction={onOpenAiCall}
         />
       )}
-      {currentUser && <AskAuraOrb onClick={onOpenAiCall} />}
+      {currentUser && view !== 'sim' && <AskAuraOrb onClick={onOpenAiCall} />}
     </>
   );
 };

@@ -1,13 +1,14 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BookOpen, Globe2, HeartPulse, LogOut, Star, UserRound, X } from 'lucide-react';
+import { BookOpen, ClipboardList, Globe2, HeartPulse, LayoutGrid, LogOut, Orbit, UserRound, Users, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { LANGUAGES } from '../i18n/registry';
 import { allDemoAccounts } from '../world/accounts';
 import type { AuthUser } from '../types';
 import { taipeiHour } from '../world/worldState';
+import { dockItemsForRole, type AppView } from '../app/routing';
 
-export type AppView = 'home' | 'console' | 'sources' | 'hq';
+export type { AppView };
 
 const LANG_SHORT: Record<string, string> = {
   en: 'EN',
@@ -250,6 +251,7 @@ export const Sheet: React.FC<{
   children: React.ReactNode;
   wide?: boolean;
 }> = ({ open, onClose, title, children, wide }) => {
+  const { t } = useI18n();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -265,7 +267,8 @@ export const Sheet: React.FC<{
         <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('common.close')}
+            title={t('common.close')}
             className="absolute inset-0 sm-scrim"
             onClick={onClose}
           />
@@ -284,7 +287,8 @@ export const Sheet: React.FC<{
                 type="button"
                 onClick={onClose}
                 className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-stone-500 shrink-0"
-                aria-label="Close"
+                aria-label={t('common.close')}
+                title={t('common.close')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -352,6 +356,7 @@ export const AvatarMenu: React.FC<{
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  const [speAsk, setSpeAsk] = useState(false);
   const roleLabel =
     user.role === 'NASA' ? t('role.nasa') : user.role === 'Commander' ? t('role.commander') : t('role.astronaut');
   return (
@@ -373,6 +378,9 @@ export const AvatarMenu: React.FC<{
           <div className="px-3 py-2">
             <p className="text-sm font-semibold">{user.name}</p>
             <p className="text-[11px] text-stone-500">{roleLabel}</p>
+            <p className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-violet-50 text-[10px] font-semibold text-violet-800">
+              {t('nav.demoSession')}
+            </p>
           </div>
           <button
             type="button"
@@ -405,10 +413,19 @@ export const AvatarMenu: React.FC<{
           {onToggleSpeDemo && (
             <button
               type="button"
-              onClick={onToggleSpeDemo}
+              title={t('nav.speTitle')}
+              onClick={() => {
+                if (speDemo) {
+                  onToggleSpeDemo();
+                  setOpen(false);
+                } else {
+                  setSpeAsk(true);
+                  setOpen(false);
+                }
+              }}
               className="w-full text-left px-3 py-2 rounded-2xl text-sm text-stone-700 hover:bg-stone-50"
             >
-              {speDemo ? t('nav.speOn') : t('nav.speOff')}
+              {speDemo ? t('nav.speStop') : t('nav.speSimulate')}
             </button>
           )}
           {onToggleRightPanel && (
@@ -430,6 +447,33 @@ export const AvatarMenu: React.FC<{
           </button>
         </div>
       )}
+      <OverlayDialog
+        open={speAsk}
+        onClose={() => setSpeAsk(false)}
+        titleId="spe-confirm-title"
+        title={<h2 id="spe-confirm-title" className="font-display text-2xl">{t('nav.speConfirmTitle')}</h2>}
+      >
+        <p className="text-sm text-stone-600">{t('nav.speTitle')}</p>
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              onToggleSpeDemo?.();
+              setSpeAsk(false);
+            }}
+            className="flex-1 h-11 rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold"
+          >
+            {t('nav.speConfirm')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSpeAsk(false)}
+            className="flex-1 h-11 rounded-full bg-stone-100 text-sm font-semibold"
+          >
+            {t('common.cancel')}
+          </button>
+        </div>
+      </OverlayDialog>
     </div>
   );
 };
@@ -440,81 +484,46 @@ export const PillDock: React.FC<{
   onChangeView: (v: AppView) => void;
 }> = ({ role, view, onChangeView }) => {
   const { t } = useI18n();
-  const items: { id: string; label: string; icon: React.ReactNode; action: () => void; active: boolean }[] = [
-    {
-      id: 'today',
-      label: t('nav.today'),
-      icon: <span className="text-[11px] font-semibold">{t('nav.today')}</span>,
-      action: () => onChangeView(role === 'NASA' ? 'hq' : 'home'),
-      active: role === 'NASA' ? view === 'hq' : view === 'home',
-    },
-    {
-      id: 'console',
-      label: t('nav.console'),
-      icon: <HeartPulse className="w-4 h-4" />,
-      action: () => onChangeView('console'),
-      active: view === 'console',
-    },
-    {
-      id: 'people',
-      label: role === 'NASA' ? t('nav.homeNasa') : role === 'Commander' ? t('nav.homeCommander') : t('nav.homeAstronaut'),
-      icon: <UserRound className="w-4 h-4" />,
-      action: () => onChangeView('home'),
-      active: false,
-    },
-    {
-      id: 'sources',
-      label: t('nav.sources'),
-      icon: <BookOpen className="w-4 h-4" />,
-      action: () => onChangeView('sources'),
-      active: view === 'sources',
-    },
-    {
-      id: 'sim',
-      label: t('nav.sim'),
-      icon: <Star className="w-4 h-4" />,
-      action: () => {
-        window.history.pushState({}, '', '/sim');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      },
-      active: false,
-    },
-  ];
-
-  if (role === 'NASA') {
-    items[0].active = view === 'hq';
-    items[2].active = view === 'home';
-  } else {
-    items[0].active = view === 'home';
-    items[2].active = false;
-  }
+  const items = dockItemsForRole(role);
 
   return (
     <nav
       aria-label="Primary"
-      className="fixed md:absolute z-40 left-1/2 -translate-x-1/2 bottom-3 md:bottom-auto md:top-3 flex items-center gap-1 p-1.5 rounded-full bg-white/85 backdrop-blur-xl shadow-[var(--sm-shadow)]"
+      className="fixed z-40 left-3 right-3 bottom-2 md:left-1/2 md:right-auto md:translate-x-[-50%] md:bottom-auto md:top-3 flex items-stretch md:items-center justify-around md:justify-center gap-0.5 p-1.5 rounded-[28px] md:rounded-full bg-white/90 backdrop-blur-xl shadow-[var(--sm-shadow)] max-w-[calc(100%-1.5rem)] md:max-w-[min(42rem,calc(100vw-11rem))]"
     >
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          aria-label={item.label}
-          aria-current={item.active ? 'page' : undefined}
-          onClick={item.action}
-          className={`relative h-10 min-w-10 px-3 rounded-full flex items-center justify-center text-sm ${
-            item.active ? 'text-white' : 'text-stone-500 hover:text-stone-800'
-          }`}
-        >
-          {item.active && (
-            <motion.span
-              layoutId="dock-pill"
-              className="absolute inset-0 rounded-full bg-[var(--sm-cobalt)]"
-              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            />
-          )}
-          <span className="relative z-10 flex items-center gap-1">{item.icon}</span>
-        </button>
-      ))}
+      {items.map((item) => {
+        const label = t(item.labelKey);
+        const short = t(item.shortKey);
+        const active = item.view === view;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            data-dock={item.id}
+            title={label}
+            aria-label={label}
+            aria-current={active ? 'page' : undefined}
+            onClick={() => onChangeView(item.view)}
+            className={`relative min-w-0 flex-1 md:flex-none shrink-0 h-12 md:h-10 px-1.5 md:px-2.5 rounded-[22px] md:rounded-full flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 text-sm ${
+              active ? 'text-white' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            {active && (
+              <motion.span
+                layoutId="dock-pill"
+                className="absolute inset-0 rounded-[22px] md:rounded-full bg-[var(--sm-cobalt)]"
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              />
+            )}
+            <span className="relative z-10 flex flex-col md:flex-row items-center gap-0.5 md:gap-1 min-w-0">
+              {DOCK_ICON[item.id]}
+              <span className="text-[9px] md:text-[11px] font-semibold leading-tight whitespace-nowrap">
+                {short}
+              </span>
+            </span>
+          </button>
+        );
+      })}
     </nav>
   );
 };
@@ -714,12 +723,176 @@ export const IconCircle: React.FC<{
   </button>
 );
 
-export const PageWordmark: React.FC<{ title?: string }> = ({ title }) => {
+export const PageWordmark: React.FC<{ title?: string; onHome?: () => void }> = ({ title, onHome }) => {
   const { t } = useI18n();
+  const label = title ?? t('app.title');
+  if (onHome) {
+    return (
+      <button
+        type="button"
+        onClick={onHome}
+        title={t('nav.homeLink')}
+        aria-label={t('nav.homeLink')}
+        className="flex items-center gap-2 min-w-0 text-left"
+      >
+        <h1 className="font-display text-[1.35rem] sm:text-xl text-stone-900 truncate">{label}</h1>
+      </button>
+    );
+  }
   return (
     <div className="flex items-center gap-2 min-w-0">
-      <h1 className="font-display text-[1.35rem] sm:text-xl text-stone-900 truncate">{title ?? t('app.title')}</h1>
+      <h1 className="font-display text-[1.35rem] sm:text-xl text-stone-900 truncate">{label}</h1>
     </div>
   );
 };
+
+const DOCK_ICON: Record<string, React.ReactNode> = {
+  today: <HeartPulse className="w-4 h-4" />,
+  day: <ClipboardList className="w-4 h-4" />,
+  body: <UserRound className="w-4 h-4" />,
+  crew: <Users className="w-4 h-4" />,
+  ops: <HeartPulse className="w-4 h-4" />,
+  hq: <LayoutGrid className="w-4 h-4" />,
+  cases: <ClipboardList className="w-4 h-4" />,
+  sources: <BookOpen className="w-4 h-4" />,
+  sim: <Orbit className="w-4 h-4" />,
+};
+
+const GLOSSARY_KEYS = [
+  'met',
+  'spe',
+  'kp',
+  'gScale',
+  'sScale',
+  'rScale',
+  'ared',
+  'cevis',
+  't2',
+  'eclss',
+  'donki',
+  'msv',
+  'hrv',
+  'spo2',
+] as const;
+
+export const GlossaryButton: React.FC = () => {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        title={t('nav.glossaryTitle')}
+        aria-expanded={open}
+        aria-label={t('nav.glossary')}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-8 px-2.5 rounded-full bg-white/80 text-[11px] font-semibold text-stone-500 hover:text-stone-800"
+      >
+        {t('nav.glossary')}
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          aria-label={t('nav.glossaryTitle')}
+          className="absolute right-0 mt-2 z-50 w-80 max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
+        >
+          <p className="font-semibold text-sm px-1">{t('nav.glossaryTitle')}</p>
+          {GLOSSARY_KEYS.map((k) => (
+            <p key={k} className="px-1 text-stone-600">
+              {t(`glossary.${k}`)}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export function OverlayDialog({
+  open,
+  onClose,
+  title,
+  titleId,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: React.ReactNode;
+  titleId: string;
+  children: React.ReactNode;
+}) {
+  const { t } = useI18n();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.activeElement as HTMLElement | null;
+    const focusables = () => {
+      const root = panelRef.current;
+      if (!root) return [] as HTMLElement[];
+      return [
+        ...root.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+    };
+    const id = window.setTimeout(() => (closeRef.current ?? focusables()[0])?.focus(), 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const i = list.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey) {
+        if (i <= 0) {
+          e.preventDefault();
+          list[list.length - 1]?.focus();
+        }
+      } else if (i === list.length - 1 || i === -1) {
+        e.preventDefault();
+        list[0]?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('keydown', onKey);
+      prev?.focus?.();
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" role="presentation">
+      <button type="button" className="absolute inset-0 sm-scrim" aria-label={t('common.close')} onClick={onClose} />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative w-full max-w-lg rounded-[32px] bg-white p-6 shadow-[var(--sm-shadow)] space-y-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">{title}</div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close')}
+            title={t('common.close')}
+            className="w-9 h-9 rounded-full bg-stone-50 flex items-center justify-center text-stone-500 shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 

@@ -16,6 +16,7 @@ interface AstronautSidebarProps {
   onUpdateEnvMetrics: (updated: Partial<EnvironmentalMetrics>) => void;
   currentUserRole: UserRole;
   recordsByAstronaut?: Record<string, DailyHealthRecord[]>;
+  co2Flash?: boolean;
 }
 
 export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
@@ -26,6 +27,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   onUpdateEnvMetrics,
   currentUserRole,
   recordsByAstronaut = {},
+  co2Flash = false,
 }) => {
   const { t, lang } = useI18n();
   const [showRoster, setShowRoster] = useState(false);
@@ -250,7 +252,11 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             <div>
               <div className="flex justify-between items-baseline mb-1">
                 <span className="text-xs font-medium text-slate-600">{t('sidebar.co2')}</span>
-                <span className={`text-base font-bold font-mono tabular-nums ${isCO2Elevated ? 'text-amber-600' : 'text-slate-900'}`}>
+                <span
+                  className={`text-base font-bold font-mono tabular-nums ${isCO2Elevated ? 'text-amber-600' : 'text-slate-900'} ${
+                    co2Flash ? 'sm-flash' : ''
+                  }`}
+                >
                   {envMetrics.carbonDioxidePercent.toFixed(2)} %
                 </span>
               </div>

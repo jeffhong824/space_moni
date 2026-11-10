@@ -21,7 +21,9 @@
     "lastUpdated": "最終更新",
     "next": "次へ",
     "view": "表示",
-    "none": "なし"
+    "none": "なし",
+    "cancel": "キャンセル",
+    "confirm": "確認"
   },
   "status": {
     "normal": "正常",
@@ -65,6 +67,25 @@
   },
   "nav": {
     "today": "今日",
+    "day": "日次報告",
+    "dayShort": "日報",
+    "body": "ボディマップ",
+    "bodyShort": "身体",
+    "crew": "乗員",
+    "ops": "運用コンソール",
+    "opsShort": "運用",
+    "cases": "症例",
+    "sourcesShort": "出典",
+    "simShort": "シミュ",
+    "hqShort": "HQ",
+    "demoSession": "デモセッション",
+    "glossary": "用語",
+    "glossaryTitle": "ミッション用語",
+    "homeLink": "SpaceMoni ホーム",
+    "speSimulate": "太陽陽子イベントを模擬",
+    "speStop": "陽子イベントの重畳を停止",
+    "speConfirmTitle": "太陽陽子イベントを模擬しますか？",
+    "speConfirm": "デモを重畳",
     "homeAstronaut": "本日の健康",
     "homeCommander": "乗員概要",
     "homeNasa": "異常キュー",
@@ -77,8 +98,8 @@
     "showTasks": "目標を表示",
     "hideTasks": "目標を隠す",
     "skipToRecords": "健康記録へ",
-    "speOn": "デモ SPE オン",
-    "speOff": "デモ SPE",
+    "speOn": "太陽陽子オーバーレイ オン",
+    "speOff": "太陽陽子オーバーレイ",
     "met": "MET",
     "stationTime": "ステーション時刻",
     "eclssDemo": "ECLSS: 名目（模擬）",
@@ -90,6 +111,22 @@
     "hideTitle": "右パネルを隠して健康ビューを拡大",
     "aiTitle": "AURA飛行外科医に通話",
     "logoutTitle": "ログアウトしてログインへ"
+  },
+  "glossary": {
+    "met": "MET — ミッション経過時間。デモ起点（2026年11月10日台北）から数えます。",
+    "spe": "SPE — 太陽陽子イベント。デモ重畳はラベル付きで、NOAA のライブフラックスではありません。",
+    "kp": "Kp — NOAA SWPC の惑星地磁気指数（0–9）。",
+    "gScale": "Gスケール — NOAA 地磁気嵐 G0–G5。Kp から導出。",
+    "sScale": "Sスケール — NOAA 太陽放射線嵐 S0–S5。≥10 MeV 陽子から。",
+    "rScale": "Rスケール — NOAA 電波障害 R0–R5。GOES X線クラスから。",
+    "ared": "ARED — 先進抵抗運動装置。",
+    "cevis": "CEVIS — 防振サイクルエルゴメーター（ステーションバイク）。",
+    "t2": "T2 — COLBERT 有酸素トレッドミル。",
+    "eclss": "ECLSS — 環境制御と生命維持（空気・水・熱）。",
+    "donki": "DONKI — NASA 宇宙天気通知・知識・情報データベース。",
+    "msv": "mSv — ミリシーベルト。乗員値はシミュレーションです。",
+    "hrv": "HRV — 心拍変動（ms）。低下はストレスや疲労の目安。",
+    "spo2": "SpO₂ — 末梢酸素飽和度（%）。"
   },
   "badge": {
     "simTelemetry": "乗員テレメトリは模擬（デモ）",
@@ -290,10 +327,18 @@
     "srcOk": "接続",
     "srcEmpty": "空",
     "srcTimeout": "タイムアウト",
-    "srcError": "失敗"
+    "srcError": "失敗",
+    "lastOk": "前回の成功取得 {time}",
+    "impactOk": "NOAA と DONKI は応答しています。",
+    "impactPartial": "{live} は利用可能；{down} は利用不可",
+    "impactDown": "宇宙環境フィードは利用できません。再試行してください。",
+    "basis": "NOAA スケール: 地磁気 {g}、電波 {r}、太陽放射線 {s}。GOES / SWPC 観測に基づき、補完値ではありません。",
+    "noaaData": "NOAA データ",
+    "donkiFlares": "DONKI フレア一覧",
+    "observedAt": "観測 {time}"
   },
   "ai": {
-    "offlineBanner": "AI オフライン。以下は閾値エンジンの結果です",
+    "offlineBanner": "AI モデルはオフライン — 端末上の閾値ルールを使用",
     "liveMode": "モード: Gemini ライブ",
     "greeting": "AURA オンライン、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
     "healthStatus": "健康状態: {status}",
@@ -330,10 +375,10 @@
     "actions": "実行可能なステーション行動",
     "synthesizing": "AURAが医療分析を合成中…",
     "quick": "クイック質問:",
-    "qHr": "心拍 103 bpm を分析",
+    "qHr": "心拍 {n} bpm を分析",
     "qExp": "実験準備の評価",
     "qHydrate": "補液対策の提案",
-    "qHrPrompt": "なぜ安静時心拍が 103 bpm ですか？",
+    "qHrPrompt": "なぜ安静時心拍が {n} bpm ですか？",
     "qExpPrompt": "植物触媒実験を今安全に実行できますか？",
     "qHydratePrompt": "補液対策プランを提案してください。",
     "listen": "聴取中…ステーションAIに話してください…",
@@ -548,16 +593,21 @@
     "name": "目標／タスク名",
     "module": "モジュール",
     "priority": "優先度",
-    "desc": "説明",
+    "desc": "説明と手順メモ",
     "assign": "割り当て",
     "placeholder": "例: 培地交換（シミュ）",
-    "defaultDesc": "ステーション任務コンソールから指令を記録（シミュ）。"
+    "defaultDesc": "ステーション任務コンソールから指令を記録（シミュ）。",
+    "notesPlaceholder": "手順、安全パラメータ、標本タグ…",
+    "create": "目標を作成",
+    "cancel": "キャンセル"
   },
   "addAct": {
     "title": "毎日の活動を追加",
     "name": "活動",
     "slot": "時間帯（UTC）",
-    "category": "カテゴリ"
+    "category": "カテゴリ",
+    "namePh": "例: 微小重力の種子給水確認",
+    "slotPh": "例: 14:00–15:30"
   },
   "ship": {
     "harmony": {
@@ -834,7 +884,11 @@
     "taskAdded": "任務を追加: 「{title}」",
     "auraTask": "AURA が予定: 「{title}」",
     "noteLogged": "臨床メモを本日の健康記録に書きました",
-    "activityAdded": "{date} に活動を追加"
+    "activityAdded": "{date} に活動を追加",
+    "spikeOn": "船内 CO₂ を {v}% に模擬上昇",
+    "spikeOff": "船内 CO₂ を {v}% にフラッシュ",
+    "speOn": "デモ太陽陽子イベントを重畳しました",
+    "speOff": "デモ太陽陽子の重畳を解除しました"
   },
   "lang": {
     "label": "言語"
@@ -1087,7 +1141,10 @@
     "secUnit": "秒",
     "minUnit": "分",
     "zoneTaipei": "Asia/Taipei",
-    "clockMet": "D+{n} · {time} Asia/Taipei",
+    "clockMet": "ミッション日 {n} · {date} · {time} 台北",
+    "logSelfCheck": "毎日の自己点検を記録",
+    "sleepLastNight": "昨夜の睡眠",
+    "sleepQualityNow": "記録した睡眠の質 {n}/5",
     "sourcesHeadline": "すべての数値の出所。",
     "judgeReading": "読み値の判定方法",
     "crewSimulated": "このデモのクルーバイタルは模擬です。",

@@ -128,6 +128,16 @@ body:has(.sm-sheet-panel) .sm-ask-aura {
   white-space: normal !important;
 }
 
+@keyframes sm-flash {
+  0% { background: #fde68a; box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.55); }
+  100% { background: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.sm-flash {
+  border-radius: 8px;
+  padding: 0 0.25rem;
+  animation: sm-flash 1.6s ease-out;
+}
+
 .sm-surface {
   background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--sm-shadow-soft);

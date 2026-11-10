@@ -1,9 +1,10 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, RefreshCw } from 'lucide-react';
 import { BAND_NUMBERS, THRESHOLDS } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { SimChip } from '../ui/chrome';
+import { feedImpact } from './SpaceEnvironmentPanel';
 
 const CITATIONS = [
   {
@@ -93,10 +94,28 @@ function Track({
   );
 }
 
+function fmtTime(iso?: string | null) {
+  if (!iso) return '—';
+  const d = new Date(iso.endsWith('Z') || iso.includes('T') ? iso : iso.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('en-GB', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  });
+}
+
 export const DataSourcesPage: React.FC<{
   onBack: () => void;
   wx?: SpaceEnvironmentPayload | null;
-}> = ({ onBack, wx = null }) => {
+  loading?: boolean;
+  error?: string | null;
+  lastOk?: string | null;
+  onRetry?: () => void;
+}> = ({ onBack, wx = null, loading = false, error = null, lastOk = null, onRetry }) => {
   const { t } = useI18n();
   const src = (id: string) => wx?.sources.find((s) => s.id === id || s.name.toLowerCase().includes(id.toLowerCase()));
   const noaa = src('kp') || src('swpc') || wx?.sources.find((s) => s.agency === 'NOAA');
@@ -108,8 +127,27 @@ export const DataSourcesPage: React.FC<{
   const spo2 = BAND_NUMBERS.spo2;
   const sleepH = BAND_NUMBERS.sleepMinutes.attentionBelow / 60;
 
+  const degraded = Boolean(error) || wx?.overallStatus === 'partial' || wx?.overallStatus === 'unavailable';
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad sm-orb-gutter">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-48 sm-page-pad sm-orb-gutter">
+      {degraded && (
+        <div className="mb-5 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 space-y-1.5 max-w-3xl">
+          <p className="text-sm font-semibold text-amber-950">{feedImpact(wx, t)}</p>
+          <p className="text-[11px] text-amber-800 font-mono">{t('wx.lastOk', { time: fmtTime(lastOk || wx?.fetchedAt) })}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={loading}
+              className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-white text-[11px] font-semibold text-amber-950 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} aria-hidden />
+              {t('common.retry')}
+            </button>
+          )}
+        </div>
+      )}
       <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.sourcesKicker')}</p>
       <h1 className="font-display text-4xl sm:text-5xl mt-1">{t('ui.sourcesHeadline')}</h1>
       <p className="text-sm text-stone-500 mt-2">{t('sources.hint')}</p>
@@ -252,7 +290,7 @@ export const DataSourcesPage: React.FC<{
         </table>
       </section>
 
-      <button type="button" onClick={onBack} className="mt-8 h-10 px-4 rounded-full bg-white text-xs font-semibold">
+      <button type="button" onClick={onBack} className="mt-8 mb-24 h-10 px-4 rounded-full bg-white text-xs font-semibold">
         {t('sources.back')}
       </button>
     </div>

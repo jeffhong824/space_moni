@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect, useCallback, useMemo } from 'react';
-import { TopNav, type AppView } from './components/TopNav';
+import { TopNav } from './components/TopNav';
 import { AstronautSidebar } from './components/AstronautSidebar';
 import { DailyRecordsPanel } from './components/DailyRecordsPanel';
 import { StationTaskPanel } from './components/StationTaskPanel';
@@ -26,8 +26,20 @@ import type { SelfCheckEntry } from './domain/healthThresholds';
 import type { CaseMeta } from './domain/clinicalCases';
 import { useI18n } from './i18n/I18nProvider';
 import { CREW, crewByLogin } from './world/catalog';
-import { calendarDayNumber, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
+import { calendarDayNumber, findCrewLive, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
 import { allProfiles, crewToProfile, enrichUser, profilesForShip } from './world/toProfiles';
+import { BodyMapDashboard } from './components/BodyMapDashboard';
+import {
+  coerceView,
+  defaultView,
+  isConsoleView,
+  pathForView,
+  pushView,
+  replaceView,
+  type AppView,
+} from './app/routing';
+import { clearDemoSession, readDemoSession, writeDemoSession } from './app/session';
+import type { EnvironmentalMetrics } from './types';
 
 const SimWorldPage = lazy(() => import('./sim/SimWorldPage').then((m) => ({ default: m.SimWorldPage })));
 
@@ -42,12 +54,21 @@ function usePath() {
 }
 
 export default function App() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const path = usePath();
   const [now, setNow] = useState(() => Date.now());
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [view, setView] = useState<AppView>('home');
-  const [selectedAstronaut, setSelectedAstronaut] = useState<AstronautProfile>(() => crewToProfile(CREW[1], Date.now()));
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    const stored = readDemoSession();
+    return stored ? enrichUser(stored) : null;
+  });
+  const [cabinPatch, setCabinPatch] = useState<Partial<EnvironmentalMetrics>>({});
+  const [co2Flash, setCo2Flash] = useState(false);
+  const [wxFetchedAt, setWxFetchedAt] = useState<string | null>(null);
+  const [selectedAstronaut, setSelectedAstronaut] = useState<AstronautProfile>(() => {
+    const stored = readDemoSession();
+    const crew = stored ? crewByLogin(stored.account) : undefined;
+    return crewToProfile(crew ?? CREW[1], Date.now());
+  });
   const [selfChecks, setSelfChecks] = useState<Record<string, SelfCheckEntry | undefined>>({});
   const [caseMeta, setCaseMeta] = useState<Record<string, CaseMeta>>({});
   const [extraTasks, setExtraTasks] = useState<StationTask[]>(() => {
@@ -89,7 +110,23 @@ export default function App() {
   }, [currentUser, myShipId, now]);
 
   const selectedShip = world.ships.find((s) => s.crew.some((c) => c.def.id === selectedAstronaut.id)) ?? world.ships[0];
-  const envMetrics = selectedShip.cabin;
+  const envMetrics = { ...selectedShip.cabin, ...cabinPatch };
+
+  const view: AppView = currentUser ? coerceView(path, currentUser.role) : defaultView('Astronaut');
+
+  const go = useCallback((next: AppView) => {
+    pushView(next);
+  }, []);
+
+  const goHome = useCallback(() => {
+    if (!currentUser) {
+      replaceView(defaultView('Astronaut'));
+      window.history.replaceState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return;
+    }
+    pushView(defaultView(currentUser.role));
+  }, [currentUser]);
 
   const dailyRecords = useMemo(() => {
     const def = CREW.find((c) => c.id === selectedAstronaut.id);
@@ -142,20 +179,31 @@ export default function App() {
 
   const handleLogin = (user: AuthUser) => {
     const enriched = enrichUser(user);
+    writeDemoSession(enriched);
     setCurrentUser(enriched);
-    setView(enriched.role === 'NASA' ? 'hq' : 'home');
     const crew = crewByLogin(enriched.account);
     if (crew) setSelectedAstronaut(crewToProfile(crew, now));
     else if (enriched.role === 'NASA') setSelectedAstronaut(crewToProfile(CREW[1], now));
-    const roleZh =
+    const roleLabel =
       enriched.role === 'NASA' ? t('role.nasa') : enriched.role === 'Commander' ? t('role.commander') : t('role.astronaut');
-    showToast(t('nav.loggedIn', { name: enriched.name, role: roleZh }));
+    showToast(t('nav.loggedIn', { name: enriched.name, role: roleLabel }));
+    replaceView(defaultView(enriched.role));
   };
 
   const handleLogout = () => {
+    clearDemoSession();
     setCurrentUser(null);
-    setView('home');
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const next = coerceView(path, currentUser.role);
+    if (pathForView(next) !== (path.replace(/\/+$/, '') || '/')) {
+      replaceView(next);
+    }
+  }, [currentUser, path]);
 
   useEffect(() => {
     localStorage.setItem('orbital_station_tasks', JSON.stringify(extraTasks));
@@ -232,6 +280,7 @@ export default function App() {
         return;
       }
       setSpaceEnvironment(json);
+      setWxFetchedAt(json.fetchedAt || new Date().toISOString());
     } catch (err: unknown) {
       setSpaceEnvError(err instanceof Error ? err.message : t('wx.fail'));
     } finally {
@@ -245,16 +294,16 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [loadWx]);
 
-  if (path === '/sim' || path === '/world') {
+  if (!currentUser && path !== '/sim' && path !== '/world') {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (!currentUser) {
     return (
       <Suspense fallback={<div className="p-8 text-sm text-slate-500">{t('sim.loadingEngine')}</div>}>
         <SimWorldPage />
       </Suspense>
     );
-  }
-
-  if (!currentUser) {
-    return <LoginPage onLogin={handleLogin} />;
   }
 
   const todayRecord = dailyRecords.find((r) => r.isToday) || dailyRecords[0];
@@ -269,7 +318,7 @@ export default function App() {
         spaceEnvironment={displayWx}
         speDemo={speDemo}
         onSelectAstronaut={handleSelectAstronaut}
-        onOpenConsole={() => setView('console')}
+        onOpenConsole={() => go(currentUser.role === 'Astronaut' ? 'day' : 'ops')}
         onOpenAiCall={handleOpenAiCall}
         world={world}
         commanderId={myCrew?.id}
@@ -294,7 +343,7 @@ export default function App() {
         spaceEnvironment={displayWx}
         speDemo={speDemo}
         onSelectAstronaut={handleSelectAstronaut}
-        onOpenConsole={() => setView('console')}
+        onOpenConsole={() => go(currentUser.role === 'Astronaut' ? 'day' : 'ops')}
         onOpenAiCall={handleOpenAiCall}
         tNow={now}
       />
@@ -311,7 +360,7 @@ export default function App() {
         onToggleActivity={handleToggleActivity}
         onToggleTaskStatus={handleToggleTaskStatus}
         onOpenAiCall={handleOpenAiCall}
-        onOpenConsole={() => setView('console')}
+        onOpenConsole={() => go(currentUser.role === 'Astronaut' ? 'day' : 'ops')}
         spaceEnvironment={displayWx}
         speDemo={speDemo}
         world={world}
@@ -335,18 +384,61 @@ export default function App() {
         isRightPanelCollapsed={isRightPanelCollapsed}
         onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
         view={view}
-        onChangeView={setView}
+        onChangeView={go}
         speDemo={speDemo}
-        onToggleSpeDemo={() => setSpeDemo((v) => !v)}
-        clockLabel={t('ui.clockMet', { n: calendarDayNumber(world.missionDay), time: taipeiClockHms(now) })}
+        onToggleSpeDemo={() => {
+          setSpeDemo((v) => {
+            const next = !v;
+            showToast(next ? t('toast.speOn') : t('toast.speOff'));
+            return next;
+          });
+        }}
+        onGoHome={goHome}
+        clockLabel={t('ui.clockMet', {
+          n: calendarDayNumber(world.missionDay),
+          date: new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : lang, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Asia/Taipei',
+          }).format(new Date(now)),
+          time: taipeiClockHms(now).slice(0, 5),
+        })}
       />
 
-      {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
-      {view === 'home' && roleHome}
-      {view === 'sources' && (
-        <DataSourcesPage onBack={() => setView(currentUser.role === 'NASA' ? 'hq' : 'home')} wx={displayWx} />
+      {view === 'sim' && (
+        <div className="flex-1 min-h-0">
+          <Suspense fallback={<div className="p-8 text-sm text-slate-500">{t('sim.loadingEngine')}</div>}>
+            <SimWorldPage />
+          </Suspense>
+        </div>
       )}
-      {view === 'console' && (
+
+      {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
+      {(view === 'today' || view === 'crew' || view === 'cases') && roleHome}
+      {view === 'body' && (
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
+          {CREW.find((c) => c.id === selectedAstronaut.id) && (
+            <BodyMapDashboard
+              crew={CREW.find((c) => c.id === selectedAstronaut.id)!}
+              tNow={world.t}
+              wx={displayWx}
+              onOpenAiCall={handleOpenAiCall}
+            />
+          )}
+        </div>
+      )}
+      {view === 'sources' && (
+        <DataSourcesPage
+          onBack={() => go(defaultView(currentUser.role))}
+          wx={displayWx}
+          loading={spaceEnvLoading}
+          error={spaceEnvError}
+          lastOk={wxFetchedAt}
+          onRetry={() => void loadWx(true)}
+        />
+      )}
+      {isConsoleView(view) && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto sm-page-pad">
             <AstronautSidebar
@@ -354,7 +446,18 @@ export default function App() {
               allAstronauts={astronauts}
               onSelectAstronaut={handleSelectAstronaut}
               envMetrics={envMetrics}
-              onUpdateEnvMetrics={() => undefined}
+              co2Flash={co2Flash}
+              onUpdateEnvMetrics={(patch) => {
+                setCabinPatch((prev) => ({ ...prev, ...patch }));
+                if (patch.carbonDioxidePercent != null) {
+                  setCo2Flash(true);
+                  window.setTimeout(() => setCo2Flash(false), 1800);
+                  const v = patch.carbonDioxidePercent.toFixed(2);
+                  showToast(
+                    patch.carbonDioxidePercent > 0.35 ? t('toast.spikeOn', { v }) : t('toast.spikeOff', { v })
+                  );
+                }
+              }}
               currentUserRole={currentUser.role}
               recordsByAstronaut={recordsByAstronaut}
             />
@@ -365,6 +468,7 @@ export default function App() {
                 error={spaceEnvError}
                 onRefresh={() => void loadWx(true)}
                 speDemo={speDemo}
+                lastOk={wxFetchedAt}
               />
             </div>
           </aside>
@@ -408,6 +512,12 @@ export default function App() {
           initialPrompt={aiCallInitialPrompt}
           spaceEnvironment={displayWx}
           selfCheck={selfChecks[selectedAstronaut.id] ?? null}
+          liveVitals={(() => {
+            const live = findCrewLive(world, selectedAstronaut.id);
+            return live
+              ? { hr: live.crew.wearable.hr, hrv: live.crew.wearable.hrv, spo2: live.crew.wearable.spo2 }
+              : undefined;
+          })()}
         />
       )}
 
@@ -426,7 +536,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
+        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

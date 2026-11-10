@@ -21,7 +21,9 @@
     "lastUpdated": "Última actualización",
     "next": "Siguiente",
     "view": "Ver",
-    "none": "Ninguno"
+    "none": "Ninguno",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
   },
   "status": {
     "normal": "Normal",
@@ -65,6 +67,25 @@
   },
   "nav": {
     "today": "Hoy",
+    "day": "Parte del día",
+    "dayShort": "Día",
+    "body": "Mapa corporal",
+    "bodyShort": "Cuerpo",
+    "crew": "Tripulación",
+    "ops": "Consola de ops",
+    "opsShort": "Ops",
+    "cases": "Casos",
+    "sourcesShort": "Fuentes",
+    "simShort": "Sim",
+    "hqShort": "HQ",
+    "demoSession": "Sesión demo",
+    "glossary": "Términos",
+    "glossaryTitle": "Términos de misión",
+    "homeLink": "Inicio SpaceMoni",
+    "speSimulate": "Simular un evento de protones solares",
+    "speStop": "Detener la superposición de protones",
+    "speConfirmTitle": "¿Simular un evento de protones solares?",
+    "speConfirm": "Superponer demo",
     "homeAstronaut": "Salud de hoy",
     "homeCommander": "Resumen de tripulación",
     "homeNasa": "Cola de casos",
@@ -77,8 +98,8 @@
     "showTasks": "Mostrar objetivos",
     "hideTasks": "Ocultar objetivos",
     "skipToRecords": "Ir a registros de salud",
-    "speOn": "SPE demo ON",
-    "speOff": "SPE demo",
+    "speOn": "Superposición de protones solares activa",
+    "speOff": "Superposición de protones solares",
     "met": "MET",
     "stationTime": "Hora de estación",
     "eclssDemo": "ECLSS: nominal (sim)",
@@ -90,6 +111,22 @@
     "hideTitle": "Ocultar el panel derecho para ampliar la salud",
     "aiTitle": "Llamar al cirujano AURA",
     "logoutTitle": "Cerrar sesión y volver al acceso"
+  },
+  "glossary": {
+    "met": "MET — Tiempo transcurrido de misión, desde la época demo (10 nov 2026, Taipéi).",
+    "spe": "SPE — Evento de protones solares. El overlay de demo está etiquetado y no es flujo NOAA en vivo.",
+    "kp": "Kp — Índice geomagnético planetario (0–9) de NOAA SWPC.",
+    "gScale": "Escala G — Tormenta geomagnética NOAA G0–G5, derivada de Kp.",
+    "sScale": "Escala S — Tormenta de radiación solar NOAA S0–S5, de protones ≥10 MeV.",
+    "rScale": "Escala R — Apagón de radio NOAA R0–R5, de la clase de rayos X GOES.",
+    "ared": "ARED — Dispositivo avanzado de ejercicio resistivo.",
+    "cevis": "CEVIS — Cicloergómetro con aislamiento de vibración (bici de estación).",
+    "t2": "T2 — Cinta COLBERT para contramedida aeróbica.",
+    "eclss": "ECLSS — Control ambiental y soporte vital (aire, agua, térmico).",
+    "donki": "DONKI — Base NASA de notificaciones y clima espacial (llamaradas, CME, tormentas).",
+    "msv": "mSv — milisievert, unidad de dosis. Los valores de tripulación son simulados.",
+    "hrv": "HRV — Variabilidad de la frecuencia cardíaca (ms). Baja puede indicar estrés o fatiga.",
+    "spo2": "SpO₂ — Saturación periférica de oxígeno (%)."
   },
   "badge": {
     "simTelemetry": "Telemetría de tripulación simulada (demo)",
@@ -290,10 +327,18 @@
     "srcOk": "conectado",
     "srcEmpty": "ventana vacía",
     "srcTimeout": "timeout",
-    "srcError": "falló"
+    "srcError": "falló",
+    "lastOk": "Última obtención correcta {time}",
+    "impactOk": "Los feeds NOAA y DONKI responden.",
+    "impactPartial": "{live} sigue en vivo; {down} no disponible",
+    "impactDown": "Los feeds del entorno espacial no están disponibles. Reintente.",
+    "basis": "Escalas NOAA: geomagnética {g}, radio {r}, radiación solar {s}. Basado en GOES / SWPC, no interpolado.",
+    "noaaData": "datos NOAA",
+    "donkiFlares": "lista de llamaradas DONKI",
+    "observedAt": "Observado {time}"
   },
   "ai": {
-    "offlineBanner": "IA desconectada; sigue el motor de umbrales",
+    "offlineBanner": "Modelo de IA desconectado — usando reglas de umbral en el dispositivo",
     "liveMode": "Modo: Gemini en vivo",
     "greeting": "AURA en línea, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
     "healthStatus": "Estado de salud: {status}",
@@ -330,10 +375,10 @@
     "actions": "Acciones de estación",
     "synthesizing": "AURA está sintetizando el análisis…",
     "quick": "Pregunta rápida:",
-    "qHr": "Analizar FC 103 bpm",
+    "qHr": "Analizar FC {n} bpm",
     "qExp": "Preparación del experimento",
     "qHydrate": "Contramedida de hidratación",
-    "qHrPrompt": "¿Por qué mi FC en reposo es 103 bpm?",
+    "qHrPrompt": "¿Por qué mi FC en reposo es {n} bpm?",
     "qExpPrompt": "¿Puedo hacer ahora el experimento de catalizador vegetal?",
     "qHydratePrompt": "Recomienda un plan de hidratación.",
     "listen": "Escuchando… hable a la IA…",
@@ -548,16 +593,21 @@
     "name": "Nombre del objetivo",
     "module": "Módulo",
     "priority": "Prioridad",
-    "desc": "Descripción",
+    "desc": "Notas y observaciones de procedimiento",
     "assign": "Asignar",
     "placeholder": "p. ej. recambio de medio (sim)",
-    "defaultDesc": "Directiva registrada desde la consola de tareas (sim)."
+    "defaultDesc": "Directiva registrada desde la consola de tareas (sim).",
+    "notesPlaceholder": "Pasos, parámetros de seguridad o etiquetas…",
+    "create": "Crear objetivo",
+    "cancel": "Cancelar"
   },
   "addAct": {
     "title": "Añadir actividad diaria",
     "name": "Actividad",
     "slot": "Franja (UTC)",
-    "category": "Categoría"
+    "category": "Categoría",
+    "namePh": "p. ej. hidratación de semillas en microgravedad",
+    "slotPh": "p. ej. 14:00–15:30"
   },
   "ship": {
     "harmony": {
@@ -834,7 +884,11 @@
     "taskAdded": "Tarea añadida: «{title}»",
     "auraTask": "AURA programó: «{title}»",
     "noteLogged": "Nota clínica escrita en el registro de hoy",
-    "activityAdded": "Actividad añadida a {date}"
+    "activityAdded": "Actividad añadida a {date}",
+    "spikeOn": "CO₂ de cabina subió a {v}% (simulación)",
+    "spikeOff": "CO₂ de cabina bajó a {v}%",
+    "speOn": "Evento de protones solares de demo superpuesto",
+    "speOff": "Superposición de protones solares retirada"
   },
   "lang": {
     "label": "Idioma"
@@ -1087,7 +1141,10 @@
     "secUnit": "s",
     "minUnit": "min",
     "zoneTaipei": "Asia/Taipei",
-    "clockMet": "D+{n} · {time} Asia/Taipei",
+    "clockMet": "Día de misión {n} · {date} · {time} Taipéi",
+    "logSelfCheck": "Registrar autoevaluación diaria",
+    "sleepLastNight": "Sueño de anoche",
+    "sleepQualityNow": "Calidad registrada {n}/5",
     "sourcesHeadline": "De dónde sale cada número.",
     "judgeReading": "Cómo juzgamos una lectura",
     "crewSimulated": "Las constantes de la tripulación en esta demo son simuladas.",

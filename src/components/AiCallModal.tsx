@@ -40,6 +40,7 @@ interface AiCallModalProps {
   initialPrompt?: string;
   spaceEnvironment?: SpaceEnvironmentPayload | null;
   selfCheck?: SelfCheckEntry | null;
+  liveVitals?: { hr: number; hrv: number; spo2: number };
 }
 
 export const AiCallModal: React.FC<AiCallModalProps> = ({
@@ -53,9 +54,12 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   initialPrompt,
   spaceEnvironment = null,
   selfCheck = null,
+  liveVitals,
 }) => {
   const { t, lang } = useI18n();
   const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang);
+  const liveHr = liveVitals?.hr ?? todayRecord.restingHR;
+  const liveHrv = liveVitals?.hrv ?? todayRecord.hrv;
   const buildGreeting = (): AiMessage => ({
       id: 'msg-init',
       sender: 'aura',
@@ -64,8 +68,8 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         name: astronaut.name,
         day: astronaut.missionDaysElapsed,
         summary: packed.overall.summary,
-        hr: todayRecord.restingHR,
-        hrv: todayRecord.hrv,
+        hr: liveHr,
+        hrv: liveHrv,
       }),
       healthAssessment: packed.overall,
       detailedAnalysis: { metrics: packed.metrics, systems: packed.systems },
@@ -102,7 +106,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               label: t('ai.logCardio'),
               type: 'LOG_ANOMALY',
               payload: {
-                note: `${astronaut.name}: HR ${todayRecord.restingHR} bpm, HRV ${todayRecord.hrv} ms.`,
+                note: `${astronaut.name}: HR ${liveHr} bpm, HRV ${liveHrv} ms.`,
               },
             },
           ],
@@ -363,6 +367,11 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   {offline ? t('ui.offlineMode') : t('ai.liveMode')}
                 </span>
               </div>
+              {offline && (
+                <p role="status" className="mt-1 text-[11px] font-semibold text-amber-800">
+                  {t('ai.offlineBanner')}
+                </p>
+              )}
             </div>
           </div>
 
@@ -385,6 +394,8 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                 stopSpeaking();
                 onClose();
               }}
+              aria-label={t('common.close')}
+              title={t('common.close')}
               className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-stone-400"
             >
               <X className="w-5 h-5" />
@@ -607,10 +618,10 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
           <p className="px-5 pt-2 text-[11px] text-stone-400">{t('ai.quick')}</p>
           <div className="px-5 pb-2 flex items-center gap-2 overflow-x-auto sm-snap sm-chip-fade text-[11px] min-w-0">
             <button
-              onClick={() => handleSendMessage(t('ai.qHrPrompt'))}
+              onClick={() => handleSendMessage(t('ai.qHrPrompt', { n: liveHr }))}
               className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap shrink-0 snap-start"
             >
-              {t('ai.qHr')}
+              {t('ai.qHr', { n: liveHr })}
             </button>
             <button
               onClick={() => handleSendMessage(t('ai.qExpPrompt'))}
