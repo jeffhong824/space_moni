@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { AlertCircle, ArrowRight, Plus, UserRound } from 'lucide-react';
 import { AuthUser, UserRole } from '../types';
-import { AlertCircle, ArrowRight, Satellite } from 'lucide-react';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { SimBadge } from './SimBadge';
+import { LanguageGlobe, IconCircle } from '../ui/chrome';
 import { useI18n } from '../i18n/I18nProvider';
 import {
   DEMO_PASSWORD,
@@ -43,12 +42,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     if (matched) {
       onLogin({
         ...matched,
-        role, // Allow setting chosen role
+        role,
       });
       return;
     }
 
-    // Default fallback user creation for custom account name
     const formattedName = cleanAccount
       .split('_')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -63,11 +61,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     });
   };
 
-  const handleQuickLogin = (preset: AuthUser) => {
-    setRole(preset.role);
-    setAccount(preset.account);
-    setPassword(DEMO_PASSWORD);
-    onLogin(preset);
+  const pickRole = (newRole: UserRole) => {
+    setRole(newRole);
+    if (newRole === 'Commander') setAccount('marcus_vance');
+    else if (newRole === 'NASA') setAccount('nasa_mission_control');
+    else setAccount('alice_smith');
   };
 
   useEffect(() => {
@@ -82,72 +80,67 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col md:flex-row bg-black text-white font-sans overflow-hidden select-none relative">
-      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            window.history.pushState({}, '', '/sim');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          }}
-          className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-white/30 bg-black/50"
-        >
-          {t('login.openSim')}
-        </button>
-        <LanguageSwitcher variant="dark" />
+    <div className="h-screen w-screen overflow-hidden relative text-stone-900">
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageGlobe />
       </div>
-      {/* LEFT COLUMN: Login Form (Strictly adhering to wireframe Log-in_9d0eec67.png) */}
-      <div className="w-full md:w-1/2 lg:w-2/5 xl:w-[38%] h-full flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10 bg-black overflow-y-auto">
-        {/* Brand Header */}
-        <div className="space-y-1 pt-2">
-          <div className="flex items-center gap-2.5 text-sky-400">
-            <Satellite className="w-5 h-5 text-sky-400" />
-            <span className="text-xl font-bold tracking-tight text-white">SpaceMoni</span>
-            <SimBadge />
+
+      <div className="h-full w-full grid md:grid-cols-2 items-center gap-8 px-6 sm:px-12 lg:px-16">
+        <div className="hidden md:flex flex-col items-center justify-center">
+          <div className="relative w-[min(78vw,420px)] aspect-square">
+            <div className="absolute inset-0 rounded-full bg-white/50 shadow-[0_40px_80px_rgba(40,36,28,0.12)]" />
+            <div className="absolute inset-[6%] rounded-full overflow-hidden shadow-inner">
+              <img
+                src="/assets/aistudio/190207123342-xl-nasa-archives-p176_2f1b8d2d.jpg"
+                alt=""
+                className="w-full h-full object-cover scale-110"
+              />
+            </div>
+            <div className="absolute inset-0 rounded-full pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.55)]" />
           </div>
-          <p className="text-xs font-mono text-neutral-400">
-            {t('login.subtitle')}
-          </p>
+          <p className="mt-5 text-[13px] text-stone-500">{t('ui.archiveImagery')}</p>
         </div>
 
-        {/* Form Container */}
-        <div className="my-auto py-6 max-w-sm w-full mx-auto space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Field 1: Role (As shown in wireframe) */}
-            <div className="space-y-2">
-              <label htmlFor="login-role" className="block text-sm font-medium text-white tracking-wide">
-                {t('login.role')}
-              </label>
-              <div className="relative">
-                <select
-                  id="login-role"
-                  value={role}
-                  onChange={(e) => {
-                    const newRole = e.target.value as UserRole;
-                    setRole(newRole);
-                    if (newRole === 'Commander') setAccount('marcus_vance');
-                    else if (newRole === 'NASA') setAccount('nasa_mission_control');
-                    else setAccount('alice_smith');
-                  }}
-                  className="w-full h-12 px-4 py-2 bg-white text-black font-semibold text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none cursor-pointer shadow-sm"
-                >
-                  <option value="Astronaut">{t('role.astronaut')}</option>
-                  <option value="Commander">{t('role.commander')}</option>
-                  <option value="NASA">{t('role.nasa')}</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-600">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+        <div className="max-w-md w-full mx-auto py-10">
+          <h1 className="font-display text-4xl sm:text-5xl text-stone-900">{t('login.welcome')}</h1>
+          <p className="mt-2 text-sm text-stone-500">{t('login.subtitle')}</p>
 
-            {/* Field 2: Account (As shown in wireframe) */}
-            <div className="space-y-2">
-              <label htmlFor="login-account" className="block text-sm font-medium text-white tracking-wide">
-                {t('login.account')}
-              </label>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div className="flex items-start justify-center gap-6" role="radiogroup" aria-label={t('login.role')}>
+              <IconCircle
+                label={t('role.astronaut')}
+                active={role === 'Astronaut'}
+                onClick={() => pickRole('Astronaut')}
+              >
+                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M7 14c0-4 2.2-7 5-7s5 3 5 7" />
+                  <path d="M6 15h12v2.2c0 .6-.5 1.1-1.1 1.3C15.4 19.2 13.8 20 12 20s-3.4-.8-4.9-1.5c-.6-.2-1.1-.7-1.1-1.3V15Z" />
+                  <path d="M8.5 11.5h7" />
+                </svg>
+              </IconCircle>
+              <IconCircle
+                label={t('role.commander')}
+                active={role === 'Commander'}
+                onClick={() => pickRole('Commander')}
+              >
+                <UserRound className="w-6 h-6" />
+              </IconCircle>
+              <IconCircle
+                label={t('ui.flightSurgeon')}
+                active={role === 'NASA'}
+                onClick={() => pickRole('NASA')}
+              >
+                <Plus className="w-6 h-6" strokeWidth={2.4} />
+              </IconCircle>
+            </div>
+            <select id="login-role" className="sr-only" value={role} onChange={(e) => pickRole(e.target.value as UserRole)}>
+              <option value="Astronaut">{t('role.astronaut')}</option>
+              <option value="Commander">{t('role.commander')}</option>
+              <option value="NASA">{t('role.nasa')}</option>
+            </select>
+
+            <label className="block">
+              <span className="sr-only">{t('login.account')}</span>
               <input
                 id="login-account"
                 type="text"
@@ -156,20 +149,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
                 placeholder={t('login.accountPlaceholder')}
-                className="w-full h-12 px-4 py-2 bg-white text-black font-medium text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder-neutral-400 shadow-sm"
+                className="w-full h-12 px-5 bg-white rounded-full text-sm shadow-[var(--sm-shadow-soft)] placeholder:text-stone-400"
               />
-            </div>
-
-            {/* Field 3: Password (As shown in wireframe, default 12345) */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label htmlFor="login-password" className="block text-sm font-medium text-white tracking-wide">
-                  {t('login.password')}
-                </label>
-                <span className="text-[11px] font-mono text-neutral-400">
-                  {t('login.passwordHint')}
-                </span>
-              </div>
+            </label>
+            <label className="block">
+              <span className="sr-only">{t('login.password')}</span>
               <input
                 id="login-password"
                 type="password"
@@ -178,121 +162,75 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="12345"
-                className="w-full h-12 px-4 py-2 bg-white text-black font-medium text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder-neutral-400 shadow-sm font-mono"
+                className="w-full h-12 px-5 bg-white rounded-full text-sm shadow-[var(--sm-shadow-soft)]"
               />
-            </div>
+            </label>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-rose-950/80 border border-rose-700/80 rounded-xl text-rose-200 text-xs">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-rose-50 text-rose-800 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Login Submit Button */}
             <button
               type="submit"
-              className="w-full h-12 mt-2 bg-sky-500 hover:bg-sky-400 text-black font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
+              className="w-full h-12 rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold flex items-center justify-center gap-2"
             >
-              <span>
-                {role === 'NASA' ? t('login.submitNasa') : role === 'Commander' ? t('login.submitCommander') : t('login.submitAstronaut')}
-              </span>
+              {t('ui.continue')}
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Quick Demo Credentials for Reviewers */}
-          <div className="pt-4 border-t border-neutral-800 space-y-2.5">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 text-center">
-              {t('login.quickRoles')}
-            </div>
-            <div className="grid grid-cols-1 gap-1.5">
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                window.history.pushState({}, '', '/sim');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              className="text-[13px] text-stone-500 hover:text-stone-800"
+            >
+              {t('ui.exploreFleet')} →
+            </button>
+            <p className="mt-5 text-[11px] text-stone-400">{t('login.quickRoles')}</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickLogin(accountByLogin('alice_smith')!)}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(accountByLogin('alice_smith')!)}
+                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
               >
-                <div>
-                  <span className="font-semibold text-white">{t('login.quickAstronaut')}</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickAstronautHint')}</div>
-                </div>
-                <span className="text-[10px] font-mono bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800">
-                  {t('role.astronaut')}
-                </span>
+                {t('login.quickAstronaut')}
               </button>
-
               <button
                 type="button"
-                onClick={() => handleQuickLogin(accountByLogin('marcus_vance')!)}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(accountByLogin('marcus_vance')!)}
+                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
               >
-                <div>
-                  <span className="font-semibold text-white">{t('login.quickCommander')}</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickCommanderHint')}</div>
-                </div>
-                <span className="text-[10px] font-mono bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800">
-                  {t('role.commander')}
-                </span>
+                {t('login.quickCommander')}
               </button>
-
               <button
                 type="button"
-                onClick={() => handleQuickLogin(NASA_ACCOUNT)}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(NASA_ACCOUNT)}
+                className="h-9 px-3 rounded-full bg-white text-[11px] font-semibold"
               >
-                <div>
-                  <span className="font-semibold text-white">{t('login.quickNasa')}</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickNasaHint')}</div>
-                </div>
-                <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
-                  {t('role.nasa')}
-                </span>
+                {t('login.quickNasa')}
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Footer info */}
-        <div className="pt-4 text-center text-[11px] font-mono text-neutral-500">
-          {t('login.footer')}
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: Photo with Top-Right Caption (Strictly adhering to wireframe) */}
-      <div className="hidden md:block md:w-1/2 lg:w-3/5 xl:w-[62%] h-full relative overflow-hidden bg-neutral-950">
-        <img
-          src="/assets/aistudio/190207123342-xl-nasa-archives-p176_2f1b8d2d.jpg"
-          alt="Astronaut spacewalk over Earth"
-          className="w-full h-full object-cover"
-        />
-
-        {/* Dark subtle gradient overlay to ensure legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none" />
-
-        {/* Caption in Top Right (Strictly matching wireframe) */}
-        <div className="absolute top-6 right-8 text-right font-sans text-xs lg:text-sm text-white/90 drop-shadow-md select-text">
-          <span>{t('login.heroCaption')}</span>
-        </div>
-
-        {/* Bottom subtle mission caption */}
-        <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between text-xs font-mono text-white/80">
-          <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>{t('login.orbitCaption')}</span>
-          </div>
-          <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>{t('login.archiveCaption')}</span>
+            <p className="mt-4 text-[11px] text-stone-400">{t('login.footer')}</p>
+            <p className="mt-1 text-[11px] text-stone-400 font-mono">{t('login.passwordHint')}</p>
           </div>
         </div>
       </div>
 
       {confirm && (
-        <div className="absolute inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm rounded-2xl border border-sky-700 bg-neutral-950 p-5 space-y-4">
-            <p className="text-sm font-semibold text-white">
+        <div className="absolute inset-0 z-[60] bg-stone-900/30 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-[32px] bg-white p-6 space-y-4 shadow-[var(--sm-shadow)]">
+            <p className="font-display text-2xl">
               {t('login.confirmTitle', { name: confirm.name, role: t(confirm.roleKey), ship: t(confirm.shipNameKey) })}
             </p>
-            <p className="text-[11px] text-neutral-400">{t('login.confirmHint')}</p>
-            <p className="text-[11px] font-mono text-sky-300">
+            <p className="text-[13px] text-stone-500">{t('login.confirmHint')}</p>
+            <p className="text-[12px] font-mono text-stone-400">
               {account} · {t('login.passwordHint')}
             </p>
             <div className="flex gap-2">
@@ -303,14 +241,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   setConfirm(null);
                   if (user) onLogin(user);
                 }}
-                className="flex-1 h-10 rounded-xl bg-sky-500 text-black text-sm font-bold"
+                className="flex-1 h-11 rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold"
               >
                 {t('login.confirm')}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirm(null)}
-                className="flex-1 h-10 rounded-xl border border-neutral-700 text-sm font-semibold text-white"
+                className="flex-1 h-11 rounded-full bg-stone-100 text-sm font-semibold"
               >
                 {t('login.cancel')}
               </button>

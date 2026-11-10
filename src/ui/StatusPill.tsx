@@ -1,14 +1,7 @@
 import React from 'react';
+import { StatusDot, toneFromRank, type RankTone } from './chrome';
 
-type Tone = 'ok' | 'warn' | 'crit' | 'info' | 'neutral';
-
-const TONE: Record<Tone, string> = {
-  ok: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  warn: 'bg-amber-50 text-amber-900 border-amber-200',
-  crit: 'bg-rose-50 text-rose-800 border-rose-200',
-  info: 'bg-sky-50 text-sky-800 border-sky-200',
-  neutral: 'bg-slate-50 text-slate-700 border-slate-200',
-};
+type Tone = RankTone | 'neutral';
 
 export function StatusPill({
   children,
@@ -19,31 +12,17 @@ export function StatusPill({
   tone?: Tone;
   className?: string;
 }) {
+  const mapped: RankTone = tone === 'neutral' ? 'info' : tone;
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold tracking-wide ${TONE[tone]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/80 text-[11px] font-medium text-stone-700 ${className}`}
     >
+      <StatusDot tone={mapped} />
       {children}
     </span>
   );
 }
 
 export function toneFromStatus(status?: string): Tone {
-  if (!status) return 'neutral';
-  if (status === 'Critical' || status === 'Severe' || status === 'unavailable' || status === '危急') return 'crit';
-  if (
-    status === 'Attention' ||
-    status === 'Attention Required' ||
-    status === 'Caution' ||
-    status === 'High' ||
-    status === 'Moderate' ||
-    status === 'partial' ||
-    status === 'Elevated' ||
-    status === '注意' ||
-    status === 'Precaución'
-  ) {
-    return 'warn';
-  }
-  if (status === 'Nominal' || status === 'Normal' || status === 'Low' || status === 'ok' || status === '正常') return 'ok';
-  return 'info';
+  return toneFromRank(status);
 }

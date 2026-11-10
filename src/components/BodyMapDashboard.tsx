@@ -14,12 +14,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Activity, Brain, Dumbbell, Radio } from 'lucide-react';
-import { SimBadge } from './SimBadge';
-import { StatusPill, toneFromStatus } from '../ui/StatusPill';
+import { Activity, Brain, Dumbbell } from 'lucide-react';
 import { AnatomicalFigure } from './AnatomicalFigure';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
+import { Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
+import { StatusPill } from '../ui/StatusPill';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import type { CrewDef } from '../world/catalog';
 import { SHIPS } from '../world/catalog';
@@ -51,11 +51,14 @@ export const BodyMapDashboard: React.FC<{
   onOpenAiCall: (prompt?: string) => void;
   compact?: boolean;
   hero?: boolean;
-}> = ({ crew, tNow, wx, onOpenAiCall, compact = false, hero = false }) => {
+  figureOnly?: boolean;
+  onAskAura?: (prompt?: string) => void;
+}> = ({ crew, tNow, wx, onOpenAiCall, compact = false, hero = false, figureOnly = false }) => {
   const { t, lang } = useI18n();
   const [side, setSide] = useState<'front' | 'back'>('front');
-  const [selected, setSelected] = useState<BodyRegionId | null>('heart');
+  const [selected, setSelected] = useState<BodyRegionId | null>(hero ? 'heart' : 'heart');
   const [range, setRange] = useState<TrendRange>('24h');
+  const [sheetOpen, setSheetOpen] = useState(!hero && !figureOnly && !compact);
 
   const health = useMemo(() => bodyHealthAt(crew, tNow, wx), [crew, tNow, wx]);
   const series = useMemo(() => combinedTrend(crew, tNow, range, wx), [crew, tNow, range, wx]);
@@ -89,159 +92,92 @@ export const BodyMapDashboard: React.FC<{
     );
   };
 
-  return (
-    <section
-      className={`rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 overflow-hidden ${
-        hero ? 'lg:max-h-[calc(100dvh-7.5rem)] lg:flex lg:flex-col' : ''
-      }`}
-    >
-      <header className={`${hero ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-800 flex flex-wrap items-start justify-between gap-2 shrink-0`}>
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-sm font-bold tracking-tight">{t('body.title')}</h2>
-            <SimBadge />
-            <StatusPill tone={toneFromStatus(STATUS[health.overallRank])}>{statusLabel(lang, STATUS[health.overallRank])}</StatusPill>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            {crew.name} · {t(crew.occupationKey)} · {ship ? t(ship.nameKey) : ''} · {t('body.subtitle')}
+  const onSelect = (id: BodyRegionId) => {
+    setSelected(id);
+    if (hero || figureOnly) setSheetOpen(true);
+  };
+
+  const details = (
+    <div className="space-y-4">
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">{selected ? t(`body.region.${selected}`) : t('body.regionDetail')}</h3>
+          {domain && (
+            <StatusDot tone={toneFromRank(STATUS[domain.rank])} label={statusLabel(lang, STATUS[domain.rank])} />
+          )}
+        </div>
+        {domain && (
+          <>
+            <p className="text-[12px] text-stone-500 mt-1">
+              {t(`body.domain.${domain.id}`)} · {domain.valueLabel} · {t('body.score', { n: domain.score })}
+            </p>
+            <p className="text-[11px] text-stone-400 mt-1">{t(`body.hrp.${domain.id}`)}</p>
+            <button
+              type="button"
+              onClick={() => askAura(domain.id)}
+              className="mt-2 h-9 px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-[12px] font-semibold"
+            >
+              {t('body.askAura')}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="h-48 rounded-[28px] bg-white/80 p-2">
+          <p className="text-[10px] font-semibold text-stone-400 px-2 flex items-center gap-1">
+            <Brain className="w-3 h-3" /> {t('body.radar')}
+          </p>
+          <ResponsiveContainer width="100%" height="90%">
+            <RadarChart data={radar}>
+              <PolarGrid stroke="#e7e5e0" />
+              <PolarAngleAxis dataKey="key" tick={{ fill: '#6b6a66', fontSize: 9 }} />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+              <Radar dataKey="score" stroke="#2b3bff" fill="#c4b5fd" fillOpacity={0.35} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="rounded-[28px] bg-white/80 p-3 space-y-1.5">
+          <p className="text-[10px] font-semibold text-stone-400">{t('body.liveVitals')}</p>
+          <p className="text-[12px] font-mono">
+            {t('wear.hr')} {w.hr} · {t('wear.hrv')} {w.hrv} · {t('wear.resp')} {w.respRate} · SpO₂ {w.spo2}%
+          </p>
+          <p className="text-[11px] font-mono text-stone-500">
+            {t('wear.bp')} {w.bpSys}/{w.bpDia} · {t('wear.core')} {w.coreTempC}°C · {t('wear.skin')} {w.skinTempC}°C
+          </p>
+          <p className="text-[11px] font-mono text-stone-500">
+            {t('wear.dose')} {w.doseMsv} / {health.doseLimitMsv} mSv · {t('body.boneLoss')} −{health.boneLossPct}%
           </p>
         </div>
-        <div className="flex items-center gap-3 font-mono text-rose-300">
-          <span className="inline-block w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-          <span className="text-lg font-bold tabular-nums">{w.hr}</span>
-          <span className="text-[10px] text-slate-500">bpm</span>
-          <span className="text-[11px] text-slate-400">SpO₂ {w.spo2}%</span>
-        </div>
-      </header>
+      </div>
 
-      <div
-        className={`grid ${compact ? 'lg:grid-cols-1' : hero ? 'lg:grid-cols-[minmax(220px,340px)_1fr]' : 'lg:grid-cols-[minmax(280px,420px)_1fr]'} gap-0 ${
-          hero ? 'min-h-0 flex-1 lg:overflow-hidden' : ''
-        }`}
-      >
-        <div className="p-3 border-b lg:border-b-0 lg:border-r border-slate-800 shrink-0">
-          <div className="flex gap-1 mb-2">
-            <button
-              type="button"
-              onClick={() => setSide('front')}
-              className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg border ${side === 'front' ? 'bg-cyan-900/60 border-cyan-500 text-cyan-100' : 'border-slate-700 text-slate-400'}`}
-            >
-              {t('body.front')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSide('back')}
-              className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg border ${side === 'back' ? 'bg-cyan-900/60 border-cyan-500 text-cyan-100' : 'border-slate-700 text-slate-400'}`}
-            >
-              {t('body.back')}
-            </button>
-          </div>
-          <div className="relative mx-auto w-full max-w-[420px]">
-            <AnatomicalFigure
-              side={side}
-              regionRank={health.regionRank}
-              selected={selected}
-              onSelect={setSelected}
-              pulse={pulseRegion}
-              auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
-              labelFor={(id) => t(`body.region.${id}`)}
-              hero={hero}
-            />
-          </div>
-          <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">{t('body.credit')}</p>
-        </div>
-
-        <div className={`p-3 space-y-3 min-w-0 ${hero ? 'lg:overflow-y-auto lg:min-h-0' : ''}`}>
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs font-bold">{selected ? t(`body.region.${selected}`) : t('body.regionDetail')}</h3>
-              {domain && (
-                <StatusPill tone={toneFromStatus(STATUS[domain.rank])}>{statusLabel(lang, STATUS[domain.rank])}</StatusPill>
-              )}
-            </div>
-            {domain && (
-              <>
-                <p className="text-[11px] text-slate-300 mt-1">
-                  {t(`body.domain.${domain.id}`)} · {domain.valueLabel} · {t('body.score', { n: domain.score })}
-                </p>
-                <p className="text-[10px] text-slate-500 mt-1">{t(`body.hrp.${domain.id}`)}</p>
-                <button
-                  type="button"
-                  onClick={() => askAura(domain.id)}
-                  className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-sky-600 text-sky-200"
-                >
-                  <Radio className="w-3 h-3" />
-                  {t('body.askAura')}
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-2 h-48">
-              <p className="text-[10px] font-semibold text-slate-400 px-1 flex items-center gap-1">
-                <Brain className="w-3 h-3" /> {t('body.radar')}
-              </p>
-              <ResponsiveContainer width="100%" height="90%">
-                <RadarChart data={radar}>
-                  <PolarGrid stroke="#334155" />
-                  <PolarAngleAxis dataKey="key" tick={{ fill: '#94a3b8', fontSize: 9 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-1.5">
-              <p className="text-[10px] font-semibold text-slate-400">{t('body.liveVitals')}</p>
-              <p className="text-[11px] font-mono text-slate-200">
-                {t('wear.hr')} {w.hr} · {t('wear.hrv')} {w.hrv} · {t('wear.resp')} {w.respRate} · SpO₂ {w.spo2}%
-              </p>
-              <p className="text-[11px] font-mono text-slate-400">
-                {t('wear.bp')} {w.bpSys}/{w.bpDia} · {t('wear.core')} {w.coreTempC}°C · {t('wear.skin')} {w.skinTempC}°C
-              </p>
-              <p className="text-[11px] font-mono text-amber-200/90">
-                {t('wear.dose')} {w.doseMsv} / {health.doseLimitMsv} mSv · {t('body.boneLoss')} −{health.boneLossPct}%
-              </p>
-              <p className="text-[10px] text-amber-300/80">{t('wear.liveStream')}</p>
-            </div>
-          </div>
-
-      <div className="px-1 py-1 border-t border-slate-800 space-y-2">
+      <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xs font-bold">{t('body.trends')}</h3>
-          <div className="flex gap-1">
-            {(['24h', '7d', 'mission'] as TrendRange[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRange(r)}
-                className={`text-[10px] font-semibold px-2 py-1 rounded-md border ${range === r ? 'bg-slate-100 text-slate-900 border-slate-100' : 'border-slate-700 text-slate-400'}`}
-              >
-                {t(`body.range.${r}`)}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            value={range}
+            onChange={setRange}
+            options={(['24h', '7d', 'mission'] as TrendRange[]).map((r) => ({ id: r, label: t(`body.range.${r}`) }))}
+            ariaLabel={t('body.trends')}
+          />
         </div>
-        <p className="text-[10px] text-amber-200/90">
+        <p className="text-[10px] text-stone-400">
           {t('body.forecastHint')} · {t('body.prediction')}
         </p>
         <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 9 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fill: '#64748b', fontSize: 9 }} width={32} />
-              <Tooltip
-                contentStyle={{ background: '#0f172a', border: '1px solid #334155', fontSize: 11 }}
-                labelStyle={{ color: '#cbd5e1' }}
-              />
-              <Area dataKey="hrHi" stroke="none" fill="#fb7185" fillOpacity={0.12} />
-              <Line type="monotone" dataKey="hr" stroke="#fb7185" dot={false} strokeWidth={1.6} name={t('wear.hr')} />
-              <Line type="monotone" dataKey="spo2" stroke="#22d3ee" dot={false} strokeWidth={1.2} name="SpO₂" />
+              <CartesianGrid stroke="#eeeae4" strokeDasharray="3 3" />
+              <XAxis dataKey="label" tick={{ fill: '#6b6a66', fontSize: 9 }} interval="preserveStartEnd" />
+              <YAxis tick={{ fill: '#6b6a66', fontSize: 9 }} width={32} />
+              <Tooltip contentStyle={{ borderRadius: 16, fontSize: 11, border: 'none' }} />
+              <Area dataKey="hrHi" stroke="none" fill="#f08a80" fillOpacity={0.12} />
+              <Line type="monotone" dataKey="hr" stroke="#f08a80" dot={false} strokeWidth={1.6} name={t('wear.hr')} />
+              <Line type="monotone" dataKey="spo2" stroke="#7ddfc3" dot={false} strokeWidth={1.2} name="SpO₂" />
               <Line
                 type="monotone"
                 dataKey="doseMsv"
-                stroke="#a78bfa"
+                stroke="#c4b5fd"
                 dot={false}
                 strokeWidth={1.2}
                 strokeDasharray="4 3"
@@ -250,7 +186,7 @@ export const BodyMapDashboard: React.FC<{
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <ul className="grid sm:grid-cols-3 gap-2 text-[10px] font-mono text-slate-400">
+        <ul className="grid sm:grid-cols-3 gap-2 text-[10px] font-mono text-stone-500">
           <li>
             {t('body.forecastHr')}: {series.filter((p) => p.predicted).slice(-1)[0]?.hr ?? '—'} bpm
           </li>
@@ -263,8 +199,8 @@ export const BodyMapDashboard: React.FC<{
         </ul>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-0 border-t border-slate-800">
-        <div className="p-4 border-b lg:border-b-0 lg:border-r border-slate-800">
+      <div className="grid lg:grid-cols-2 gap-3">
+        <div>
           <h3 className="text-xs font-bold flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" /> {t('body.activityLog')}
           </h3>
@@ -272,31 +208,31 @@ export const BodyMapDashboard: React.FC<{
             {schedule.map((b) => (
               <li
                 key={`${b.startHour}-${b.activityKey}`}
-                className={`flex items-center gap-2 text-[11px] rounded-lg px-2 py-1 ${b.current ? 'bg-cyan-950 border border-cyan-700' : ''}`}
+                className={`flex items-center gap-2 text-[11px] rounded-full px-3 py-1.5 ${b.current ? 'bg-white shadow-[var(--sm-shadow-soft)]' : ''}`}
               >
-                <span className="font-mono text-slate-500 w-24 shrink-0">
+                <span className="font-mono text-stone-400 w-24 shrink-0">
                   {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
                 </span>
-                <span className={b.done ? 'text-slate-500 line-through' : 'text-slate-200'}>{t(b.activityKey)}</span>
-                <span className="ml-auto text-[10px] text-slate-500">
+                <span className={b.done ? 'text-stone-400 line-through' : ''}>{t(b.activityKey)}</span>
+                <span className="ml-auto text-[10px] text-stone-400">
                   {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
                 </span>
               </li>
             ))}
           </ol>
         </div>
-        <div className="p-4">
+        <div>
           <h3 className="text-xs font-bold flex items-center gap-1.5">
             <Dumbbell className="w-3.5 h-3.5" /> {t('body.exerciseLog')}
           </h3>
           <ul className="mt-2 space-y-1.5">
             {exLog.map((b) => (
-              <li key={b.device} className="flex items-center gap-2 text-[11px] rounded-lg border border-slate-800 px-2 py-1.5">
-                <span className="font-semibold text-slate-100">{t(`body.ex.${b.device}`)}</span>
-                <span className="font-mono text-slate-500">
+              <li key={b.device} className="flex items-center gap-2 text-[11px] rounded-full bg-white/80 px-3 py-1.5">
+                <span className="font-semibold">{t(`body.ex.${b.device}`)}</span>
+                <span className="font-mono text-stone-400">
                   {fmtHour(b.startHour)}–{fmtHour(b.endHour)}
                 </span>
-                <span className="ml-auto text-[10px] text-slate-500">
+                <span className="ml-auto text-[10px] text-stone-400">
                   {b.current ? t('body.now') : b.done ? t('body.done') : t('body.upcoming')}
                 </span>
               </li>
@@ -308,7 +244,7 @@ export const BodyMapDashboard: React.FC<{
                 key={d.id}
                 type="button"
                 onClick={() => askAura(d.id)}
-                className="text-[10px] px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:border-cyan-600"
+                className="text-[10px] px-2.5 py-1 rounded-full bg-white text-stone-600"
               >
                 {t('body.askAura')} · {t(`body.domain.${d.id}`)}
               </button>
@@ -316,8 +252,64 @@ export const BodyMapDashboard: React.FC<{
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <section className={hero ? 'lg:flex lg:flex-col min-h-0' : ''}>
+      {!figureOnly && !hero && (
+        <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="font-display text-2xl">{t('body.title')}</h2>
+            <p className="text-[11px] text-stone-400 mt-0.5">
+              {crew.name} · {t(crew.occupationKey)} · {ship ? t(ship.nameKey) : ''} · {t('body.subtitle')}
+            </p>
+          </div>
+          <StatusPill tone={toneFromRank(STATUS[health.overallRank])}>{statusLabel(lang, STATUS[health.overallRank])}</StatusPill>
+        </header>
+      )}
+
+      <div className={`grid ${compact || figureOnly ? 'grid-cols-1' : hero ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(240px,320px)_1fr]'} gap-4`}>
+        <div>
+          <div className="flex justify-center mb-2">
+            <Segmented
+              value={side}
+              onChange={setSide}
+              options={[
+                { id: 'front' as const, label: t('body.front') },
+                { id: 'back' as const, label: t('body.back') },
+              ]}
+              ariaLabel={t('body.title')}
+            />
+          </div>
+          <AnatomicalFigure
+            side={side}
+            regionRank={health.regionRank}
+            selected={selected}
+            onSelect={onSelect}
+            pulse={pulseRegion}
+            auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
+            labelFor={(id) => t(`body.region.${id}`)}
+            hero={hero}
+          />
+          <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
         </div>
+        {!hero && !figureOnly && !compact && details}
       </div>
+
+      <Sheet
+        open={sheetOpen && (hero || figureOnly || compact)}
+        onClose={() => setSheetOpen(false)}
+        title={
+          <div>
+            <p className="font-display text-2xl">{crew.name}</p>
+            <p className="text-[12px] text-stone-500">{t(crew.occupationKey)}</p>
+          </div>
+        }
+        wide
+      >
+        {details}
+      </Sheet>
     </section>
   );
 };

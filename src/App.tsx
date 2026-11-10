@@ -319,7 +319,7 @@ export default function App() {
     );
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
+    <div className="h-screen w-screen flex flex-col overflow-hidden">
       <a
         href="#main-records"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:px-3 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold focus:shadow"
@@ -331,6 +331,7 @@ export default function App() {
         onOpenAiCall={() => handleOpenAiCall()}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onSwitchUser={handleLogin}
         isRightPanelCollapsed={isRightPanelCollapsed}
         onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
         view={view}
@@ -341,10 +342,12 @@ export default function App() {
 
       {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
       {view === 'home' && roleHome}
-      {view === 'sources' && <DataSourcesPage onBack={() => setView(currentUser.role === 'NASA' ? 'hq' : 'home')} />}
+      {view === 'sources' && (
+        <DataSourcesPage onBack={() => setView(currentUser.role === 'NASA' ? 'hq' : 'home')} wx={displayWx} />
+      )}
       {view === 'console' && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-          <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto bg-slate-50/90 border-r border-slate-200/90">
+          <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto">
             <AstronautSidebar
               currentAstronaut={selectedAstronaut}
               allAstronauts={astronauts}
@@ -422,7 +425,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed top-16 right-6 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 text-xs font-medium">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

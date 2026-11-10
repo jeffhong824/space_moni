@@ -115,6 +115,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   const [speechSynthesisEnabled, setSpeechSynthesisEnabled] = useState(true);
   const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
   const [expandedAnalysisId, setExpandedAnalysisId] = useState<string | null>(null);
+  const [auraTab, setAuraTab] = useState<'chat' | 'report'>('chat');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -337,32 +338,30 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 
   if (!isOpen) return null;
 
+  const lastAi = [...messages].reverse().find((m) => m.sender === 'aura');
+  const offline = lastAi?.analysisMode === 'offline_fallback' || !lastAi;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/55 backdrop-blur-[2px]" role="presentation">
+    <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
+      <button type="button" className="absolute inset-0 bg-stone-900/20" aria-label={t('common.close')} onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="aura-dialog-title"
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl h-[85vh] max-h-[720px] flex flex-col overflow-hidden"
+        className="relative h-full w-full max-w-md sm-glass rounded-l-[32px] flex flex-col overflow-hidden sm-sheet-in"
       >
-        {/* Header */}
-        <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-sky-100 border border-sky-300 text-sky-700 flex items-center justify-center shadow-2xs">
-              <Radio className="w-5 h-5 text-sky-600 animate-pulse" />
-            </div>
+            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-200 via-violet-200 to-fuchsia-200" />
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="aura-dialog-title" className="text-sm font-bold text-slate-900 tracking-tight">
-                  {t('ai.title')}
+                <h3 id="aura-dialog-title" className="font-display text-2xl tracking-tight">
+                  AURA
                 </h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {t('ai.link')}
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white text-stone-500">
+                  {offline ? t('ui.offlineMode') : t('ai.liveMode')}
                 </span>
               </div>
-              <p className="text-xs font-mono text-slate-500">
-                {t('ai.connected', { name: astronaut.name, role: localizeKey(lang, astronaut.role), hr: todayRecord.restingHR })}
-              </p>
             </div>
           </div>
 
@@ -372,10 +371,8 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                 if (speechSynthesisEnabled) stopSpeaking();
                 setSpeechSynthesisEnabled(!speechSynthesisEnabled);
               }}
-              className={`p-1.5 rounded-lg border transition-colors ${
-                speechSynthesisEnabled
-                  ? 'bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100'
-                  : 'bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600'
+              className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                speechSynthesisEnabled ? 'bg-white text-[var(--sm-cobalt)]' : 'bg-white/60 text-stone-400'
               }`}
               title={speechSynthesisEnabled ? t('ai.speechOn') : t('ai.speechOff')}
             >
@@ -387,15 +384,59 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                 stopSpeaking();
                 onClose();
               }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-stone-400"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
+        <div className="px-5 pb-3">
+          <div className="inline-flex p-1 rounded-full bg-white/80">
+            <button
+              type="button"
+              onClick={() => setAuraTab('chat')}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold ${auraTab === 'chat' ? 'bg-[var(--sm-cobalt)] text-white' : 'text-stone-500'}`}
+            >
+              {t('ui.chat')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuraTab('report')}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold ${auraTab === 'report' ? 'bg-[var(--sm-cobalt)] text-white' : 'text-stone-500'}`}
+            >
+              {t('ui.report')}
+            </button>
+          </div>
+        </div>
+
+        {auraTab === 'report' && lastAi?.healthAssessment && (
+          <div className="px-5 pb-3 space-y-2 text-sm">
+            <p className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[var(--sm-apricot)]" />
+              {t('ui.noticed', { item: lastAi.healthAssessment.summary })}
+            </p>
+            <p className="text-stone-500">{t('ui.why', { item: lastAi.healthAssessment.summary })}</p>
+            <p>{t('ui.nextAction', { item: t('ai.hydrate') })}</p>
+            <button
+              type="button"
+              onClick={() => lastAi.suggestedActions?.[0] && handleActionClick(lastAi.id, lastAi.suggestedActions[0])}
+              className="h-11 w-full rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold"
+            >
+              {t('ui.addHydration')}
+            </button>
+            <button
+              type="button"
+              onClick={() => lastAi.suggestedActions?.[1] && handleActionClick(lastAi.id, lastAi.suggestedActions[1])}
+              className="h-11 w-full rounded-full bg-white text-sm font-semibold"
+            >
+              {t('ui.logObservation')}
+            </button>
+          </div>
+        )}
+
         {/* Messages transcript scroll container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/40">
+        <div className={`flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 ${auraTab === 'report' ? 'hidden' : ''}`}>
           {messages.map((msg) => {
             const isUser = msg.sender === 'astronaut';
             const isSpeaking = activeSpeakingId === msg.id;
@@ -562,30 +603,29 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         </div>
 
         {/* Quick prompt suggestions */}
-        <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0 font-mono">
-          <span className="text-slate-400 shrink-0">{t('ai.quick')}</span>
+        <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0">
+          <span className="text-stone-400 shrink-0">{t('ai.quick')}</span>
           <button
             onClick={() => handleSendMessage(t('ai.qHrPrompt'))}
-            className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
+            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
           >
             {t('ai.qHr')}
           </button>
           <button
             onClick={() => handleSendMessage(t('ai.qExpPrompt'))}
-            className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
+            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
           >
             {t('ai.qExp')}
           </button>
           <button
             onClick={() => handleSendMessage(t('ai.qHydratePrompt'))}
-            className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-sky-50 text-slate-700 whitespace-nowrap transition-colors"
+            className="px-3 py-1 rounded-full bg-white text-stone-700 whitespace-nowrap"
           >
             {t('ai.qHydrate')}
           </button>
         </div>
 
-        {/* Microphone and input dock */}
-        <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+        <div className="p-4 shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -593,45 +633,32 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
             }}
             className="flex items-center gap-2.5"
           >
-            {/* Microphone Toggle Button */}
             <button
               type="button"
               onClick={toggleListening}
-              className={`p-3 rounded-xl border flex items-center justify-center transition-all shadow-2xs ${
-                isListening
-                  ? 'bg-rose-500 border-rose-600 text-white animate-pulse'
-                  : 'bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-800'
+              className={`w-11 h-11 rounded-full flex items-center justify-center ${
+                isListening ? 'bg-rose-500 text-white' : 'bg-white text-stone-600'
               }`}
               title={isListening ? t('ai.micOn') : t('ai.micOff')}
             >
-              {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5 text-sky-600" />}
+              {isListening ? <Mic className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
-
-            {/* Input field */}
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={isListening ? t('ai.listen') : t('ai.placeholder')}
-                className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full h-11 px-4 text-sm bg-white rounded-full"
               />
-              {isListening && (
-                <span className="absolute right-3 top-2.5 text-[10px] font-mono text-rose-600 font-semibold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                  {t('ai.recording')}
-                </span>
-              )}
             </div>
-
-            {/* Send button */}
             <button
               type="submit"
               disabled={!inputText.trim() || isProcessing}
-              className="p-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-40 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="w-11 h-11 rounded-full bg-[var(--sm-cobalt)] text-white flex items-center justify-center disabled:opacity-40"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('ai.send')}</span>
+              <span className="sr-only">{t('ai.send')}</span>
             </button>
           </form>
         </div>

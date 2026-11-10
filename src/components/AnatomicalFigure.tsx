@@ -5,19 +5,19 @@ const W = 720;
 const H = 1280;
 
 const TINT: Record<Rank, string> = {
-  0: 'rgba(45, 212, 191, 0.36)',
-  1: 'rgba(251, 191, 36, 0.48)',
-  2: 'rgba(244, 63, 94, 0.54)',
+  0: 'rgba(125, 223, 195, 0.42)',
+  1: 'rgba(243, 177, 132, 0.5)',
+  2: 'rgba(240, 138, 128, 0.55)',
 };
 const RING: Record<Rank, string> = {
-  0: '#2dd4bf',
-  1: '#fbbf24',
-  2: '#fb7185',
+  0: '#7ddfc3',
+  1: '#f3b184',
+  2: '#f08a80',
 };
 const AURA: Record<Rank, { inner: string; outer: string }> = {
-  0: { inner: 'rgba(45, 212, 191, 0)', outer: 'rgba(45, 212, 191, 0.42)' },
-  1: { inner: 'rgba(251, 191, 36, 0)', outer: 'rgba(251, 191, 36, 0.46)' },
-  2: { inner: 'rgba(244, 63, 94, 0)', outer: 'rgba(244, 63, 94, 0.5)' },
+  0: { inner: 'rgba(125, 223, 195, 0)', outer: 'rgba(125, 223, 195, 0.28)' },
+  1: { inner: 'rgba(243, 177, 132, 0)', outer: 'rgba(243, 177, 132, 0.32)' },
+  2: { inner: 'rgba(240, 138, 128, 0)', outer: 'rgba(240, 138, 128, 0.36)' },
 };
 
 interface Hit {
@@ -189,15 +189,16 @@ export const AnatomicalFigure: React.FC<{
 
   return (
     <div
-      className="relative mx-auto select-none overflow-hidden rounded-lg bg-black"
+      className="relative mx-auto select-none overflow-visible bodymap-frost"
       style={{
         aspectRatio: '9 / 16',
         width: hero
-          ? 'min(100%, 20rem, calc((100dvh - 15.5rem) * 9 / 16))'
-          : 'min(100%, 26rem, calc((100vh - 13.75rem) * 9 / 16))',
+          ? 'min(100%, 22rem, calc((100dvh - 12rem) * 9 / 16))'
+          : 'min(100%, 22rem, calc((100vh - 12rem) * 9 / 16))',
         height: 'auto',
       }}
     >
+      <div className="absolute inset-0 bg-[#f6f5f1]" aria-hidden />
       <picture>
         <source type="image/webp" srcSet={`/bodymap/${src}.webp`} />
         <img
@@ -232,7 +233,7 @@ export const AnatomicalFigure: React.FC<{
           rx={248}
           ry={610}
           fill={`url(#${gid}-aura)`}
-          style={{ mixBlendMode: 'screen' }}
+          style={{ mixBlendMode: 'multiply' }}
           className="pointer-events-none"
         />
 
@@ -258,7 +259,7 @@ export const AnatomicalFigure: React.FC<{
                   strokeOpacity={active ? 1 : 0.35}
                   strokeWidth={active ? 3 : rank > 0 ? 1.2 : 0}
                   pointerEvents="visibleFill"
-                  style={{ mixBlendMode: hit.id === 'skin' ? 'normal' : 'screen' }}
+                  style={{ mixBlendMode: hit.id === 'skin' ? 'normal' : 'multiply' }}
                   filter={pulsing || rank === 2 ? `url(#${gid}-glow)` : undefined}
                 />
               ))}
@@ -301,7 +302,7 @@ export const AnatomicalFigure: React.FC<{
                   x={dest.x}
                   y={dest.y - 8}
                   textAnchor={hit.labelSide === 'left' ? 'start' : 'end'}
-                  fill={active ? '#e2e8f0' : '#94a3b8'}
+                  fill={active ? '#1c1b18' : '#6b6a66'}
                   fontSize={active ? 22 : 17}
                   fontFamily="ui-sans-serif, system-ui, sans-serif"
                   fontWeight={active ? 700 : 500}
@@ -313,10 +314,10 @@ export const AnatomicalFigure: React.FC<{
           })}
       </svg>
 
-      <div className="atlas-scan pointer-events-none absolute left-[20%] right-[20%] top-0 h-px bg-cyan-300/70 shadow-[0_0_10px_2px_rgba(103,232,249,0.35)]" />
+      <div className="atlas-scan pointer-events-none absolute left-[22%] right-[22%] top-0 h-px bg-sky-300/40" />
 
       {hover && (
-        <div className="absolute right-2 top-2 z-10 rounded-md border border-cyan-500/60 bg-slate-950/90 px-2 py-1 text-[10px] font-semibold text-cyan-100 shadow-lg">
+        <div className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-stone-700 shadow-[var(--sm-shadow-soft)]">
           {labelFor(hover)}
         </div>
       )}

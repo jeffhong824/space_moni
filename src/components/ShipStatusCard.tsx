@@ -27,7 +27,7 @@ export const ShipStatusCard: React.FC<ShipStatusCardProps> = ({ world, ship, me,
   const others = world.ships.filter((s) => s.def.id !== ship.def.id);
 
   return (
-    <section className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-4 shadow-2xs space-y-3">
+    <section className="rounded-[28px] bg-white/80 p-4 shadow-[var(--sm-shadow-soft)] space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

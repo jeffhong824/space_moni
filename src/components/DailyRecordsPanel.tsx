@@ -43,6 +43,7 @@ import {
 } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
+import { RingGauge, Segmented, WaveScrubber } from '../ui/chrome';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
@@ -73,6 +74,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // If focusedDate is set, other days are hidden and only this day's full 24-hour detail is displayed
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [showCommanderModal, setShowCommanderModal] = useState<boolean>(false);
+  const [dayTab, setDayTab] = useState<'hourly' | 'equipment' | 'notes'>('hourly');
 
   const isCommander = currentUserRole === 'Commander';
   const isNASA = currentUserRole === 'NASA';
@@ -123,135 +125,145 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
     const nextRecord = records[currentIndex - 1]; // Newer date
 
     return (
-      <section className="flex-1 flex flex-col h-full bg-slate-50/70 overflow-hidden relative">
-        {/* Top Control Bar with Back button and Quick Direct-Ask AI */}
-        <div className="p-4 lg:px-6 py-3.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-2xs">
+      <section className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div className="p-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setFocusedDate(null)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-stone-600"
             >
-              <ArrowLeft className="w-4 h-4 text-slate-600" />
-              <span>{t('records.backDates')}</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="sr-only">{t('records.backDates')}</span>
             </button>
 
-            <div className="h-5 w-px bg-slate-200" />
-
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold font-mono text-slate-900">
+              <button
+                disabled={!prevRecord}
+                onClick={() => prevRecord && setFocusedDate(prevRecord.date)}
+                className="w-9 h-9 rounded-full bg-white disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4 mx-auto" />
+              </button>
+              <span className="px-4 py-1.5 rounded-full bg-white text-sm font-medium">
                 {currentRecord.date}
               </span>
+              <button
+                disabled={!nextRecord}
+                onClick={() => nextRecord && setFocusedDate(nextRecord.date)}
+                className="w-9 h-9 rounded-full bg-white disabled:opacity-30"
+              >
+                <ChevronRight className="w-4 h-4 mx-auto" />
+              </button>
               {currentRecord.isToday && (
-                <span className="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-md border border-sky-200 font-mono">
+                <span className="px-3 py-1 text-[11px] font-semibold bg-white rounded-full">
                   {t('records.today')}
-                </span>
-              )}
-              {hrStatus !== 'Normal' && (
-                <span className="px-2.5 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 rounded-md border border-rose-300 font-mono flex items-center gap-1 animate-pulse">
-                  <AlertTriangle className="w-3 h-3 text-rose-600" />
-                  {statusLabel(lang, hrStatus)} · {THRESHOLDS.restingHR.labelZh}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Quick Direct-Ask AI Shortcut Button & Date Switcher */}
           <div className="flex items-center gap-2.5">
-            {/* Quick Direct-Ask AI for health suggestions */}
             <button
               onClick={() => handleDirectAskAi(currentRecord)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold text-xs shadow-sm hover:shadow transition-all active:scale-98 cursor-pointer"
-              title="Direct-Ask AI for Health Suggestions on this day's abnormal telemetry"
+              className="h-10 px-4 rounded-full bg-[var(--sm-cobalt)] text-white font-semibold text-xs inline-flex items-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-sky-200 animate-spin" />
+              <Sparkles className="w-4 h-4" />
               <span>{t('records.askAi')}</span>
-              <Mic className="w-3.5 h-3.5 text-white/90" />
             </button>
-
-            {/* Stepper to adjacent days */}
-            <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-              <button
-                disabled={!prevRecord}
-                onClick={() => prevRecord && setFocusedDate(prevRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors cursor-pointer"
-                title="View previous day"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                disabled={!nextRecord}
-                onClick={() => nextRecord && setFocusedDate(nextRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors border-l border-slate-200 cursor-pointer"
-                title="View next day"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Toggle Right Station Objectives Panel */}
             {onToggleRightPanel && (
               <button
                 onClick={onToggleRightPanel}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for maximum viewing of 24h health diagrams"}
+                className="h-10 px-4 rounded-full bg-white text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                {isRightPanelCollapsed ? (
-                  <>
-                    <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                    <span>{t('records.showTasks')}</span>
-                  </>
-                ) : (
-                  <>
-                    <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden sm:inline">{t('records.expandView')}</span>
-                  </>
-                )}
+                {isRightPanelCollapsed ? t('records.showTasks') : t('records.expandView')}
               </button>
             )}
           </div>
         </div>
 
-        {/* Scrollable Detailed Dashboard */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-28">
-          {/* 1. Red Alert Banner for Abnormal Biometrics (If Present) */}
+        <div className="flex-1 overflow-y-auto px-4 lg:px-8 space-y-6 pb-28">
+          <div>
+            <h2 className="font-display text-4xl">
+              {new Date(currentRecord.date.replace(/\//g, '-')).toLocaleDateString(lang, { weekday: 'long' })}, {t('ui.steadyDay')}
+            </h2>
+            <p className="mt-2 text-sm text-stone-500">
+              {abnormalPoints[0]
+                ? t('ui.expectedSpike', { time: abnormalPoints[0].hour })
+                : t('reason.allNormal')}
+            </p>
+          </div>
           {hasCriticalVitals && (
-            <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-4 sm:p-5 text-rose-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <ShieldAlert className="w-5 h-5 animate-bounce" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                      {t('records.alert', { reason: interp.reasonZh })}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-200 text-rose-900">
-                      {interp.overallZh}
-                    </span>
-                  </div>
-                  <p className="text-xs text-rose-800 mt-1 leading-relaxed">
-                    {t('records.hrHrvLine', {
-                      hr: currentRecord.restingHR,
-                      hrStatus: statusLabel(lang, hrStatus),
-                      hrv: currentRecord.hrv,
-                      hrvStatus: statusLabel(lang, hrvStatus),
-                    })}
-                  </p>
-                </div>
+            <div className="rounded-[28px] bg-rose-50 p-4 text-rose-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold">
+                  {t('records.alert', { reason: statusLabel(lang, interp.overall) })}
+                </h3>
+                <span className="text-[11px] font-semibold">{statusLabel(lang, interp.overall)}</span>
+                <p className="text-xs mt-1">
+                  {t('records.hrHrvLine', {
+                    hr: currentRecord.restingHR,
+                    hrStatus: statusLabel(lang, hrStatus),
+                    hrv: currentRecord.hrv,
+                    hrvStatus: statusLabel(lang, hrvStatus),
+                  })}
+                </p>
               </div>
-
-              {/* Direct ask shortcut inside alert banner */}
               <button
                 onClick={() => handleDirectAskAi(currentRecord)}
-                className="shrink-0 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all active:scale-98 cursor-pointer"
+                className="h-10 px-4 rounded-full bg-rose-600 text-white text-xs font-semibold"
               >
-                <Mic className="w-3.5 h-3.5" />
-                <span>{t('records.askSurgeon')}</span>
+                {t('records.askSurgeon')}
               </button>
             </div>
           )}
 
-          {/* 2. Primary 24-Hour Metric Cards Grid (Red-Highlighting Abnormal Parts) */}
+          <WaveScrubber
+            points={currentRecord.hourlyTimeline.map((pt) => ({
+              hour: pt.hour,
+              hr: pt.hr,
+              spo2: pt.spo2,
+              hrv: pt.hrv,
+              spike: Boolean(pt.isAbnormal || hourlyAbnormal(pt)),
+              note: pt.activityNote,
+            }))}
+            onAsk={() => handleDirectAskAi(currentRecord)}
+          />
+
+          <div className="flex flex-wrap gap-6">
+            <RingGauge
+              value={currentRecord.restingHR}
+              max={120}
+              label={t('ui.restingHr')}
+              unit="bpm"
+              tone={hrStatus === 'Normal' ? 'ok' : hrStatus === 'Critical' ? 'crit' : 'warn'}
+            />
+            <RingGauge
+              value={currentRecord.hrv}
+              max={50}
+              label={t('records.hrvLabel')}
+              unit="ms"
+              tone={hrvStatus === 'Normal' ? 'warn' : 'warn'}
+            />
+            <RingGauge
+              value={currentRecord.spo2}
+              max={100}
+              label={t('records.spo2')}
+              unit="%"
+              tone="lilac"
+            />
+          </div>
+
+          <Segmented
+            value={dayTab}
+            onChange={setDayTab}
+            options={[
+              { id: 'hourly' as const, label: t('ui.hourly') },
+              { id: 'equipment' as const, label: t('ui.equipment') },
+              { id: 'notes' as const, label: t('ui.notes') },
+            ]}
+          />
+
+          <div className={dayTab === 'hourly' ? '' : 'hidden'}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {/* Resting HR (RED-HIGHLIGHTED IF >100) */}
             <div
@@ -513,10 +525,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             </div>
           </div>
 
-          {/* 5. Activities List (2nd) & Daily Conditioning with Details (3rd) */}
-          <div className="space-y-6">
-            {/* 2nd: Daily Experiment & Activity Checklist */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-2xs">
+          </div>
+
+          <div className={dayTab === 'notes' ? '' : 'hidden'}>
+            <div className="rounded-[28px] bg-white/90 p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-sky-600" />
@@ -565,28 +577,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
             </div>
 
-            {/* 3rd: Daily Conditioning Overview with Clickable Past Data Inspection */}
-            <div>
-              <ConditioningDetailCard
-                currentRecord={currentRecord}
-                onAskAi={(prompt) => onOpenAiCall(prompt)}
-              />
-            </div>
           </div>
-        </div>
 
-        {/* Floating Call with AI at bottom */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
-          <button
-            onClick={() => handleDirectAskAi(currentRecord)}
-            className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all border border-sky-300 active:scale-97 cursor-pointer group"
-          >
-            <div className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Mic className="w-3.5 h-3.5" />
-            </div>
-            <span className="tracking-wide">{t('records.askAiDate', { date: currentRecord.date })}</span>
-            <Sparkles className="w-4 h-4 text-sky-200 animate-pulse" />
-          </button>
+          <div className={dayTab === 'equipment' ? '' : 'hidden'}>
+            <ConditioningDetailCard
+              currentRecord={currentRecord}
+              onAskAi={(prompt) => onOpenAiCall(prompt)}
+            />
+          </div>
         </div>
       </section>
     );
@@ -596,7 +594,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // MULTI-DAY STACK VIEW (DEFAULT LIST)
   // ==========================================
   return (
-    <section id="main-records" className="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
+    <section id="main-records" className="flex-1 flex flex-col h-full overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 pb-24">
         {/* Header bar */}
@@ -712,7 +710,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         e.stopPropagation();
                         setShowCommanderModal(true);
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold shadow-2xs transition-all cursor-pointer ml-1"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-semibold ml-1"
                       title="24-hour details are restricted to NASA"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
@@ -725,7 +723,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         e.stopPropagation();
                         setFocusedDate(record.date);
                       }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white hover:bg-sky-50 text-sky-800 border border-sky-200 text-xs font-semibold shadow-2xs transition-all active:scale-98 cursor-pointer ml-1"
+                      className="flex items-center gap-1 px-3 py-1 rounded-full bg-white text-[var(--sm-cobalt)] text-xs font-semibold ml-1"
                       title="Hide other days and inspect full 24h diagrams and abnormal telemetry"
                     >
                       <Maximize2 className="w-3.5 h-3.5 text-sky-600" />
@@ -1042,7 +1040,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
       </div>
 
       {/* Floating Action Button at Middle Bottom: "Call with AI" */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
+      <div className="absolute bottom-24 left-5 z-10">
         <button
           onClick={() => onOpenAiCall()}
           className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#c8f0f8] hover:bg-[#b2eaf5] text-sky-950 font-semibold text-sm shadow-md hover:shadow-lg transition-all border border-sky-300/80 active:scale-97 cursor-pointer group"
@@ -1057,8 +1055,8 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
 
       {/* Commander Clearance Restriction Modal */}
       {showCommanderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/25">
+          <div className="bg-white rounded-[32px] shadow-[var(--sm-shadow)] max-w-md w-full p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                 <Lock className="w-5 h-5 text-amber-700" />
@@ -1085,7 +1083,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowCommanderModal(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="h-10 px-4 bg-[var(--sm-cobalt)] text-white text-xs font-semibold rounded-full"
               >
                 {t('records.ackPolicy')}
               </button>

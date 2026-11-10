@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Users } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import { interpretRecord, type SelfCheckEntry } from '../domain/healthThresholds';
 import { weatherTaskConflicts } from '../domain/opsConflicts';
 import { sScaleElevated, type SpaceEnvironmentPayload } from '../domain/spaceWeather';
-import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
-import { SimBadge } from './SimBadge';
 import { ShipStatusCard } from './ShipStatusCard';
 import type { WorldState } from '../world/worldState';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
 import { findCrewLive } from '../world/worldState';
+import { initials, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
+import { StatusPill } from '../ui/StatusPill';
 
 interface CommanderHomeProps {
   astronauts: AstronautProfile[];
@@ -46,7 +46,14 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
 }) => {
   const { t, lang } = useI18n();
   const [inspectId, setInspectId] = useState<string | null>(null);
+  const [mode, setMode] = useState<'orbit' | 'list'>('orbit');
   const inspectCrew = inspectId ? CREW.find((c) => c.id === inspectId) : null;
+  const inspectAstro = astronauts.find((a) => a.id === inspectId);
+  const inspectToday =
+    inspectAstro &&
+    ((recordsByAstronaut[inspectAstro.id] || []).find((r) => r.isToday) || recordsByAstronaut[inspectAstro.id]?.[0]);
+  const inspectInterp =
+    inspectAstro && inspectToday ? interpretRecord(inspectToday, selfChecks[inspectAstro.id] ?? null) : null;
   const rows = astronauts
     .map((astro) => {
       const records = recordsByAstronaut[astro.id] || [];
@@ -63,34 +70,51 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   const sScale = spaceEnvironment?.scales.sScale ?? 'S?';
   const conflicts = weatherTaskConflicts(tasks, sScale);
   const live = findCrewLive(world, commanderId || astronauts[0]?.id);
+  const n = rows.length;
+
+  const openCrew = (id: string) => {
+    const astro = astronauts.find((a) => a.id === id);
+    if (astro) onSelectAstronaut(astro);
+    setInspectId(id);
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-slate-50/80">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-slate-900">{t('cmd.title')}</h1>
-            <SimBadge />
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">{t('cmd.hint')}</p>
+          <h1 className="font-display text-4xl sm:text-5xl">
+            {t('ui.crewAboard', { n })}
+          </h1>
+          <p className="text-sm text-stone-400 mt-1">
+            {t('ui.leoDay', { n: world.missionDay })} · {t('cmd.hint')}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={onOpenConsole}
-          className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700"
-        >
-          {t('cmd.openConsole')}
-        </button>
-      </header>
-
-      {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
+        <div className="flex items-center gap-2">
+          <Segmented
+            value={mode}
+            onChange={setMode}
+            options={[
+              { id: 'orbit' as const, label: t('ui.orbitView') },
+              { id: 'list' as const, label: t('ui.listView') },
+            ]}
+            ariaLabel={t('cmd.rows')}
+          />
+          <button
+            type="button"
+            onClick={onOpenConsole}
+            className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
+          >
+            {t('cmd.openConsole')}
+          </button>
+        </div>
+      </div>
 
       {sScaleElevated(sScale) && conflicts.length > 0 && (
-        <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950 flex gap-3">
+        <div className="mt-4 px-4 py-3 rounded-[28px] bg-amber-50 text-amber-950 flex gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <div>
             <p className="text-sm font-bold">{t('cmd.conflictTitle', { scale: sScale })}</p>
-            <p className="text-xs mt-1 leading-relaxed">
+            <p className="text-xs mt-1">
               {t('cmd.conflictBody')}
               {speDemo ? t('astro.shelterSpe') : ''}
             </p>
@@ -105,63 +129,120 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
         </div>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
-          <Users className="w-4 h-4 text-sky-700" />
-          <h2 className="text-sm font-bold">{t('cmd.rows')}</h2>
+      {mode === 'orbit' ? (
+        <div className="relative mx-auto mt-6 w-full max-w-3xl aspect-square max-h-[min(68vh,640px)]">
+          <div className="absolute inset-[12%] rounded-full border border-stone-200/80" />
+          {rows.map((row, i) => {
+            const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+            const r = 38;
+            const x = 50 + r * Math.cos(angle);
+            const y = 50 + r * Math.sin(angle);
+            const rank = row.interp ? RANK[row.interp.overall] : 2;
+            const tone = toneFromRank(row.interp?.overall);
+            const size = 56 + (2 - rank) * 14;
+            const selected = inspectId === row.astro.id;
+            return (
+              <button
+                key={row.astro.id}
+                type="button"
+                onClick={() => openCrew(row.astro.id)}
+                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center font-semibold text-sm bg-white shadow-[var(--sm-shadow-soft)]"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: size,
+                  height: size,
+                  boxShadow: selected ? `0 0 0 4px ${TONE_HEX[tone]}` : `0 0 0 3px ${TONE_HEX[tone]}`,
+                }}
+                aria-label={`${row.astro.name} ${row.interp ? statusLabel(lang, row.interp.overall) : ''}`}
+              >
+                {initials(row.astro.name, row.astro.avatarSeed)}
+              </button>
+            );
+          })}
         </div>
-        <ul className="divide-y divide-slate-100">
-          {rows.map(({ astro, today, interp }) => (
+      ) : (
+        <ul className="mt-6 space-y-2 max-w-2xl">
+          {rows.map(({ astro, interp }) => (
             <li key={astro.id}>
               <button
                 type="button"
-                onClick={() => {
-                  onSelectAstronaut(astro);
-                  setInspectId(astro.id);
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3"
+                onClick={() => openCrew(astro.id)}
+                className="w-full text-left px-4 py-3 rounded-[28px] bg-white/90 flex items-center gap-3"
               >
-                <div className="w-9 h-9 rounded-lg bg-slate-800 text-white text-xs font-bold flex items-center justify-center">
-                  {astro.avatarSeed}
-                </div>
+                <span className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold">
+                  {initials(astro.name, astro.avatarSeed)}
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900">{astro.name}</span>
-                    <span className="text-[11px] text-slate-500">{localizeKey(lang, astro.role)}</span>
-                    {interp && <StatusPill tone={toneFromStatus(interp.overall)}>{statusLabel(lang, interp.overall)}</StatusPill>}
+                    <span className="text-sm font-semibold">{astro.name}</span>
+                    <span className="text-[11px] text-stone-500">{localizeKey(lang, astro.role)}</span>
+                    {interp && <StatusPill tone={toneFromRank(interp.overall)}>{statusLabel(lang, interp.overall)}</StatusPill>}
                   </div>
-                  <p className="text-xs text-slate-600 mt-0.5 truncate">{interp ? t('badge.simTelemetry') : t('cmd.noRecord')}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  {(() => {
-                    const rowLive = findCrewLive(world, astro.id);
-                    return rowLive ? (
-                      <p className="text-[11px] font-mono text-rose-700">
-                        ♥ {rowLive.crew.wearable.hr} · SpO₂ {rowLive.crew.wearable.spo2}
-                      </p>
-                    ) : (
-                      <p className="text-[10px] font-mono text-slate-400">{t('cmd.lastUpdated')}</p>
-                    );
-                  })()}
-                  <p className="text-xs font-mono text-slate-700">{interp?.lastUpdated ?? '—'}</p>
                 </div>
               </button>
             </li>
           ))}
         </ul>
-      </section>
-      {inspectCrew && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-bold text-slate-900">{t('body.openMap')} · {inspectCrew.name}</h2>
-            <button type="button" onClick={() => setInspectId(null)} className="text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 bg-white">
-              {t('common.close')}
-            </button>
-          </div>
-          <BodyMapDashboard crew={inspectCrew} tNow={world.t} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} />
+      )}
+
+      {live && (
+        <div className="mt-6">
+          <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />
         </div>
       )}
       {astronauts[0]?.assignedStation && <CrewCommsInbox shipId={astronauts[0].assignedStation} />}
+
+      <Sheet
+        open={!!inspectCrew}
+        onClose={() => setInspectId(null)}
+        title={
+          inspectCrew ? (
+            <div>
+              <p className="font-display text-2xl">{inspectCrew.name}</p>
+              <p className="text-[12px] text-stone-500">{t(inspectCrew.occupationKey)}</p>
+              {inspectInterp && (
+                <StatusDot
+                  className="mt-2"
+                  tone={toneFromRank(inspectInterp.overall)}
+                  label={inspectInterp.overall === 'Normal' ? t('status.normal') : t('ui.watch')}
+                />
+              )}
+            </div>
+          ) : null
+        }
+        wide
+      >
+        {inspectInterp && inspectAstro && (
+          <div className="space-y-3 mb-4 text-sm">
+            <p>
+              <span className="text-stone-400">{t('ui.whyPrefix')}</span>
+              {' · '}
+              {inspectInterp.metrics.find((m) => m.status !== 'Normal')
+                ? `${t(`metric.${inspectInterp.metrics.find((m) => m.status !== 'Normal')!.id}`)} ${inspectInterp.metrics.find((m) => m.status !== 'Normal')!.valueLabel}`
+                : t('reason.allNormal')}
+            </p>
+            <p>
+              <span className="text-stone-400">{t('ui.nextPrefix')}</span>
+              {' · '}
+              {t('body.askAura')}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenConsole();
+                setInspectId(null);
+              }}
+              className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
+            >
+              {t('cmd.openConsole')}
+            </button>
+          </div>
+        )}
+        {inspectCrew && (
+          <BodyMapDashboard crew={inspectCrew} tNow={world.t} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} />
+        )}
+      </Sheet>
     </div>
   );
 };

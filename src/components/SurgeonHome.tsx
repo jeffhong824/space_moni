@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { ClipboardList, FileText } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics } from '../types';
 import { type SelfCheckEntry } from '../domain/healthThresholds';
 import {
@@ -12,12 +11,12 @@ import {
 import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
-import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
-import { SimBadge } from './SimBadge';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
+import { initials, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
+import { StatusPill } from '../ui/StatusPill';
 
 interface SurgeonHomeProps {
   surgeonName: string;
@@ -57,6 +56,8 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
   );
   const [openId, setOpenId] = useState<string | null>(cases[0]?.id ?? null);
   const [noteDraft, setNoteDraft] = useState('');
+  const [filter, setFilter] = useState<'open' | 'reviewing' | 'done'>('open');
+  const [metricsOpen, setMetricsOpen] = useState(false);
   const selected = cases.find((c) => c.id === openId) ?? null;
   const selectedAstro = selected ? astronauts.find((a) => a.id === selected.astronautId) : null;
   const selectedRecord =
@@ -96,170 +97,267 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
     setNoteDraft('');
   };
 
+  const visible = cases.filter((c) => {
+    if (filter === 'open') return c.state === 'open';
+    if (filter === 'reviewing') return c.state === 'reviewing' || c.state === 'acted';
+    return c.state === 'closed';
+  });
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-slate-50/80">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-28">
+      <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
+      <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
+
+      <div className="mt-4">
+        <Segmented
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { id: 'open', label: t('ui.filterOpen') },
+            { id: 'reviewing', label: t('ui.filterReviewing') },
+            { id: 'done', label: t('ui.filterDone') },
+          ]}
+        />
+      </div>
+
+      <div className="mt-5 grid lg:grid-cols-[minmax(0,22rem)_1fr] gap-6">
+        <ul className="space-y-2">
+          {visible.length === 0 && <li className="text-xs text-stone-400">{t('surg.empty')}</li>}
+          {visible.map((c) => (
+            <li key={c.id}>
+              <button
+                type="button"
+                onClick={() => setOpenId(c.id)}
+                className={`w-full text-left px-4 py-3 rounded-[28px] flex items-center gap-3 ${
+                  openId === c.id ? 'bg-white shadow-[var(--sm-shadow)]' : 'bg-white/70'
+                }`}
+              >
+                <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-[11px] font-bold">
+                  {initials(c.astronautName)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">{c.astronautName}</p>
+                  <p className="text-[11px] text-stone-400">
+                    {t(`metric.${c.metricId}`)} {c.valueLabel}
+                  </p>
+                </div>
+                <StatusDot tone={toneFromRank(c.status)} />
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="hidden lg:block">
+          {selected && selectedAstro && analysis ? (
+            <CaseInspector
+              selected={selected}
+              selectedAstro={selectedAstro}
+              analysis={analysis}
+              surgeonName={surgeonName}
+              noteDraft={noteDraft}
+              setNoteDraft={setNoteDraft}
+              metricsOpen={metricsOpen}
+              setMetricsOpen={setMetricsOpen}
+              tNow={tNow}
+              spaceEnvironment={spaceEnvironment}
+              onOpenAiCall={onOpenAiCall}
+              onSelectAstronaut={onSelectAstronaut}
+              onOpenConsole={onOpenConsole}
+              onUpdateCase={onUpdateCase}
+              advance={advance}
+              addNote={addNote}
+            />
+          ) : (
+            <p className="text-sm text-stone-400">{t('surg.pick')}</p>
+          )}
+        </div>
+      </div>
+
+      <Sheet
+        open={!!selected && typeof window !== 'undefined' && window.innerWidth < 1024}
+        onClose={() => setOpenId(null)}
+        wide
+        title={selected ? <p className="font-display text-2xl">{selected.astronautName}</p> : null}
+      >
+        {selected && selectedAstro && analysis && (
+          <CaseInspector
+            selected={selected}
+            selectedAstro={selectedAstro}
+            analysis={analysis}
+            surgeonName={surgeonName}
+            noteDraft={noteDraft}
+            setNoteDraft={setNoteDraft}
+            metricsOpen={metricsOpen}
+            setMetricsOpen={setMetricsOpen}
+            tNow={tNow}
+            spaceEnvironment={spaceEnvironment}
+            onOpenAiCall={onOpenAiCall}
+            onSelectAstronaut={onSelectAstronaut}
+            onOpenConsole={onOpenConsole}
+            onUpdateCase={onUpdateCase}
+            advance={advance}
+            addNote={addNote}
+          />
+        )}
+      </Sheet>
+      {speDemo && <p className="sr-only">{t('surg.speBanner')}</p>}
+    </div>
+  );
+};
+
+function CaseInspector({
+  selected,
+  selectedAstro,
+  analysis,
+  surgeonName,
+  noteDraft,
+  setNoteDraft,
+  metricsOpen,
+  setMetricsOpen,
+  tNow,
+  spaceEnvironment,
+  onOpenAiCall,
+  onSelectAstronaut,
+  onOpenConsole,
+  onUpdateCase,
+  advance,
+  addNote,
+}: {
+  selected: ClinicalCase;
+  selectedAstro: AstronautProfile;
+  analysis: ReturnType<typeof buildOfflineTwoLevelAnalysis>;
+  surgeonName: string;
+  noteDraft: string;
+  setNoteDraft: (v: string) => void;
+  metricsOpen: boolean;
+  setMetricsOpen: (v: boolean) => void;
+  tNow: number;
+  spaceEnvironment: SpaceEnvironmentPayload | null;
+  onOpenAiCall: (prompt?: string) => void;
+  onSelectAstronaut: (astro: AstronautProfile) => void;
+  onOpenConsole: () => void;
+  onUpdateCase: (id: string, patch: Partial<CaseMeta>) => void;
+  advance: (c: ClinicalCase) => void;
+  addNote: (c: ClinicalCase) => void;
+}) {
+  const { t, lang } = useI18n();
+  const idx = CASE_STATE_ORDER.indexOf(selected.state);
+  const crew = CREW.find((c) => c.id === selectedAstro.id);
+  return (
+    <div className="rounded-[32px] bg-white/90 p-5 shadow-[var(--sm-shadow-soft)] space-y-4">
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-slate-900">{t('surg.title')}</h1>
-            <SimBadge />
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {t('surg.hint', { name: surgeonName })}
+          <h2 className="font-display text-2xl">
+            {selected.astronautName} — {t(`metric.${selected.metricId}`)}
+          </h2>
+          <p className="text-[12px] text-stone-400 mt-0.5">
+            {selected.valueLabel} · {t(`source.${selected.sourceKind}`)}
           </p>
         </div>
         <button
           type="button"
-          onClick={onOpenConsole}
-          className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700"
+          onClick={() => {
+            onSelectAstronaut(selectedAstro);
+            onOpenConsole();
+          }}
+          className="text-[12px] font-semibold text-[var(--sm-cobalt)]"
         >
           {t('surg.openConsole')}
         </button>
-      </header>
+      </div>
 
-      {speDemo && (
-        <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-          {t('surg.speBanner')}
-        </p>
+      <ol className="flex items-center gap-2">
+        {CASE_STATE_ORDER.map((st, i) => (
+          <li key={st} className="flex-1 flex flex-col items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onUpdateCase(selected.id, { state: st, physicianNotes: selected.physicianNotes })}
+              className="w-3.5 h-3.5 rounded-full"
+              style={{ background: i <= idx ? '#2b3bff' : '#d6d3cd' }}
+              aria-label={t(`case.${st}`)}
+            />
+            <span className={`text-[10px] ${i === idx ? 'text-[var(--sm-cobalt)] font-semibold' : 'text-stone-400'}`}>
+              {t(`case.${st}`)}
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      {crew && (
+        <BodyMapDashboard crew={crew} tNow={tNow} wx={spaceEnvironment} onOpenAiCall={onOpenAiCall} figureOnly />
       )}
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-4">
-        <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-emerald-700" />
-            <h2 className="text-sm font-bold">{t('surg.cases', { n: cases.length })}</h2>
-          </div>
-          {cases.length === 0 ? (
-            <p className="p-4 text-xs text-slate-500">{t('surg.empty')}</p>
-          ) : (
-            <ul className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
-              {cases.map((c) => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(c.id)}
-                    className={`w-full text-left px-4 py-3 ${openId === c.id ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-slate-900">{c.astronautName}</span>
-                      <StatusPill tone={toneFromStatus(c.status)}>{statusLabel(lang, c.status)}</StatusPill>
-                      <StatusPill tone="neutral">{t(`case.${c.state}`)}</StatusPill>
-                      <StatusPill tone="info">{t(`source.${c.sourceKind}`)}</StatusPill>
-                    </div>
-                    <p className="text-xs text-slate-700 mt-1">
-                      {t(`metric.${c.metricId}`)} {c.valueLabel}
-                    </p>
-                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">{t('surg.observed', { at: c.observedAt, source: t('badge.simTelemetry') })}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <dl className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt className="text-stone-400 text-[11px]">{t('ui.problem')}</dt>
+          <dd>{t(`metric.${selected.metricId}`)} {selected.valueLabel}</dd>
+        </div>
+        <div>
+          <dt className="text-stone-400 text-[11px]">{t('ui.likelyCause')}</dt>
+          <dd>{analysis.healthAssessment.summary}</dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="text-stone-400 text-[11px]">{t('ui.nextStep')}</dt>
+          <dd>{t('surg.offline')}</dd>
+        </div>
+      </dl>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
-          {!selected && <p className="text-xs text-slate-500">{t('surg.pick')}</p>}
-          {selected && selectedAstro && analysis && (
-            <>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="text-sm font-bold">{selected.astronautName} · {t(`metric.${selected.metricId}`)}</h2>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {selected.valueLabel} · {t(`source.${selected.sourceKind}`)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectAstronaut(selectedAstro);
-                    onOpenConsole();
-                  }}
-                  className="text-[11px] font-semibold text-sky-800"
-                >
-                  {t('surg.openConsole')}
-                </button>
-              </div>
-
-              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
-                {t('surg.offline')}
-              </p>
-              <DetailedHealthAnalysis
-                metrics={analysis.detailedAnalysis.metrics}
-                systems={analysis.detailedAnalysis.systems}
-                overallStatus={analysis.healthAssessment.status}
-                overallSummary={analysis.healthAssessment.summary}
-                dataQuality={analysis.dataQuality}
-                analysisMode="offline_fallback"
-              />
-
-              <div>
-                <p className="text-[11px] font-bold text-slate-600 mb-1.5">{t('surg.caseState')}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {CASE_STATE_ORDER.map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => onUpdateCase(selected.id, { state: st, physicianNotes: selected.physicianNotes })}
-                      className={`px-2 py-1 rounded-md text-[11px] font-semibold border ${
-                        selected.state === st ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      {t(`case.${st}`)}
-                    </button>
-                  ))}
-                  {selected.state !== 'closed' && (
-                    <button
-                      type="button"
-                      onClick={() => advance(selected)}
-                      className="px-2 py-1 rounded-md text-[11px] font-semibold border border-emerald-200 bg-emerald-50 text-emerald-900"
-                    >
-                      {t('surg.advance', { state: t(`case.${CASE_STATE_ORDER[Math.min(CASE_STATE_ORDER.indexOf(selected.state) + 1, 3)]}`) })}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5" />
-                  {t('surg.notes', { name: surgeonName })}
-                </p>
-                <ul className="space-y-1.5 mb-2">
-                  {selected.physicianNotes.map((n, i) => (
-                    <li key={`${n.at}-${i}`} className="rounded-lg border border-slate-200 px-2.5 py-2 text-xs">
-                      <p className="font-semibold text-slate-800">{n.author}</p>
-                      <p className="text-slate-700 mt-0.5">{n.text}</p>
-                      <p className="text-[10px] font-mono text-slate-400 mt-0.5">{n.at}</p>
-                    </li>
-                  ))}
-                  {selected.physicianNotes.length === 0 && <li className="text-[11px] text-slate-400">{t('surg.noNotes')}</li>}
-                </ul>
-                <textarea
-                  className="w-full rounded-lg border border-slate-200 text-xs p-2 min-h-[64px]"
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder={t('surg.notePlaceholder')}
-                />
-                <button
-                  type="button"
-                  onClick={() => addNote(selected)}
-                  className="mt-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold"
-                >
-                  {t('surg.signSave')}
-                </button>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
-      {selectedAstro && CREW.find((c) => c.id === selectedAstro.id) && (
-        <BodyMapDashboard
-          crew={CREW.find((c) => c.id === selectedAstro.id)!}
-          tNow={tNow}
-          wx={spaceEnvironment}
-          onOpenAiCall={onOpenAiCall}
+      <button
+        type="button"
+        onClick={() => setMetricsOpen(!metricsOpen)}
+        className="h-10 px-4 rounded-full bg-stone-50 text-xs font-semibold"
+      >
+        {t('ui.allMetrics')} +
+      </button>
+      {metricsOpen && (
+        <DetailedHealthAnalysis
+          metrics={analysis.detailedAnalysis.metrics}
+          systems={analysis.detailedAnalysis.systems}
+          overallStatus={analysis.healthAssessment.status}
+          overallSummary={analysis.healthAssessment.summary}
+          dataQuality={analysis.dataQuality}
+          analysisMode="offline_fallback"
         />
       )}
+
+      {selected.state !== 'closed' && (
+        <button
+          type="button"
+          onClick={() => advance(selected)}
+          className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
+        >
+          {t('surg.advance', { state: t(`case.${CASE_STATE_ORDER[Math.min(CASE_STATE_ORDER.indexOf(selected.state) + 1, 3)]}`) })}
+        </button>
+      )}
+
+      <div>
+        <p className="text-[11px] font-semibold text-stone-500 mb-1.5">{t('surg.notes', { name: surgeonName })}</p>
+        <ul className="space-y-1.5 mb-2">
+          {selected.physicianNotes.map((n, i) => (
+            <li key={`${n.at}-${i}`} className="rounded-[18px] bg-stone-50 px-3 py-2 text-xs">
+              <p className="font-semibold">{n.author}</p>
+              <p>{n.text}</p>
+              <p className="text-[10px] font-mono text-stone-400">{n.at}</p>
+            </li>
+          ))}
+          {selected.physicianNotes.length === 0 && <li className="text-[11px] text-stone-400">{t('surg.noNotes')}</li>}
+        </ul>
+        <textarea
+          className="w-full rounded-[22px] bg-stone-50 text-xs p-3 min-h-[64px]"
+          value={noteDraft}
+          onChange={(e) => setNoteDraft(e.target.value)}
+          placeholder={t('surg.notePlaceholder')}
+        />
+        <button
+          type="button"
+          onClick={() => addNote(selected)}
+          className="mt-2 h-11 w-full rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold"
+        >
+          {t('surg.signSave')}
+        </button>
+      </div>
+      <StatusPill tone={toneFromRank(selected.status)}>{statusLabel(lang, selected.status)}</StatusPill>
     </div>
   );
-};
+}
+

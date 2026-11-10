@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SimBadge } from '../components/SimBadge';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { LanguageGlobe, SimChip } from '../ui/chrome';
 import { StatusPill, toneFromStatus } from '../ui/StatusPill';
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
@@ -102,14 +102,15 @@ export const SimWorldPage: React.FC = () => {
   };
 
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden bg-slate-950 text-slate-100 flex flex-col">
-      <header className="min-h-14 shrink-0 px-4 py-2 flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col">
+      <header className="min-h-14 shrink-0 px-4 py-2 flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold">{t('sim.title')}</h1>
+            <h1 className="font-display text-xl">{t('sim.title')}</h1>
+            <SimChip />
             <SimBadge />
           </div>
-          <p className="text-[10px] text-slate-400">{t('sim.subtitle')}</p>
+          <p className="text-[10px] text-stone-400">{t('sim.subtitle')}</p>
           <nav className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-400">
             <button
               type="button"
@@ -136,8 +137,8 @@ export const SimWorldPage: React.FC = () => {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <LanguageSwitcher variant="dark" />
-          <button type="button" onClick={goDash} className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-600">
+          <LanguageGlobe />
+          <button type="button" onClick={goDash} className="h-10 px-4 rounded-full bg-white text-xs font-semibold">
             {t('sim.backDash')}
           </button>
         </div>
