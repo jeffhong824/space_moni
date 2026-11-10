@@ -340,7 +340,8 @@
   "ai": {
     "offlineBanner": "Modelo de IA desconectado — usando reglas de umbral en el dispositivo",
     "liveMode": "Modo: Gemini en vivo",
-    "greeting": "AURA en línea, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
+    "greeting": "AURA en vivo, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
+    "greetingOffline": "AURA está desconectada y usa reglas de umbral en el dispositivo, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
     "healthStatus": "Estado de salud: {status}",
     "detailToggle": "Análisis detallado (global + por métrica)",
     "ackRoutine": "Registrar chequeo rutinario",

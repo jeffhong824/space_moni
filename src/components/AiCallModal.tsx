@@ -28,6 +28,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { toneFromStatus } from '../ui/StatusPill';
 import { taipeiStamp } from '../world/worldState';
+import { bindEscapeClose } from '../ui/escapeClose';
 
 interface AiCallModalProps {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       id: 'msg-init',
       sender: 'aura',
       timestamp: taipeiStamp(),
-      text: t('ai.greeting', {
+      text: t('ai.greetingOffline', {
         name: astronaut.name,
         day: astronaut.missionDaysElapsed,
         summary: packed.overall.summary,
@@ -216,6 +217,14 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    return bindEscapeClose(window, () => {
+      stopSpeaking();
+      onClose();
+    });
+  }, [isOpen, onClose]);
+
   const toggleListening = () => {
     if (!recognitionRef.current) {
       alert('Speech recognition is not supported in this browser. Please type your query.');
@@ -353,6 +362,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="aura-dialog-title"
+        data-escape-close="aura"
         className="relative h-full w-full max-w-md sm-sheet-panel rounded-l-[32px] flex flex-col overflow-hidden sm-sheet-in"
       >
         <div className="px-5 py-4 flex items-center justify-between shrink-0">

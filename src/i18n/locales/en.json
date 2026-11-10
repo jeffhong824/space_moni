@@ -340,7 +340,8 @@
   "ai": {
     "offlineBanner": "AI model offline — using on-device threshold rules",
     "liveMode": "Mode: live Gemini",
-    "greeting": "AURA online, {name}. Mission day {day}. {summary} Resting HR {hr} bpm, HRV {hrv} ms. Physiology is simulated; space weather uses the official feed. How do you feel?",
+    "greeting": "AURA live, {name}. Mission day {day}. {summary} Resting HR {hr} bpm, HRV {hrv} ms. Physiology is simulated; space weather uses the official feed. How do you feel?",
+    "greetingOffline": "AURA is offline and using on-device threshold rules, {name}. Mission day {day}. {summary} Resting HR {hr} bpm, HRV {hrv} ms. Physiology is simulated; space weather uses the official feed. How do you feel?",
     "healthStatus": "Health status: {status}",
     "detailToggle": "Detailed health analysis (overall + per metric)",
     "ackRoutine": "Log routine health check complete",

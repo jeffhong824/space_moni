@@ -340,7 +340,8 @@
   "ai": {
     "offlineBanner": "AI 模型離線 — 改用裝置上門檻規則",
     "liveMode": "模式：Gemini 即時",
-    "greeting": "AURA 上線，{name}。任務第 {day} 日。{summary} 靜息心率 {hr} bpm、HRV {hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？",
+    "greeting": "AURA 即時連線，{name}。任務第 {day} 日。{summary} 靜息心率 {hr} bpm、HRV {hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？",
+    "greetingOffline": "AURA 離線，改用裝置上門檻規則，{name}。任務第 {day} 日。{summary} 靜息心率 {hr} bpm、HRV {hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？",
     "healthStatus": "健康狀態：{status}",
     "detailToggle": "詳細健康分析（整體＋逐項）",
     "ackRoutine": "記錄例行健康檢核完成",

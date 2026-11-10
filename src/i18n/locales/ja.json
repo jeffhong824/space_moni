@@ -340,7 +340,8 @@
   "ai": {
     "offlineBanner": "AI モデルはオフライン — 端末上の閾値ルールを使用",
     "liveMode": "モード: Gemini ライブ",
-    "greeting": "AURA オンライン、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
+    "greeting": "AURA ライブ、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
+    "greetingOffline": "AURA はオフラインで、端末上の閾値ルールを使用しています、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
     "healthStatus": "健康状態: {status}",
     "detailToggle": "詳細健康分析（全体＋指標）",
     "ackRoutine": "定例健康点検の完了を記録",

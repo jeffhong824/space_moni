@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { BookOpen, ClipboardList, Globe2, HeartPulse, LayoutGrid, LogOut, Orbit, UserRound, Users, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
@@ -7,6 +7,7 @@ import { allDemoAccounts } from '../world/accounts';
 import type { AuthUser } from '../types';
 import { taipeiHour } from '../world/worldState';
 import { dockItemsForRole, type AppView } from '../app/routing';
+import { bindEscapeClose, bindOutsidePointerClose } from './escapeClose';
 
 export type { AppView };
 
@@ -775,11 +776,55 @@ const GLOSSARY_KEYS = [
   'spo2',
 ] as const;
 
+export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const { t } = useI18n();
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('nav.glossaryTitle')}
+      data-escape-close="glossary"
+      className="absolute right-0 mt-2 z-50 w-80 max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
+    >
+      <div className="flex items-start justify-between gap-2 px-1">
+        <p className="font-semibold text-sm">{t('nav.glossaryTitle')}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('common.close')}
+          title={t('common.close')}
+          className="w-8 h-8 rounded-full bg-stone-50 flex items-center justify-center text-stone-500 shrink-0"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {GLOSSARY_KEYS.map((k) => (
+        <p key={k} className="px-1 text-stone-600">
+          {t(`glossary.${k}`)}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 export const GlossaryButton: React.FC = () => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    return bindEscapeClose(window, close);
+  }, [open, close]);
+
+  useEffect(() => {
+    if (!open) return;
+    return bindOutsidePointerClose(rootRef.current, document, close);
+  }, [open, close]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         type="button"
         title={t('nav.glossaryTitle')}
@@ -790,20 +835,7 @@ export const GlossaryButton: React.FC = () => {
       >
         {t('nav.glossary')}
       </button>
-      {open && (
-        <div
-          role="dialog"
-          aria-label={t('nav.glossaryTitle')}
-          className="absolute right-0 mt-2 z-50 w-80 max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
-        >
-          <p className="font-semibold text-sm px-1">{t('nav.glossaryTitle')}</p>
-          {GLOSSARY_KEYS.map((k) => (
-            <p key={k} className="px-1 text-stone-600">
-              {t(`glossary.${k}`)}
-            </p>
-          ))}
-        </div>
-      )}
+      {open && <GlossaryPanel onClose={close} />}
     </div>
   );
 };
