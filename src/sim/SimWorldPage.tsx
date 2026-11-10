@@ -11,6 +11,11 @@ import type { SimSelect } from './FleetScene';
 export const SimWorldPage: React.FC = () => {
   const { t, lang } = useI18n();
   const host = useRef<HTMLDivElement>(null);
+  const engine = useRef<{
+    destroy: (remove: boolean) => void;
+    setWorld: (w: WorldState) => void;
+    setTranslator: (t: (k: string, v?: Record<string, string | number>) => string) => void;
+  } | null>(null);
   const [world, setWorld] = useState<WorldState>(() => worldStateAt(Date.now(), null));
   const [wx, setWx] = useState<SpaceEnvironmentPayload | null>(null);
   const [sel, setSel] = useState<SimSelect | null>({ kind: 'ship', id: 'ship-harmony' });
@@ -41,7 +46,14 @@ export const SimWorldPage: React.FC = () => {
   }, [wx]);
 
   useEffect(() => {
-    let game: { destroy: (remove: boolean) => void } | undefined;
+    engine.current?.setWorld(world);
+  }, [world]);
+
+  useEffect(() => {
+    engine.current?.setTranslator(t);
+  }, [t, lang]);
+
+  useEffect(() => {
     let cancelled = false;
     const boot = async () => {
       if (!host.current) return;
@@ -49,10 +61,11 @@ export const SimWorldPage: React.FC = () => {
       try {
         const { bootFleetGame } = await import('./FleetScene');
         if (cancelled || !host.current) return;
-        game = bootFleetGame(host.current, {
+        engine.current = bootFleetGame(host.current, {
           world: worldStateAt(Date.now(), wx),
           onSelect: setSel,
           mobile,
+          t,
         });
         setEngineOk(true);
       } catch {
@@ -64,7 +77,8 @@ export const SimWorldPage: React.FC = () => {
     void boot();
     return () => {
       cancelled = true;
-      game?.destroy(true);
+      engine.current?.destroy(true);
+      engine.current = null;
     };
   }, []);
 

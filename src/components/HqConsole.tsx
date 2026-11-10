@@ -6,6 +6,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import type { WorldState, ShipLive } from '../world/worldState';
 import { overallRankFromVitals } from '../world/worldState';
+import { locationVars, shipCrewStatus } from '../world/shipStatus';
 import {
   ackVisible,
   formatEta,
@@ -21,18 +22,8 @@ interface HqConsoleProps {
 }
 
 function locLine(ship: ShipLive, t: (k: string, v?: Record<string, string | number>) => string) {
-  const loc = ship.location;
-  if (ship.def.kind === 'leo-station') return t('loc.leo', { phase: loc.phaseDeg.toFixed(0) });
-  if (ship.def.kind === 'lunar-gateway') return t('loc.gateway', { phase: loc.phaseDeg.toFixed(0) });
-  if (ship.def.kind === 'mars-transit') return t('loc.mars', { au: loc.auFromEarth.toFixed(2), phase: loc.phaseDeg.toFixed(0) });
-  return t('loc.mare', { lat: loc.lat.toFixed(1), lon: loc.lon.toFixed(1), sun: loc.sunElevDeg.toFixed(0) });
-}
-
-function shipStatus(ship: ShipLive): 'Critical' | 'Attention' | 'Normal' {
-  const ranks = ship.crew.map((c) => overallRankFromVitals(c.vitals));
-  if (ranks.includes(2)) return 'Critical';
-  if (ranks.includes(1) || ship.cabin.carbonDioxidePercent > 0.5) return 'Attention';
-  return 'Normal';
+  const loc = locationVars(ship);
+  return t(loc.key, loc.vars);
 }
 
 export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
@@ -78,7 +69,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now }) => {
         </div>
         <ul className="divide-y divide-slate-100">
           {world.ships.map((s) => {
-            const st = shipStatus(s);
+            const st = shipCrewStatus(s);
             return (
               <li key={s.def.id}>
                 <button

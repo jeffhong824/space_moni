@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { goesClassToRScale } from '../domain/spaceWeather';
 import { WORLD_EPOCH_MS, missionDayAt, worldStateAt } from './worldState';
+import { latencyKey, locationVars, shipCrewStatus } from './shipStatus';
 
 describe('deterministic mission world', () => {
   it('day 0 is 2026-11-10 00:00 Taipei', () => {
@@ -52,6 +53,25 @@ describe('deterministic mission world', () => {
     expect(marsStorm.radiationMsvDay).toBeGreaterThan(leoStorm.radiationMsvDay);
     expect(leoQuiet.commLatencySec).toBe(0);
     expect(marsStorm.commLatencySec).toBeGreaterThan(60);
+  });
+});
+
+describe('ship header fields', () => {
+  it('exposes name, orbit, activity, next event, latency and fleet status', () => {
+    const t = WORLD_EPOCH_MS + 10 * 3600 * 1000;
+    const world = worldStateAt(t, null);
+    const harmony = world.ships.find((s) => s.def.id === 'ship-harmony')!;
+    const ares = world.ships.find((s) => s.def.id === 'ship-ares')!;
+    expect(harmony.def.nameKey).toBe('ship.harmony.name');
+    expect(locationVars(harmony).key).toBe('loc.leo');
+    expect(harmony.crew[0].activityKey.startsWith('act.')).toBe(true);
+    expect(harmony.nextEventKey.startsWith('act.')).toBe(true);
+    expect(harmony.nextEventAt).toBeGreaterThan(t);
+    expect(latencyKey(harmony).key).toBe('shipCard.latencyLeo');
+    expect(ares.commLatencySec).toBeGreaterThan(60);
+    expect(latencyKey(ares).key).toBe('shipCard.latencyMin');
+    expect(['Normal', 'Attention', 'Critical']).toContain(shipCrewStatus(harmony));
+    expect(world.missionDay).toBe(missionDayAt(t));
   });
 });
 

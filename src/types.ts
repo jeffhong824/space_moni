@@ -72,7 +72,7 @@ export interface DailyHealthRecord {
 export interface StationTask {
   id: string;
   title: string;
-  module: 'Columbus BioLab' | 'Destiny Lab' | 'Kibo Module' | 'Tranquility ECLSS' | 'Station Exterior';
+  module: string;
   priority: 'Critical' | 'High' | 'Medium' | 'Routine';
   status: 'In Progress' | 'Scheduled' | 'Completed' | 'Pending Review';
   progress: number; // 0 - 100

@@ -50,7 +50,7 @@ export const SHIPS: ShipDef[] = [
     kind: 'leo-station',
     shielding: 0.72,
     baselineMsvDay: 0.42,
-    modules: ['Columbus BioLab', 'Destiny Lab', 'Tranquility ECLSS', 'Station Exterior'],
+    modules: ['mod.columbus', 'mod.destiny', 'mod.tranquility', 'mod.exterior'],
     locKey: 'loc.leo',
   },
   {
@@ -60,7 +60,7 @@ export const SHIPS: ShipDef[] = [
     kind: 'lunar-gateway',
     shielding: 0.55,
     baselineMsvDay: 0.61,
-    modules: ['Habitation', 'Power & Propulsion', 'Airlock'],
+    modules: ['mod.hab', 'mod.pps', 'mod.airlock'],
     locKey: 'loc.gateway',
   },
   {
@@ -70,7 +70,7 @@ export const SHIPS: ShipDef[] = [
     kind: 'mars-transit',
     shielding: 0.48,
     baselineMsvDay: 1.15,
-    modules: ['Command deck', 'Spin habitat', 'Engineering'],
+    modules: ['mod.command', 'mod.spin', 'mod.engineering'],
     locKey: 'loc.mars',
   },
   {
@@ -80,7 +80,7 @@ export const SHIPS: ShipDef[] = [
     kind: 'lunar-habitat',
     shielding: 0.82,
     baselineMsvDay: 0.28,
-    modules: ['Regolith berm', 'Airlock', 'Greenhouse'],
+    modules: ['mod.berm', 'mod.airlock', 'mod.greenhouse'],
     locKey: 'loc.mare',
   },
 ];

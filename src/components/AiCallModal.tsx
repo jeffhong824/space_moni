@@ -92,7 +92,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               type: 'ADD_TASK',
               payload: {
                 title: t('ai.hydrateTask'),
-                module: 'Tranquility ECLSS',
+                module: 'mod.tranquility',
                 priority: 'High',
               },
             },

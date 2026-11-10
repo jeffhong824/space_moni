@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { StationTask } from '../types';
 import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey } from '../i18n/index';
 
 interface StationTaskPanelProps {
   tasks: StationTask[];
@@ -36,7 +37,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
   const isCollapsed = propIsCollapsed !== undefined ? propIsCollapsed : internalCollapsed;
   const toggleCollapse = onToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
 
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -44,7 +45,9 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
   const filteredTasks = tasks.filter((task) => {
     if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
     if (statusFilter !== 'ALL' && task.status !== statusFilter) return false;
-    if (searchQuery.trim() && !task.title.toLowerCase().includes(searchQuery.toLowerCase()) && !task.module.toLowerCase().includes(searchQuery.toLowerCase())) {
+    const title = localizeKey(lang, task.title).toLowerCase();
+    const moduleLabel = localizeKey(lang, task.module).toLowerCase();
+    if (searchQuery.trim() && !title.includes(searchQuery.toLowerCase()) && !moduleLabel.includes(searchQuery.toLowerCase())) {
       return false;
     }
     return true;
@@ -229,7 +232,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                 {/* Header: Module & Priority */}
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-[11px] font-mono font-medium text-slate-500">
-                    {task.module}
+                    {localizeKey(lang, task.module)}
                   </span>
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase font-mono ${getPriorityStyle(
@@ -246,12 +249,12 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                     isCompleted ? 'text-slate-400 line-through' : 'text-slate-900'
                   }`}
                 >
-                  {task.title}
+                  {localizeKey(lang, task.title)}
                 </h3>
 
                 {/* Description */}
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                  {task.description}
+                  {localizeKey(lang, task.description)}
                 </p>
 
                 {/* Progress Bar & Status Slider */}
@@ -280,7 +283,7 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                         <div
                           key={i}
                           className={`inline-block h-5 w-5 rounded-full ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center ${c.avatarBg}`}
-                          title={`${c.name} (${c.role})`}
+                          title={`${c.name} (${localizeKey(lang, c.role)})`}
                         >
                           {c.name.slice(0, 2).toUpperCase()}
                         </div>

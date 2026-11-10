@@ -284,7 +284,7 @@ export function tasksForShip(ship: ShipLive, t: number): StationTask[] {
     {
       id: `${ship.def.id}-eva-${day}`,
       title: 'act.eva',
-      module: 'Station Exterior',
+      module: 'mod.exterior',
       priority: 'High',
       status: ship.crew.some((c) => c.activityKey === 'act.eva') ? 'In Progress' : 'Scheduled',
       progress: ship.crew.some((c) => c.activityKey === 'act.eva') ? 40 : 10,
@@ -295,7 +295,7 @@ export function tasksForShip(ship: ShipLive, t: number): StationTask[] {
     {
       id: `${ship.def.id}-ex-${day}`,
       title: 'act.exercise',
-      module: 'Tranquility ECLSS',
+      module: 'mod.tranquility',
       priority: 'Medium',
       status: ship.crew.some((c) => c.activityKey === 'act.exercise') ? 'In Progress' : 'Scheduled',
       progress: 25,

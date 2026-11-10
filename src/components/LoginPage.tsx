@@ -52,7 +52,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       account: cleanAccount,
       name: formattedName,
       role,
-      title: role === 'Commander' ? 'Station Commander' : role === 'NASA' ? 'NASA Flight Operations' : 'Mission Specialist',
+      title: role === 'Commander' ? t('role.commander') : role === 'NASA' ? t('role.nasa') : t('role.astronaut'),
       astronautId: role === 'Commander' ? 'astro-marcus' : 'astro-alice',
     });
   };
@@ -200,7 +200,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickAstronautHint')}</div>
                 </div>
                 <span className="text-[10px] font-mono bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800">
-                  Astronaut
+                  {t('role.astronaut')}
                 </span>
               </button>
 
@@ -214,7 +214,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickCommanderHint')}</div>
                 </div>
                 <span className="text-[10px] font-mono bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800">
-                  Commander
+                  {t('role.commander')}
                 </span>
               </button>
 
@@ -228,7 +228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <div className="text-[10px] text-neutral-400 font-mono">{t('login.quickNasaHint')}</div>
                 </div>
                 <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
-                  NASA
+                  {t('role.nasa')}
                 </span>
               </button>
             </div>

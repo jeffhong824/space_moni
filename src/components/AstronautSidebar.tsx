@@ -122,7 +122,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                           )}
                         </div>
                         <div className="text-[10px] font-mono text-slate-500">
-                          {astro.role} · {astro.stationModule.split(' ')[0]}
+                          {localizeKey(lang, astro.role)} · {localizeKey(lang, astro.stationModule)}
                         </div>
                       </div>
                     </div>
@@ -168,7 +168,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                   {currentAstronaut.name}
                 </h2>
                 <p className="text-xs font-medium text-slate-600 mt-0.5">
-                  {currentAstronaut.gender}, {currentAstronaut.age}
+                  {t(`gender.${currentAstronaut.gender.toLowerCase()}`)}, {currentAstronaut.age}
                 </p>
               </div>
             </div>

@@ -383,7 +383,7 @@ export function buildOfflineTwoLevelAnalysis(
             type: 'ADD_TASK',
             payload: {
               title: tr(lang, 'ai.hydrateTask'),
-              module: 'Tranquility ECLSS',
+              module: 'mod.tranquility',
               priority: 'High',
               category: 'Health Countermeasure',
             },

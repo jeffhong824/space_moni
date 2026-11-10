@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckSquare, Plus } from 'lucide-react';
 import { StationTask, AstronautProfile } from '../types';
 import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey } from '../i18n/index';
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -17,10 +18,10 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
   astronauts,
 }) => {
   const [title, setTitle] = useState('');
-  const [module, setModule] = useState<StationTask['module']>('Columbus BioLab');
+  const [module, setModule] = useState('mod.columbus');
   const [priority, setPriority] = useState<StationTask['priority']>('High');
   const [description, setDescription] = useState('');
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [assignedAstroName, setAssignedAstroName] = useState(astronauts[0]?.name || 'Alice Smith');
 
   if (!isOpen) return null;
@@ -41,12 +42,12 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
       assignedCrew: [
         {
           name: assignedAstroName,
-          role: assigned?.role || 'Mission Specialist',
+          role: assigned?.role || 'occ.science',
           avatarBg: 'bg-cyan-600',
         },
       ],
       deadline: 'Today, 22:00 UTC',
-      description: description.trim() || 'Mission directive logged from orbital station task console.',
+      description: description.trim() || t('newTask.defaultDesc'),
     };
 
     onAddTask(newTask);
@@ -83,7 +84,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Microgravity cell culture media replacement"
+              placeholder={t('newTask.placeholder')}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
@@ -95,14 +96,14 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
               </label>
               <select
                 value={module}
-                onChange={(e) => setModule(e.target.value as any)}
+                onChange={(e) => setModule(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
-                <option value="Columbus BioLab">Columbus BioLab</option>
-                <option value="Destiny Lab">Destiny Lab</option>
-                <option value="Kibo Module">Kibo Module</option>
-                <option value="Tranquility ECLSS">Tranquility ECLSS</option>
-                <option value="Station Exterior">Station Exterior</option>
+                <option value="mod.columbus">{t('mod.columbus')}</option>
+                <option value="mod.destiny">{t('mod.destiny')}</option>
+                <option value="mod.kibo">{t('mod.kibo')}</option>
+                <option value="mod.tranquility">{t('mod.tranquility')}</option>
+                <option value="mod.exterior">{t('mod.exterior')}</option>
               </select>
             </div>
 
@@ -134,7 +135,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
             >
               {astronauts.map((a) => (
                 <option key={a.id} value={a.name}>
-                  {a.name} ({a.role})
+                  {a.name} ({localizeKey(lang, a.role)})
                 </option>
               ))}
             </select>

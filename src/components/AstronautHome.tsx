@@ -14,6 +14,9 @@ import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
 import { SimBadge } from './SimBadge';
+import { ShipStatusCard } from './ShipStatusCard';
+import type { WorldState } from '../world/worldState';
+import { findCrewLive } from '../world/worldState';
 
 interface AstronautHomeProps {
   astronaut: AstronautProfile;
@@ -27,6 +30,7 @@ interface AstronautHomeProps {
   onOpenConsole: () => void;
   spaceEnvironment: SpaceEnvironmentPayload | null;
   speDemo: boolean;
+  world: WorldState;
 }
 
 export const AstronautHome: React.FC<AstronautHomeProps> = ({
@@ -41,6 +45,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   onOpenConsole,
   spaceEnvironment,
   speDemo,
+  world,
 }) => {
   const { t, lang } = useI18n();
   const interp = interpretRecord(todayRecord, selfCheck);
@@ -48,8 +53,9 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   const shelter = sScaleElevated(sScale);
   const countermeasures = todayRecord.dailyActivities.filter((a) => a.category === 'Health Countermeasure');
   const assignedTasks = tasks.filter(
-    (t) => t.assignedCrew.some((c) => c.name === astronaut.name) && t.status !== 'Completed'
+    (task) => task.assignedCrew.some((c) => c.name === astronaut.name) && task.status !== 'Completed'
   );
+  const live = findCrewLive(world, astronaut.id);
 
   const [sleepQuality, setSleepQuality] = useState<1 | 2 | 3 | 4 | 5>(selfCheck?.sleepQuality ?? 3);
   const [mood, setMood] = useState<SelfCheckMood>(selfCheck?.mood ?? 'normal');
@@ -97,6 +103,8 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           </button>
         </div>
       </header>
+
+      {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
 
       {shelter && (
         <div className="rounded-2xl border-2 border-rose-400 bg-rose-50 p-4 text-rose-950 flex gap-3">
@@ -241,7 +249,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => onOpenAiCall('請依目前示範門檻新增一項我今天可完成的健康對策任務。')}
+            onClick={() => onOpenAiCall(t('astro.askAddTask'))}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-sky-200 bg-sky-50 text-sky-900"
           >
             <Mic className="w-3.5 h-3.5" />

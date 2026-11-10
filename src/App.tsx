@@ -201,7 +201,7 @@ export default function App() {
       const newTask: StationTask = {
         id: 'tsk-' + Date.now(),
         title: payload.title || action.label,
-        module: (payload.module as StationTask['module']) || 'Tranquility ECLSS',
+        module: payload.module || 'mod.tranquility',
         priority: (payload.priority as StationTask['priority']) || 'High',
         status: 'In Progress',
         progress: 0,
@@ -270,6 +270,8 @@ export default function App() {
         speDemo={speDemo}
         onSelectAstronaut={handleSelectAstronaut}
         onOpenConsole={() => setView('console')}
+        world={world}
+        commanderId={myCrew?.id}
       />
     ) : currentUser.role === 'NASA' ? (
       <SurgeonHome
@@ -309,6 +311,7 @@ export default function App() {
         onOpenConsole={() => setView('console')}
         spaceEnvironment={displayWx}
         speDemo={speDemo}
+        world={world}
       />
     );
 

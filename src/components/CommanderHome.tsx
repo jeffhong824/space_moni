@@ -9,6 +9,9 @@ import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
 import { SimBadge } from './SimBadge';
+import { ShipStatusCard } from './ShipStatusCard';
+import type { WorldState } from '../world/worldState';
+import { findCrewLive } from '../world/worldState';
 
 interface CommanderHomeProps {
   astronauts: AstronautProfile[];
@@ -19,6 +22,8 @@ interface CommanderHomeProps {
   speDemo: boolean;
   onSelectAstronaut: (astro: AstronautProfile) => void;
   onOpenConsole: () => void;
+  world: WorldState;
+  commanderId?: string;
 }
 
 const RANK = { Critical: 0, Attention: 1, Normal: 2 } as const;
@@ -32,6 +37,8 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   speDemo,
   onSelectAstronaut,
   onOpenConsole,
+  world,
+  commanderId,
 }) => {
   const { t, lang } = useI18n();
   const rows = astronauts
@@ -49,6 +56,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
 
   const sScale = spaceEnvironment?.scales.sScale ?? 'S?';
   const conflicts = weatherTaskConflicts(tasks, sScale);
+  const live = findCrewLive(world, commanderId || astronauts[0]?.id);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-slate-50/80">
@@ -68,6 +76,8 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
           {t('cmd.openConsole')}
         </button>
       </header>
+
+      {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
 
       {sScaleElevated(sScale) && conflicts.length > 0 && (
         <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950 flex gap-3">
