@@ -39,6 +39,23 @@ button:disabled {
   background: #cbd5e1;
   border-radius: 9999px;
 }
+
+@keyframes atlas-scan {
+  0% { transform: translateY(-12%); }
+  100% { transform: translateY(720%); }
+}
+.atlas-scan {
+  animation: atlas-scan 6.4s linear infinite;
+}
+@keyframes atlas-ring-pulse {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.45); }
+}
+.atlas-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: atlas-ring-pulse 1.4s ease-in-out infinite;
+}
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }

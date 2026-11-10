@@ -122,7 +122,9 @@ Expanded 2026-11-10 crew (Harmony 7 / Gateway 4 / Ares 6 / Mare 4) **reuses** th
 
 | Asset | Source | Author | License | Notes |
 |---|---|---|---|---|
-| `src/components/AnatomicalFigure.tsx` (front/back SVG) | Original SpaceMoni vector | SpaceMoni | Original (this repo) | Clean clinical atlas style. **Not** traced from a copyrighted medical atlas. Region fills encode simulated NASA HRP-domain status (SANS, bone, muscle, cardio, radiation, BHP). Not medical imaging. |
+| `public/bodymap/body-front.webp` (+ `.jpg` fallback) | AI-generated holographic anatomy (front) | SpaceMoni | **AI-generated**, non-commercial demo | 720×1280 plate. Overlay tints are simulated HRP-domain status, not medical imaging. |
+| `public/bodymap/body-back.webp` (+ `.jpg` fallback) | AI-generated holographic anatomy (back) | SpaceMoni | **AI-generated**, non-commercial demo | 720×1280 plate. Same terms as front. |
+| `src/components/AnatomicalFigure.tsx` | SVG hit regions / scanner overlay | SpaceMoni | Original (this repo) | Transparent hotspots aligned to the plates (brain, eyes, heart, lungs, kidneys, spine, hips, quads, calves/hamstrings, skin) plus radiation aura. |
 
 HRP domain mapping (not an asset license, cited on Data sources):
 

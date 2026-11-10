@@ -398,8 +398,8 @@
         "note": "NASA public SANS overview. The sim uses a fluid-shift analog, not flight OCT data."
       },
       "anatomy": {
-        "used": "Front/back clinical body map on the astronaut dashboard",
-        "note": "Original SpaceMoni vector anatomy (clean clinical atlas style). Not traced from a copyrighted medical atlas. Region colors are simulation status, not imaging."
+        "used": "Front/back holographic body map on the astronaut dashboard",
+        "note": "AI-generated holographic anatomy plates for this non-commercial demo, with original SVG hotspots. Region colors are simulation status, not medical imaging."
       }
     }
   },
@@ -679,7 +679,7 @@
     "askAura": "Ask AURA",
     "askPrompt": "Analyze simulated {domain} for {name}: {value} (score {score}). Use demo bands and official space weather. Do not invent NASA numbers.",
     "regionDetail": "Region detail",
-    "credit": "Original SpaceMoni clinical body map (vector). Colors = simulated HRP-domain status, not medical imaging.",
+    "credit": "AI-generated holographic anatomy for this non-commercial demo. Overlay colors = simulated HRP-domain status, not medical imaging.",
     "score": "Score {n}/100",
     "boneLoss": "Bone-loss analog",
     "openMap": "Body map",

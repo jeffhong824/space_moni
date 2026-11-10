@@ -24,8 +24,10 @@ import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import type { CrewDef } from '../world/catalog';
 import { SHIPS } from '../world/catalog';
 import {
+  BACK_REGIONS,
   bodyHealthAt,
   combinedTrend,
+  FRONT_REGIONS,
   REGION_DOMAIN,
   type BodyDomainId,
   type BodyRegionId,
@@ -60,8 +62,11 @@ export const BodyMapDashboard: React.FC<{
   const exLog = useMemo(() => exerciseLog(crew, tNow), [crew, tNow]);
   const ship = SHIPS.find((s) => s.id === crew.shipId);
   const w = health.snap.wearable;
+  const visibleRegions = side === 'front' ? FRONT_REGIONS : BACK_REGIONS;
   const pulseRegion =
-    (Object.entries(health.regionRank) as [BodyRegionId, Rank][]).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    (Object.entries(health.regionRank) as [BodyRegionId, Rank][])
+      .filter(([id, rank]) => visibleRegions.includes(id) && rank > 0)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
   const radar = health.domains.map((d) => ({
     key: t(`body.domain.${d.id}`),
@@ -104,7 +109,7 @@ export const BodyMapDashboard: React.FC<{
         </div>
       </header>
 
-      <div className={`grid ${compact ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(220px,280px)_1fr]'} gap-0`}>
+      <div className={`grid ${compact ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,420px)_1fr]'} gap-0`}>
         <div className="p-3 border-b lg:border-b-0 lg:border-r border-slate-800">
           <div className="flex gap-1 mb-2">
             <button
@@ -122,13 +127,15 @@ export const BodyMapDashboard: React.FC<{
               {t('body.back')}
             </button>
           </div>
-          <div className="relative mx-auto max-w-[240px]">
+          <div className="relative mx-auto w-full max-w-[420px]">
             <AnatomicalFigure
               side={side}
               regionRank={health.regionRank}
               selected={selected}
               onSelect={setSelected}
               pulse={pulseRegion}
+              auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
+              labelFor={(id) => t(`body.region.${id}`)}
             />
           </div>
           <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">{t('body.credit')}</p>

@@ -1,17 +1,171 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { BodyRegionId, Rank } from '../world/bodyHealth';
 
-const FILL: Record<Rank, string> = {
-  0: '#34d399',
+const W = 720;
+const H = 1280;
+
+const TINT: Record<Rank, string> = {
+  0: 'rgba(45, 212, 191, 0.36)',
+  1: 'rgba(251, 191, 36, 0.48)',
+  2: 'rgba(244, 63, 94, 0.54)',
+};
+const RING: Record<Rank, string> = {
+  0: '#2dd4bf',
   1: '#fbbf24',
   2: '#fb7185',
 };
-
-const FILL_DIM: Record<Rank, string> = {
-  0: '#065f46',
-  1: '#92400e',
-  2: '#9f1239',
+const AURA: Record<Rank, { inner: string; outer: string }> = {
+  0: { inner: 'rgba(45, 212, 191, 0)', outer: 'rgba(45, 212, 191, 0.42)' },
+  1: { inner: 'rgba(251, 191, 36, 0)', outer: 'rgba(251, 191, 36, 0.46)' },
+  2: { inner: 'rgba(244, 63, 94, 0)', outer: 'rgba(244, 63, 94, 0.5)' },
 };
+
+interface Hit {
+  id: BodyRegionId;
+  cx: number;
+  cy: number;
+  labelSide: 'left' | 'right';
+  shapes: string[];
+}
+
+/** Silhouette traced from the 720×1280 holographic plates (includes arms). */
+const SKIN_FRONT =
+  'M360 32 C418 32 422 82 412 132 C412 162 398 186 390 200 L448 234 C528 272 554 375 558 505 C564 590 568 650 566 698 L498 706 C490 620 476 495 450 328 L454 558 C472 574 500 616 508 672 L488 684 C466 640 430 622 408 628 L416 858 C420 958 428 1072 416 1152 C432 1174 448 1208 418 1214 C388 1222 368 1208 358 1184 L354 1150 C350 1070 346 958 342 858 L312 628 C288 622 252 640 232 684 L212 672 C222 616 248 574 266 558 L270 328 C244 495 230 620 222 706 L154 698 C152 650 156 590 162 505 C166 375 192 272 272 234 L330 200 C322 186 308 162 308 132 C298 82 302 32 360 32Z';
+
+const SKIN_BACK =
+  'M360 30 C420 30 424 80 414 130 C414 160 400 184 392 198 L452 232 C532 270 558 372 562 500 C568 588 572 650 570 702 L500 710 C492 622 478 492 450 322 L454 552 C474 570 504 612 512 668 L492 680 C468 636 432 618 410 624 L416 862 C420 968 430 1080 418 1168 C436 1190 452 1220 422 1224 C390 1230 368 1214 358 1188 L354 1164 C350 1078 346 968 342 862 L310 624 C286 618 250 636 228 680 L208 668 C218 612 246 570 266 552 L270 322 C244 492 228 622 220 710 L150 702 C148 650 152 588 158 500 C162 372 188 270 268 232 L328 198 C320 184 306 160 306 130 C296 80 300 30 360 30Z';
+
+/** Coordinates in the 720×1280 holographic plates. */
+const FRONT_HITS: Hit[] = [
+  {
+    id: 'brain',
+    cx: 360,
+    cy: 108,
+    labelSide: 'left',
+    shapes: ['M308 46 C308 20 412 20 412 46 C414 94 400 164 360 176 C320 164 306 94 308 46Z'],
+  },
+  {
+    id: 'eyes',
+    cx: 360,
+    cy: 104,
+    labelSide: 'right',
+    shapes: [
+      'M314 96 C314 86 350 86 350 104 C350 118 314 118 314 104Z',
+      'M370 96 C370 86 406 86 406 104 C406 118 370 118 370 104Z',
+    ],
+  },
+  {
+    id: 'lungs',
+    cx: 360,
+    cy: 340,
+    labelSide: 'left',
+    shapes: [
+      'M248 268 C252 242 332 246 354 282 C350 358 328 416 294 424 C256 410 246 328 248 268Z',
+      'M472 268 C468 242 388 246 366 282 C370 358 392 416 426 424 C464 410 474 328 472 268Z',
+    ],
+  },
+  {
+    id: 'heart',
+    cx: 412,
+    cy: 344,
+    labelSide: 'right',
+    shapes: ['M380 312 C400 288 454 298 458 344 C454 388 424 410 400 390 C378 370 364 336 380 312Z'],
+  },
+  {
+    id: 'hips',
+    cx: 360,
+    cy: 600,
+    labelSide: 'right',
+    shapes: [
+      'M268 538 C274 508 446 508 452 538 C460 578 430 628 360 636 C290 628 260 578 268 538Z',
+      'M316 622 C298 682 292 742 306 758 C330 760 342 692 350 628Z',
+      'M404 622 C422 682 428 742 414 758 C390 760 378 692 370 628Z',
+    ],
+  },
+  {
+    id: 'quads',
+    cx: 360,
+    cy: 752,
+    labelSide: 'left',
+    shapes: [
+      'M248 638 C240 728 246 842 274 870 C318 874 338 772 342 640Z',
+      'M472 638 C480 728 474 842 446 870 C402 874 382 772 378 640Z',
+    ],
+  },
+  {
+    id: 'calves',
+    cx: 360,
+    cy: 1020,
+    labelSide: 'right',
+    shapes: [
+      'M256 888 C248 978 256 1100 284 1146 C322 1140 336 1000 334 890Z',
+      'M464 888 C472 978 464 1100 436 1146 C398 1140 384 1000 386 890Z',
+    ],
+  },
+  { id: 'skin', cx: 360, cy: 640, labelSide: 'left', shapes: [SKIN_FRONT] },
+];
+
+const BACK_HITS: Hit[] = [
+  {
+    id: 'brain',
+    cx: 360,
+    cy: 108,
+    labelSide: 'left',
+    shapes: ['M308 44 C308 18 412 18 412 44 C414 92 400 162 360 174 C320 162 306 92 308 44Z'],
+  },
+  {
+    id: 'back',
+    cx: 360,
+    cy: 330,
+    labelSide: 'left',
+    shapes: ['M252 232 C274 204 446 204 468 232 C490 304 470 428 426 464 C396 482 324 482 294 464 C250 428 230 304 252 232Z'],
+  },
+  {
+    id: 'spine',
+    cx: 360,
+    cy: 390,
+    labelSide: 'right',
+    shapes: ['M350 208 L370 208 L375 572 C375 584 345 584 345 572Z'],
+  },
+  {
+    id: 'kidneys',
+    cx: 360,
+    cy: 458,
+    labelSide: 'right',
+    shapes: [
+      'M298 438 C298 416 338 412 344 444 C338 476 298 480 298 450Z',
+      'M422 438 C422 416 382 412 376 444 C382 476 422 480 422 450Z',
+    ],
+  },
+  {
+    id: 'hips',
+    cx: 360,
+    cy: 610,
+    labelSide: 'left',
+    shapes: [
+      'M262 548 C268 514 452 514 458 548 C466 592 432 646 360 654 C288 646 254 592 262 548Z',
+      'M314 640 C296 700 290 760 304 776 C328 778 340 710 348 646Z',
+      'M406 640 C424 700 430 760 416 776 C392 778 380 710 372 646Z',
+    ],
+  },
+  {
+    id: 'calves',
+    cx: 360,
+    cy: 900,
+    labelSide: 'right',
+    shapes: [
+      'M250 650 C240 760 246 860 274 892 C318 886 338 762 340 652Z',
+      'M470 650 C480 760 474 860 446 892 C402 886 382 762 380 652Z',
+      'M256 900 C248 992 254 1118 284 1152 C322 1146 336 1008 334 902Z',
+      'M464 900 C472 992 466 1118 436 1152 C398 1146 384 1008 386 902Z',
+    ],
+  },
+  { id: 'skin', cx: 360, cy: 640, labelSide: 'left', shapes: [SKIN_BACK] },
+];
+
+function labelAnchor(hit: Hit): { x: number; y: number } {
+  return hit.labelSide === 'left' ? { x: 16, y: hit.cy } : { x: W - 16, y: hit.cy };
+}
 
 export const AnatomicalFigure: React.FC<{
   side: 'front' | 'back';
@@ -19,103 +173,150 @@ export const AnatomicalFigure: React.FC<{
   selected: BodyRegionId | null;
   onSelect: (id: BodyRegionId) => void;
   pulse: BodyRegionId | null;
-}> = ({ side, regionRank, selected, onSelect, pulse }) => {
-  const r = (id: BodyRegionId) => regionRank[id] ?? 0;
-  const cls = (id: BodyRegionId) =>
-    [
-      'cursor-pointer transition-colors duration-300',
-      selected === id ? 'stroke-white stroke-2' : 'stroke-slate-500/80 stroke-[0.8]',
-      pulse === id ? 'animate-pulse' : '',
-    ].join(' ');
-
-  const fill = (id: BodyRegionId) => (selected === id ? FILL[r(id)] : FILL_DIM[r(id)]);
+  auraRank: Rank;
+  labelFor: (id: BodyRegionId) => string;
+}> = ({ side, regionRank, selected, onSelect, pulse, auraRank, labelFor }) => {
+  const [hover, setHover] = useState<BodyRegionId | null>(null);
+  useEffect(() => {
+    setHover(null);
+  }, [side]);
+  const hits = side === 'front' ? FRONT_HITS : BACK_HITS;
+  const src = side === 'front' ? 'body-front' : 'body-back';
+  const ranked = useMemo(() => [...hits].sort((a, b) => (a.id === 'skin' ? -1 : b.id === 'skin' ? 1 : 0)), [hits]);
+  const aura = AURA[auraRank];
+  const gid = `atlas-${side}`;
 
   return (
-    <svg viewBox="0 0 240 560" className="w-full h-full max-h-[520px]" role="img" aria-label={side}>
-      <defs>
-        <filter id="atlas-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <linearGradient id="atlas-shade" x1="0" x2="1">
-          <stop offset="0%" stopColor="#0f172a" />
-          <stop offset="50%" stopColor="#1e293b" />
-          <stop offset="100%" stopColor="#0f172a" />
-        </linearGradient>
-      </defs>
-
-      {/* Skin / silhouette */}
-      <path
-        d={side === 'front' ? SILHOUETTE_FRONT : SILHOUETTE_BACK}
-        fill="url(#atlas-shade)"
-        stroke="#475569"
-        strokeWidth="1.2"
-        className={cls('skin')}
-        onClick={() => onSelect('skin')}
-        opacity={0.95}
-      />
-      {r('skin') > 0 && (
-        <path
-          d={side === 'front' ? SILHOUETTE_FRONT : SILHOUETTE_BACK}
-          fill={FILL[r('skin')]}
-          opacity={0.18}
-          className={cls('skin')}
-          onClick={() => onSelect('skin')}
+    <div
+      className="relative mx-auto select-none overflow-hidden rounded-lg bg-black"
+      style={{
+        aspectRatio: '9 / 16',
+        width: 'min(100%, 26rem, calc((100vh - 13.75rem) * 9 / 16))',
+        height: 'auto',
+      }}
+    >
+      <picture>
+        <source type="image/webp" srcSet={`/bodymap/${src}.webp`} />
+        <img
+          src={`/bodymap/${src}.jpg`}
+          alt=""
+          width={W}
+          height={H}
+          draggable={false}
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
         />
-      )}
+      </picture>
 
-      {side === 'front' ? (
-        <>
-          <ellipse cx="120" cy="46" rx="28" ry="32" fill={fill('brain')} className={cls('brain')} onClick={() => onSelect('brain')} filter={pulse === 'brain' ? 'url(#atlas-glow)' : undefined} />
-          <ellipse cx="108" cy="48" rx="6" ry="4" fill={fill('eyes')} className={cls('eyes')} onClick={() => onSelect('eyes')} />
-          <ellipse cx="132" cy="48" rx="6" ry="4" fill={fill('eyes')} className={cls('eyes')} onClick={() => onSelect('eyes')} filter={pulse === 'eyes' ? 'url(#atlas-glow)' : undefined} />
-          <path d="M86 118 C86 102 154 102 154 118 C154 168 148 196 120 198 C92 196 86 168 86 118Z" fill={fill('lungs')} className={cls('lungs')} onClick={() => onSelect('lungs')} opacity={0.85} />
-          <path d="M112 128 C118 118 138 122 140 140 C138 158 122 168 114 158 C104 150 106 136 112 128Z" fill={fill('heart')} className={cls('heart')} onClick={() => onSelect('heart')} filter={pulse === 'heart' ? 'url(#atlas-glow)' : undefined} />
-          <rect x="116" y="108" width="8" height="168" rx="3" fill={fill('spine')} className={cls('spine')} onClick={() => onSelect('spine')} opacity={0.55} />
-          <ellipse cx="96" cy="236" rx="14" ry="18" fill={fill('kidneys')} className={cls('kidneys')} onClick={() => onSelect('kidneys')} opacity={0.9} />
-          <ellipse cx="144" cy="236" rx="14" ry="18" fill={fill('kidneys')} className={cls('kidneys')} onClick={() => onSelect('kidneys')} />
-          <path d="M78 268 C78 252 162 252 162 268 C164 292 150 308 120 310 C90 308 76 292 78 268Z" fill={fill('hips')} className={cls('hips')} onClick={() => onSelect('hips')} />
-          <path d="M84 312 C78 360 74 410 86 430 C102 438 112 400 114 318 Z" fill={fill('quads')} className={cls('quads')} onClick={() => onSelect('quads')} />
-          <path d="M126 318 C128 400 138 438 154 430 C166 410 162 360 156 312 Z" fill={fill('quads')} className={cls('quads')} onClick={() => onSelect('quads')} />
-          <path d="M88 438 C84 478 88 512 98 522 C110 518 112 478 108 438 Z" fill={fill('calves')} className={cls('calves')} onClick={() => onSelect('calves')} />
-          <path d="M132 438 C128 478 130 518 142 522 C152 512 156 478 152 438 Z" fill={fill('calves')} className={cls('calves')} onClick={() => onSelect('calves')} />
-        </>
-      ) : (
-        <>
-          <ellipse cx="120" cy="46" rx="28" ry="32" fill={fill('brain')} className={cls('brain')} onClick={() => onSelect('brain')} filter={pulse === 'brain' ? 'url(#atlas-glow)' : undefined} />
-          <path d="M78 112 C84 96 156 96 162 112 C168 150 160 210 148 248 C140 258 100 258 92 248 C80 210 72 150 78 112Z" fill={fill('back')} className={cls('back')} onClick={() => onSelect('back')} />
-          <rect x="114" y="100" width="12" height="176" rx="4" fill={fill('spine')} className={cls('spine')} onClick={() => onSelect('spine')} filter={pulse === 'spine' ? 'url(#atlas-glow)' : undefined} />
-          <ellipse cx="94" cy="232" rx="16" ry="20" fill={fill('kidneys')} className={cls('kidneys')} onClick={() => onSelect('kidneys')} />
-          <ellipse cx="146" cy="232" rx="16" ry="20" fill={fill('kidneys')} className={cls('kidneys')} onClick={() => onSelect('kidneys')} />
-          <path d="M76 268 C78 250 162 250 164 268 C166 300 148 318 120 320 C92 318 74 300 76 268Z" fill={fill('hips')} className={cls('hips')} onClick={() => onSelect('hips')} />
-          <path d="M86 322 C80 380 78 430 92 448 C108 444 114 390 116 324 Z" fill={fill('calves')} opacity={0.45} className={cls('calves')} onClick={() => onSelect('calves')} />
-          <path d="M124 324 C126 390 132 444 148 448 C162 430 160 380 154 322 Z" fill={fill('calves')} opacity={0.45} className={cls('calves')} onClick={() => onSelect('calves')} />
-          <path d="M90 448 C86 488 90 518 100 528 C112 522 114 486 110 448 Z" fill={fill('calves')} className={cls('calves')} onClick={() => onSelect('calves')} />
-          <path d="M130 448 C126 486 128 522 140 528 C150 518 154 488 150 448 Z" fill={fill('calves')} className={cls('calves')} onClick={() => onSelect('calves')} />
-        </>
-      )}
+      <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 w-full h-full" role="img" aria-label={side}>
+        <defs>
+          <radialGradient id={`${gid}-aura`} cx="50%" cy="48%" r="54%">
+            <stop offset="48%" stopColor={aura.inner} />
+            <stop offset="100%" stopColor={aura.outer} />
+          </radialGradient>
+          <filter id={`${gid}-glow`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="7" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-      {/* Deltoids / arms — skin-linked, not a separate domain */}
-      {side === 'front' ? (
-        <>
-          <path d="M78 108 C52 130 44 190 50 230 C62 236 74 200 80 150 Z" fill="#1e293b" stroke="#475569" strokeWidth="0.8" />
-          <path d="M162 108 C188 130 196 190 190 230 C178 236 166 200 160 150 Z" fill="#1e293b" stroke="#475569" strokeWidth="0.8" />
-        </>
-      ) : (
-        <>
-          <path d="M78 108 C50 132 42 192 48 232 C60 236 74 198 80 148 Z" fill="#1e293b" stroke="#475569" strokeWidth="0.8" />
-          <path d="M162 108 C190 132 198 192 192 232 C180 236 166 198 160 148 Z" fill="#1e293b" stroke="#475569" strokeWidth="0.8" />
-        </>
+        <ellipse
+          cx={360}
+          cy={640}
+          rx={248}
+          ry={610}
+          fill={`url(#${gid}-aura)`}
+          style={{ mixBlendMode: 'screen' }}
+          className="pointer-events-none"
+        />
+
+        {ranked.map((hit) => {
+          const rank = regionRank[hit.id] ?? 0;
+          const active = selected === hit.id || hover === hit.id;
+          const pulsing = pulse === hit.id;
+          return (
+            <g
+              key={hit.id}
+              className="cursor-pointer"
+              onMouseEnter={() => setHover(hit.id)}
+              onMouseLeave={() => setHover((h) => (h === hit.id ? null : h))}
+              onClick={() => onSelect(hit.id)}
+            >
+              {hit.shapes.map((d, i) => (
+                <path
+                  key={`${hit.id}-${i}`}
+                  d={d}
+                  fill={TINT[rank]}
+                  fillOpacity={hit.id === 'skin' ? (active ? 0.18 : 0.06) : active ? 0.58 : rank > 0 ? 0.38 : 0.26}
+                  stroke={active ? RING[rank] : rank > 0 ? RING[rank] : 'transparent'}
+                  strokeOpacity={active ? 1 : 0.35}
+                  strokeWidth={active ? 3 : rank > 0 ? 1.2 : 0}
+                  pointerEvents="visibleFill"
+                  style={{ mixBlendMode: hit.id === 'skin' ? 'normal' : 'screen' }}
+                  filter={pulsing || rank === 2 ? `url(#${gid}-glow)` : undefined}
+                />
+              ))}
+              {(active || pulsing) && hit.id !== 'skin' && (
+                <g className="pointer-events-none">
+                  <circle
+                    cx={hit.cx}
+                    cy={hit.cy}
+                    r={pulsing ? 26 : 18}
+                    fill="none"
+                    stroke={RING[rank]}
+                    strokeWidth="2"
+                    className={pulsing ? 'atlas-ring' : ''}
+                  />
+                  <circle cx={hit.cx} cy={hit.cy} r={5} fill={RING[rank]} />
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {hits
+          .filter((hit) => hit.id !== 'skin')
+          .map((hit) => {
+            const rank = regionRank[hit.id] ?? 0;
+            const active = selected === hit.id || hover === hit.id || pulse === hit.id;
+            const dest = labelAnchor(hit);
+            const midX = hit.labelSide === 'left' ? hit.cx - 78 : hit.cx + 78;
+            return (
+              <g key={`lead-${hit.id}`} className="pointer-events-none" opacity={active ? 1 : 0.32}>
+                <path
+                  d={`M${hit.cx} ${hit.cy} L${midX} ${hit.cy} L${dest.x} ${dest.y}`}
+                  fill="none"
+                  stroke={RING[rank]}
+                  strokeWidth={active ? 1.6 : 0.8}
+                  strokeLinejoin="miter"
+                />
+                <circle cx={dest.x} cy={dest.y} r={active ? 3.5 : 2} fill={RING[rank]} />
+                <text
+                  x={dest.x}
+                  y={dest.y - 8}
+                  textAnchor={hit.labelSide === 'left' ? 'start' : 'end'}
+                  fill={active ? '#e2e8f0' : '#94a3b8'}
+                  fontSize={active ? 22 : 17}
+                  fontFamily="ui-sans-serif, system-ui, sans-serif"
+                  fontWeight={active ? 700 : 500}
+                >
+                  {labelFor(hit.id)}
+                </text>
+              </g>
+            );
+          })}
+      </svg>
+
+      <div className="atlas-scan pointer-events-none absolute left-[20%] right-[20%] top-0 h-px bg-cyan-300/70 shadow-[0_0_10px_2px_rgba(103,232,249,0.35)]" />
+
+      {hover && (
+        <div className="absolute right-2 top-2 z-10 rounded-md border border-cyan-500/60 bg-slate-950/90 px-2 py-1 text-[10px] font-semibold text-cyan-100 shadow-lg">
+          {labelFor(hover)}
+        </div>
       )}
-    </svg>
+    </div>
   );
 };
-
-const SILHOUETTE_FRONT =
-  'M120 12 C148 12 156 36 156 52 C156 64 150 74 144 80 L152 96 C176 108 188 128 194 168 C198 198 196 228 188 236 L176 232 C170 200 168 160 158 132 L158 250 C176 258 184 278 182 300 L170 302 C166 280 160 270 150 268 L152 312 C158 380 164 430 158 468 C170 476 176 500 168 530 C160 548 148 552 140 536 L136 500 C132 470 130 430 128 318 L112 318 C110 430 108 470 104 500 L100 536 C92 552 80 548 72 530 C64 500 70 476 82 468 C76 430 82 380 88 312 L90 268 C80 270 74 280 70 302 L58 300 C56 278 64 258 82 250 L82 132 C72 160 70 200 64 232 L52 236 C44 228 42 198 46 168 C52 128 64 108 88 96 L96 80 C90 74 84 64 84 52 C84 36 92 12 120 12Z';
-
-const SILHOUETTE_BACK =
-  'M120 12 C148 12 156 36 156 52 C156 64 150 74 144 80 L154 98 C178 110 190 132 196 172 C200 202 198 230 190 238 L178 234 C172 200 168 158 158 130 L158 252 C176 260 186 280 184 302 L172 304 C168 282 160 272 150 270 L152 316 C158 384 164 434 158 470 C170 478 176 502 168 532 C160 550 148 554 140 538 L136 502 C132 472 130 432 128 320 L112 320 C110 432 108 472 104 502 L100 538 C92 554 80 550 72 532 C64 502 70 478 82 470 C76 434 82 384 88 316 L90 270 C80 272 72 282 68 304 L56 302 C54 280 64 260 82 252 L82 130 C70 158 68 200 62 234 L50 238 C42 230 40 202 44 172 C50 132 62 110 86 98 L96 80 C90 74 84 64 84 52 C84 36 92 12 120 12Z';

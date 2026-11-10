@@ -1,11 +1,14 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CREW } from './catalog.ts';
 import { WORLD_EPOCH_MS } from './worldState.ts';
 import {
+  BACK_REGIONS,
   BONE_LOSS_PCT_PER_30D,
   bodyHealthAt,
   combinedTrend,
   forecastSeries,
+  FRONT_REGIONS,
   trendSeries,
 } from './bodyHealth.ts';
 
@@ -59,5 +62,14 @@ describe('body-map health model', () => {
     expect(d30).toBeGreaterThan(d0);
     expect(d30).toBeGreaterThan(BONE_LOSS_PCT_PER_30D * 0.4);
     expect(d30).toBeLessThan(BONE_LOSS_PCT_PER_30D * 1.6);
+  });
+
+  it('keeps front/back hotspot sets aligned to the holographic plates', () => {
+    expect(FRONT_REGIONS).toEqual(['brain', 'eyes', 'heart', 'lungs', 'hips', 'quads', 'calves', 'skin']);
+    expect(BACK_REGIONS).toEqual(['brain', 'back', 'spine', 'kidneys', 'hips', 'calves', 'skin']);
+    for (const side of ['front', 'back'] as const) {
+      expect(existsSync(`public/bodymap/body-${side}.webp`)).toBe(true);
+      expect(existsSync(`public/bodymap/body-${side}.jpg`)).toBe(true);
+    }
   });
 });

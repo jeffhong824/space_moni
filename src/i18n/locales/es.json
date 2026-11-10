@@ -398,8 +398,8 @@
         "note": "Resumen público de SANS de la NASA. El sim usa un análogo de desplazamiento de fluidos, no OCT de vuelo."
       },
       "anatomy": {
-        "used": "Mapa corporal clínico de frente y dorso en el panel del astronauta",
-        "note": "Anatomía vectorial original de SpaceMoni (estilo atlas clínico). No calcada de un atlas médico con copyright. Los colores son estado simulado, no imagen."
+        "used": "Mapa corporal holográfico de frente y dorso en el panel del astronauta",
+        "note": "Placas de anatomía holográfica generadas por IA para esta demo no comercial, con puntos calientes SVG originales. Los colores son estado simulado, no imagen médica."
       }
     }
   },
@@ -679,7 +679,7 @@
     "askAura": "Preguntar a AURA",
     "askPrompt": "Analiza {domain} simulado de {name}: {value} (puntuación {score}). Usa umbrales demo y clima espacial oficial. No inventes cifras de la NASA.",
     "regionDetail": "Detalle de región",
-    "credit": "Mapa corporal clínico original de SpaceMoni (vector). Colores = estado HRP simulado, no imagen médica.",
+    "credit": "Anatomía holográfica generada por IA para esta demo no comercial. Los colores = estado HRP simulado, no imagen médica.",
     "score": "Puntuación {n}/100",
     "boneLoss": "Análogo de pérdida ósea",
     "openMap": "Mapa corporal",

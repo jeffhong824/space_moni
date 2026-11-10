@@ -69,7 +69,7 @@ export const REGION_DOMAIN: Record<BodyRegionId, BodyDomainId> = {
   skin: 'skin',
 };
 
-export const FRONT_REGIONS: BodyRegionId[] = ['brain', 'eyes', 'heart', 'lungs', 'spine', 'hips', 'quads', 'calves', 'kidneys', 'skin'];
+export const FRONT_REGIONS: BodyRegionId[] = ['brain', 'eyes', 'heart', 'lungs', 'hips', 'quads', 'calves', 'skin'];
 export const BACK_REGIONS: BodyRegionId[] = ['brain', 'back', 'spine', 'kidneys', 'hips', 'calves', 'skin'];
 
 export type Rank = 0 | 1 | 2;

@@ -123,7 +123,7 @@ export const DataSourcesPage: React.FC<{ onBack: () => void }> = ({ onBack }) =>
             <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.simAi.note')}</p>
           </li>
           <li className="rounded-xl border border-slate-200 px-3 py-2.5">
-            <p className="text-sm font-semibold text-slate-900">Clinical body map (SpaceMoni vector)</p>
+            <p className="text-sm font-semibold text-slate-900">Holographic body map (AI-generated, non-commercial demo)</p>
             <p className="text-xs text-slate-700 mt-1">{t('sources.cite.anatomy.used')}</p>
             <p className="text-[11px] text-slate-500 mt-1">{t('sources.cite.anatomy.note')}</p>
           </li>
