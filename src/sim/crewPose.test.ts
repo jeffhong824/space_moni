@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sScaleElevated } from '../domain/spaceWeather.ts';
 import { WORLD_EPOCH_MS, findCrewLive, worldStateAt } from '../world/worldState.ts';
-import { crewPoseAt, roomForActivity } from './crewPose.ts';
+import { crewPoseAt, crewPosesForShip, PERSONAL_ROOMS, roomForActivity, tileKey } from './crewPose.ts';
 import { layoutOf } from './layouts.ts';
 
 const HOUR = 3600 * 1000;
@@ -81,5 +81,34 @@ describe('crewPoseAt', () => {
     expect(sScaleElevated(ship.sScaleUsed)).toBe(true);
     const pose = crewPoseAt(t, ship.crew[0], ship);
     expect(pose.roomId).toBe(layoutOf('ship-gateway').shelterRoom);
+  });
+
+  it('spreads Harmony personal time across hangouts with unique tiles', () => {
+    const t = WORLD_EPOCH_MS + 19.5 * HOUR;
+    const world = worldStateAt(t, null);
+    const ship = world.ships.find((s) => s.def.id === 'ship-harmony')!;
+    expect(ship.crew).toHaveLength(7);
+    expect(ship.crew.every((c) => c.activityKey === 'act.personal')).toBe(true);
+    const poses = crewPosesForShip(t, ship);
+    expect(poses.every((p) => !p.walking)).toBe(true);
+    const keys = poses.map((p) => tileKey(p.x, p.y));
+    expect(new Set(keys).size).toBe(7);
+    expect(poses.every((p) => (PERSONAL_ROOMS as string[]).includes(p.roomId))).toBe(true);
+    expect(poses.some((p) => Math.round(p.x) === 37 && Math.round(p.y) === 3)).toBe(false);
+    expect(new Set(poses.map((p) => p.roomId)).size).toBeGreaterThan(1);
+    expect(crewPosesForShip(t, ship)).toEqual(poses);
+  });
+
+  it('never stacks two crew on the same tile for any daytime activity', () => {
+    const hours = [3, 8, 10, 12, 13.5, 16, 18, 19.5, 21];
+    for (const h of hours) {
+      const t = WORLD_EPOCH_MS + h * HOUR;
+      const world = worldStateAt(t, null);
+      for (const ship of world.ships) {
+        const poses = crewPosesForShip(t, ship).filter((p) => !p.walking);
+        const keys = poses.map((p) => tileKey(p.x, p.y));
+        expect(new Set(keys).size, `${ship.def.id} @ ${h}h`).toBe(keys.length);
+      }
+    }
   });
 });

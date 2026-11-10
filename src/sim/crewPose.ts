@@ -4,7 +4,9 @@ import { hash32 } from '../world/rng.ts';
 import type { ActivityKey, CrewLive, ShipLive } from '../world/worldState.ts';
 import {
   doorBetween,
+  isWalkable,
   layoutOf,
+  roomAtTile,
   roomById,
   roomPath,
   type CrewAnim,
@@ -40,11 +42,17 @@ export interface CrewPose {
   eva: boolean;
 }
 
+interface Target {
+  room: RoomId;
+  station: StationPlace;
+  eva: boolean;
+}
+
 const ACTIVITY_ROOM: Record<ActivityKey, RoomId> = {
   'act.sleep': 'crew_quarters',
   'act.wake': 'crew_quarters',
   'act.preSleep': 'crew_quarters',
-  'act.personal': 'hygiene',
+  'act.personal': 'crew_quarters',
   'act.breakfast': 'galley',
   'act.lunch': 'galley',
   'act.dinner': 'galley',
@@ -54,6 +62,9 @@ const ACTIVITY_ROOM: Record<ActivityKey, RoomId> = {
   'act.maintenance': 'eclss',
   'act.comms': 'command',
 };
+
+/** Off-duty hangouts: quarters, cupola/window (command), galley, lab. */
+export const PERSONAL_ROOMS: RoomId[] = ['crew_quarters', 'command', 'galley', 'lab'];
 
 export function roomForActivity(layout: ShipLayout, activity: ActivityKey): RoomId {
   const want = ACTIVITY_ROOM[activity] ?? 'command';
@@ -75,58 +86,151 @@ export function crewSheetFor(occ: OccupationKey, eva: boolean, microgravity: boo
   return 'mission_specialist';
 }
 
-function pickStation(
-  layout: ShipLayout,
-  roomId: RoomId,
-  _crewId: string,
-  prefer: 'sleep' | 'patient' | 'any',
-  slot = 0
-): StationPlace {
-  const room = roomById(layout, roomId);
-  const list = room?.stations?.length ? room.stations : [{ x: (room?.x0 ?? 0) + 2, y: 3, facing: 's' as Facing, anim: 'idle-s' as CrewAnim }];
-  let pool = list;
-  if (prefer === 'patient') {
-    const beds = list.filter((s) => s.anim === 'sleep' || s.anim === 'sleep-float');
-    if (beds.length) pool = beds;
-  }
-  if (prefer === 'sleep') {
-    const beds = list.filter((s) => s.anim === 'sleep' || s.anim === 'sleep-float');
-    if (beds.length) pool = beds;
-  }
-  return pool[slot % pool.length];
+export function tileKey(x: number, y: number): string {
+  return `${Math.round(x)},${Math.round(y)}`;
 }
 
-function targetFor(
+function rotate<T>(arr: T[], n: number): T[] {
+  if (arr.length === 0) return arr;
+  const i = ((n % arr.length) + arr.length) % arr.length;
+  return [...arr.slice(i), ...arr.slice(0, i)];
+}
+
+function presentRooms(layout: ShipLayout, ids: RoomId[]): RoomId[] {
+  return ids.filter((id) => roomById(layout, id));
+}
+
+function preferKind(activity: ActivityKey): 'sleep' | 'patient' | 'any' {
+  if (activity === 'act.sleep' || activity === 'act.preSleep') return 'sleep';
+  return 'any';
+}
+
+function stationsIn(layout: ShipLayout, roomId: RoomId, prefer: 'sleep' | 'patient' | 'any'): StationPlace[] {
+  const room = roomById(layout, roomId);
+  if (!room) return [];
+  let list = room.stations.length ? [...room.stations] : [];
+  if (prefer === 'sleep' || prefer === 'patient') {
+    const beds = list.filter((s) => s.anim === 'sleep' || s.anim === 'sleep-float');
+    if (beds.length) list = beds;
+  }
+  return [...list.filter((s) => !s.hideSprite), ...list.filter((s) => Boolean(s.hideSprite))];
+}
+
+function idleSpots(layout: ShipLayout, roomId: RoomId): StationPlace[] {
+  const room = roomById(layout, roomId);
+  if (!room) return [];
+  const used = new Set(room.stations.map((s) => tileKey(s.x, s.y)));
+  const spots: StationPlace[] = [];
+  for (let y = room.y0 + 1; y < room.y1; y++) {
+    for (let x = room.x0 + 1; x < room.x1; x++) {
+      if (!isWalkable(layout, x, y)) continue;
+      if (used.has(tileKey(x, y))) continue;
+      if (layout.doors.some((d) => d.x === x && d.y === y)) continue;
+      spots.push({ x, y, facing: 's', anim: 'idle-s' });
+    }
+  }
+  return spots;
+}
+
+function preferredRooms(layout: ShipLayout, ship: ShipLive, crew: CrewLive, activity: ActivityKey): RoomId[] {
+  if (sScaleElevated(ship.sScaleUsed)) {
+    const shelter = roomById(layout, layout.shelterRoom) ? layout.shelterRoom : 'crew_quarters';
+    return [shelter];
+  }
+  if (crew.event === 'event.illness' || crew.event === 'event.evaFatigue') {
+    const medical = presentRooms(layout, ['medical']);
+    return medical.length ? medical : [roomForActivity(layout, activity)];
+  }
+  if (activity === 'act.personal') {
+    const hangouts = presentRooms(layout, PERSONAL_ROOMS);
+    const base = hangouts.length ? hangouts : [roomForActivity(layout, activity)];
+    return rotate(base, hash32(crew.def.id, 'personal'));
+  }
+  return [roomForActivity(layout, activity)];
+}
+
+function candidateTargets(
   layout: ShipLayout,
   ship: ShipLive,
   crew: CrewLive,
   activity: ActivityKey,
-  slot = 0
-): { room: RoomId; station: StationPlace; eva: boolean } {
-  if (sScaleElevated(ship.sScaleUsed)) {
-    const room = roomById(layout, layout.shelterRoom) ? layout.shelterRoom : 'crew_quarters';
-    return { room, station: pickStation(layout, room, crew.def.id, 'any', slot), eva: false };
+  extraRooms: boolean
+): Target[] {
+  const prefer =
+    crew.event === 'event.illness' || crew.event === 'event.evaFatigue' ? 'patient' : preferKind(activity);
+  const eva = activity === 'act.eva' && !sScaleElevated(ship.sScaleUsed) && crew.event !== 'event.illness';
+  let rooms = preferredRooms(layout, ship, crew, activity);
+  if (extraRooms) {
+    for (const r of layout.rooms) {
+      if (!rooms.includes(r.id)) rooms = [...rooms, r.id];
+    }
   }
-  if (crew.event === 'event.illness' || crew.event === 'event.evaFatigue') {
-    const room = roomById(layout, 'medical') ? 'medical' : roomForActivity(layout, activity);
-    return { room, station: pickStation(layout, room, crew.def.id, 'patient', slot), eva: false };
+  const out: Target[] = [];
+  const seen = new Set<string>();
+  const push = (room: RoomId, station: StationPlace, isEva: boolean) => {
+    const k = tileKey(station.x, station.y);
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push({ room, station, eva: isEva });
+  };
+  for (const room of rooms) {
+    for (const st of stationsIn(layout, room, prefer)) push(room, st, eva);
+    if (extraRooms || activity === 'act.personal') {
+      for (const st of idleSpots(layout, room)) push(room, st, false);
+    }
   }
-  const room = roomForActivity(layout, activity);
-  if (activity === 'act.eva') {
-    return { room, station: pickStation(layout, room, crew.def.id, 'any', slot), eva: true };
+  if (eva) {
+    for (const st of layout.hullEva) push('airlock', st, true);
   }
-  const prefer = activity === 'act.sleep' || activity === 'act.preSleep' ? 'sleep' : 'any';
-  return { room, station: pickStation(layout, room, crew.def.id, prefer, slot), eva: false };
+  return out;
 }
 
-interface Pt {
-  x: number;
-  y: number;
+function fallbackTile(layout: ShipLayout, taken: Set<string>): Target {
+  for (const room of layout.rooms) {
+    for (const st of idleSpots(layout, room.id)) {
+      if (!taken.has(tileKey(st.x, st.y))) return { room: room.id, station: st, eva: false };
+    }
+  }
+  return {
+    room: layout.rooms[0]?.id ?? 'command',
+    station: { x: 2, y: 3, facing: 's', anim: 'idle-s' },
+    eva: false,
+  };
 }
 
-function waypoints(layout: ShipLayout, from: Pt, to: Pt, fromRoom: RoomId, toRoom: RoomId): Pt[] {
+function pickOne(layout: ShipLayout, ship: ShipLive, crew: CrewLive, activity: ActivityKey): Target {
+  const cands = candidateTargets(layout, ship, crew, activity, false);
+  if (!cands.length) return fallbackTile(layout, new Set());
+  return cands[hash32(crew.def.id, activity) % cands.length];
+}
+
+/** Unique dest tiles for every crew member on a ship at one activity snapshot. */
+export function assignCrewTargets(
+  layout: ShipLayout,
+  ship: ShipLive,
+  activityOf: (crew: CrewLive) => ActivityKey
+): Map<string, Target> {
+  const taken = new Set<string>();
+  const out = new Map<string, Target>();
+  for (const crew of ship.crew) {
+    const activity = activityOf(crew);
+    const start = hash32(crew.def.id, activity);
+    let cands = rotate(candidateTargets(layout, ship, crew, activity, false), start);
+    let pick = cands.find((t) => !taken.has(tileKey(t.station.x, t.station.y)));
+    if (!pick) {
+      cands = rotate(candidateTargets(layout, ship, crew, activity, true), start);
+      pick = cands.find((t) => !taken.has(tileKey(t.station.x, t.station.y)));
+    }
+    if (!pick) pick = fallbackTile(layout, taken);
+    taken.add(tileKey(pick.station.x, pick.station.y));
+    out.set(crew.def.id, pick);
+  }
+  return out;
+}
+
+function waypoints(layout: ShipLayout, from: { x: number; y: number }, to: { x: number; y: number }, fromRoom: RoomId, toRoom: RoomId): Array<{ x: number; y: number }> {
   const rooms = roomPath(layout, fromRoom, toRoom);
-  const pts: Pt[] = [{ ...from }];
+  const pts: Array<{ x: number; y: number }> = [{ ...from }];
   for (let i = 0; i < rooms.length - 1; i++) {
     const door = doorBetween(layout, rooms[i], rooms[i + 1]);
     if (door) pts.push({ x: door.x, y: door.y });
@@ -135,11 +239,14 @@ function waypoints(layout: ShipLayout, from: Pt, to: Pt, fromRoom: RoomId, toRoo
   return pts;
 }
 
-function dist(a: Pt, b: Pt): number {
+function dist(a: { x: number; y: number }, b: { x: number; y: number }): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-function along(pts: Pt[], travel: number): { x: number; y: number; facing: Facing } {
+function along(
+  pts: Array<{ x: number; y: number }>,
+  travel: number
+): { x: number; y: number; facing: Facing } {
   if (pts.length === 0) return { x: 0, y: 0, facing: 's' };
   if (pts.length === 1 || travel <= 0) return { ...pts[0], facing: 's' };
   let left = travel;
@@ -163,27 +270,29 @@ function along(pts: Pt[], travel: number): { x: number; y: number; facing: Facin
 }
 
 function walkAnim(facing: Facing): CrewAnim {
-  return (`walk-${facing}` as CrewAnim);
+  return `walk-${facing}` as CrewAnim;
 }
 
-export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive, slot = 0): CrewPose {
+export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive, dest?: Target, origin?: Target): CrewPose {
   const layout = layoutOf(ship.def.id);
-  const dest = targetFor(layout, ship, crew, crew.activityKey, slot);
-  const origin = targetFor(layout, ship, crew, crew.prevActivityKey, slot);
+  const claimedDest = dest ?? pickOne(layout, ship, crew, crew.activityKey);
+  const claimedOrigin = origin ?? pickOne(layout, ship, crew, crew.prevActivityKey);
   const elapsed = Math.max(0, (t - crew.activityStartedAt) / 1000);
   let evaOutside = false;
-  let destStation = dest.station;
-  if (dest.eva && elapsed > EVA_EXIT_S && layout.hullEva.length) {
+  let destStation = claimedDest.station;
+  if (claimedDest.eva && elapsed > EVA_EXIT_S && layout.hullEva.length) {
     destStation = layout.hullEva[hash32(crew.def.id, 'eva') % layout.hullEva.length];
     evaOutside = true;
   }
-  const path = waypoints(layout, origin.station, destStation, origin.room, dest.room);
+  const path = waypoints(layout, claimedOrigin.station, destStation, claimedOrigin.room, claimedDest.room);
   let total = 0;
   for (let i = 0; i < path.length - 1; i++) total += dist(path[i], path[i + 1]);
   const walkT = total / TILE_SPEED;
   const walking = elapsed < walkT && total > 0.2;
-  const pos = walking ? along(path, elapsed * TILE_SPEED) : { x: destStation.x, y: destStation.y, facing: destStation.facing };
-  const eva = dest.eva && (walking || evaOutside || elapsed > walkT);
+  const pos = walking
+    ? along(path, elapsed * TILE_SPEED)
+    : { x: destStation.x, y: destStation.y, facing: destStation.facing };
+  const eva = claimedDest.eva && (walking || evaOutside || elapsed > walkT);
   let anim: CrewAnim = destStation.anim;
   if (walking) anim = walkAnim(pos.facing);
   else if (evaOutside) anim = walkAnim(destStation.facing);
@@ -191,10 +300,11 @@ export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive, slot = 0):
     if (crew.activityKey === 'act.sleep' || crew.activityKey === 'act.preSleep') anim = 'sleep-float';
   }
   if (destStation.hideSprite && !walking) anim = destStation.anim;
+  const at = roomAtTile(layout, Math.round(pos.x), Math.round(pos.y));
   return {
     crewId: crew.def.id,
     shipId: ship.def.id,
-    roomId: walking ? dest.room : evaOutside ? dest.room : dest.room,
+    roomId: walking ? (at?.id ?? claimedDest.room) : claimedDest.room,
     x: pos.x,
     y: pos.y,
     facing: walking ? pos.facing : destStation.facing,
@@ -206,12 +316,8 @@ export function crewPoseAt(t: number, crew: CrewLive, ship: ShipLive, slot = 0):
 }
 
 export function crewPosesForShip(t: number, ship: ShipLive): CrewPose[] {
-  const slots = new Map<string, number>();
-  return ship.crew.map((c) => {
-    const layout = layoutOf(ship.def.id);
-    const room = targetFor(layout, ship, c, c.activityKey).room;
-    const slot = slots.get(room) ?? 0;
-    slots.set(room, slot + 1);
-    return crewPoseAt(t, c, ship, slot);
-  });
+  const layout = layoutOf(ship.def.id);
+  const dests = assignCrewTargets(layout, ship, (c) => c.activityKey);
+  const origins = assignCrewTargets(layout, ship, (c) => c.prevActivityKey);
+  return ship.crew.map((c) => crewPoseAt(t, c, ship, dests.get(c.def.id), origins.get(c.def.id)));
 }

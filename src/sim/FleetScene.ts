@@ -6,6 +6,7 @@ import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
 import { crewHitBox } from './crewHit.ts';
 import { FLEET_LABEL_GAP, FLEET_LABEL_H, fleetLabelHeight, unionHitBox } from './fleetHit.ts';
+import { INTERIOR_PAD_BOTTOM, INTERIOR_PAD_X, INTERIOR_PAD_Y, interiorCamera } from './interiorCamera.ts';
 import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
 export type SimSelect =
@@ -326,8 +327,8 @@ class InteriorScene extends Phaser.Scene {
   private crewSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private animProps: Array<{ sprite: Phaser.GameObjects.Sprite; cols: number; dir: number; frames: number; ds: number; flash?: boolean }> = [];
   private layout!: ShipLayout;
-  private padX = 24;
-  private padY = 40;
+  private padX = INTERIOR_PAD_X;
+  private padY = INTERIOR_PAD_Y;
   private hoveredCrewId: string | null = null;
   private crewGlow!: Phaser.GameObjects.Ellipse;
   private crewTagBg!: Phaser.GameObjects.Graphics;
@@ -343,7 +344,7 @@ class InteriorScene extends Phaser.Scene {
     this.layout = layoutOf(shipId);
     const L = this.layout;
     const worldW = L.cols * TILE + this.padX * 2;
-    const worldH = L.rows * TILE + this.padY + 24;
+    const worldH = L.rows * TILE + this.padY + INTERIOR_PAD_BOTTOM;
 
     const stars = this.add.graphics();
     drawStarfield(stars, worldW + 200, worldH + 200, 17, 280);
@@ -498,13 +499,12 @@ class InteriorScene extends Phaser.Scene {
       .setVisible(false);
 
     this.cameras.main.setBounds(0, 0, worldW, worldH);
-    const zoom = Math.max(1, Math.min(2, Math.floor(this.scale.height / (L.rows * TILE * 0.55)) || 1));
-    this.cameras.main.setZoom(zoom);
-    const linear = L.rooms.every((r) => r.y0 === 0);
-    if (linear && L.cols > 28) this.cameras.main.centerOn(this.tx(9), this.ty(L.rows / 2));
-    else this.cameras.main.centerOn(this.tx(L.cols / 2), this.ty(L.rows / 2));
-    enablePan(this);
     this.syncCrew();
+    const poses = this.ship() ? crewPosesForShip(Date.now(), this.ship()!) : [];
+    const view = interiorCamera(L, poses, this.scale.width, this.scale.height);
+    this.cameras.main.setZoom(view.zoom);
+    this.cameras.main.centerOn(view.cx, view.cy);
+    enablePan(this);
   }
 
   private tx(tileX: number) {
