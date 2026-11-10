@@ -175,7 +175,8 @@ export const AnatomicalFigure: React.FC<{
   pulse: BodyRegionId | null;
   auraRank: Rank;
   labelFor: (id: BodyRegionId) => string;
-}> = ({ side, regionRank, selected, onSelect, pulse, auraRank, labelFor }) => {
+  hero?: boolean;
+}> = ({ side, regionRank, selected, onSelect, pulse, auraRank, labelFor, hero = false }) => {
   const [hover, setHover] = useState<BodyRegionId | null>(null);
   useEffect(() => {
     setHover(null);
@@ -191,7 +192,9 @@ export const AnatomicalFigure: React.FC<{
       className="relative mx-auto select-none overflow-hidden rounded-lg bg-black"
       style={{
         aspectRatio: '9 / 16',
-        width: 'min(100%, 26rem, calc((100vh - 13.75rem) * 9 / 16))',
+        width: hero
+          ? 'min(100%, 20rem, calc((100dvh - 15.5rem) * 9 / 16))'
+          : 'min(100%, 26rem, calc((100vh - 13.75rem) * 9 / 16))',
         height: 'auto',
       }}
     >

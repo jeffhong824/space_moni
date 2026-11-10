@@ -50,7 +50,8 @@ export const BodyMapDashboard: React.FC<{
   wx: SpaceEnvironmentPayload | null;
   onOpenAiCall: (prompt?: string) => void;
   compact?: boolean;
-}> = ({ crew, tNow, wx, onOpenAiCall, compact = false }) => {
+  hero?: boolean;
+}> = ({ crew, tNow, wx, onOpenAiCall, compact = false, hero = false }) => {
   const { t, lang } = useI18n();
   const [side, setSide] = useState<'front' | 'back'>('front');
   const [selected, setSelected] = useState<BodyRegionId | null>('heart');
@@ -89,8 +90,12 @@ export const BodyMapDashboard: React.FC<{
   };
 
   return (
-    <section className="rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 overflow-hidden">
-      <header className="px-4 py-3 border-b border-slate-800 flex flex-wrap items-start justify-between gap-2">
+    <section
+      className={`rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 overflow-hidden ${
+        hero ? 'lg:max-h-[calc(100dvh-7.5rem)] lg:flex lg:flex-col' : ''
+      }`}
+    >
+      <header className={`${hero ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-800 flex flex-wrap items-start justify-between gap-2 shrink-0`}>
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-sm font-bold tracking-tight">{t('body.title')}</h2>
@@ -109,8 +114,12 @@ export const BodyMapDashboard: React.FC<{
         </div>
       </header>
 
-      <div className={`grid ${compact ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(280px,420px)_1fr]'} gap-0`}>
-        <div className="p-3 border-b lg:border-b-0 lg:border-r border-slate-800">
+      <div
+        className={`grid ${compact ? 'lg:grid-cols-1' : hero ? 'lg:grid-cols-[minmax(220px,340px)_1fr]' : 'lg:grid-cols-[minmax(280px,420px)_1fr]'} gap-0 ${
+          hero ? 'min-h-0 flex-1 lg:overflow-hidden' : ''
+        }`}
+      >
+        <div className="p-3 border-b lg:border-b-0 lg:border-r border-slate-800 shrink-0">
           <div className="flex gap-1 mb-2">
             <button
               type="button"
@@ -136,12 +145,13 @@ export const BodyMapDashboard: React.FC<{
               pulse={pulseRegion}
               auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
               labelFor={(id) => t(`body.region.${id}`)}
+              hero={hero}
             />
           </div>
           <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">{t('body.credit')}</p>
         </div>
 
-        <div className="p-3 space-y-3 min-w-0">
+        <div className={`p-3 space-y-3 min-w-0 ${hero ? 'lg:overflow-y-auto lg:min-h-0' : ''}`}>
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-xs font-bold">{selected ? t(`body.region.${selected}`) : t('body.regionDetail')}</h3>
@@ -195,10 +205,8 @@ export const BodyMapDashboard: React.FC<{
               <p className="text-[10px] text-amber-300/80">{t('wear.liveStream')}</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="px-4 py-3 border-t border-slate-800 space-y-2">
+      <div className="px-1 py-1 border-t border-slate-800 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xs font-bold">{t('body.trends')}</h3>
           <div className="flex gap-1">
@@ -306,6 +314,8 @@ export const BodyMapDashboard: React.FC<{
               </button>
             ))}
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </section>

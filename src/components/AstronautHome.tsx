@@ -77,18 +77,16 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-slate-50/80">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-slate-900">{t('astro.title')}</h1>
-            <SimBadge />
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+    <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 bg-slate-50/80">
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-base font-bold text-slate-900">{t('astro.title')}</h1>
+          <SimBadge />
+          <p className="text-[11px] text-slate-500 truncate hidden md:block">
             {t('astro.simNote', { name: astronaut.name, date: todayRecord.date })}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <button
             type="button"
             onClick={() => onOpenAiCall()}
@@ -107,16 +105,17 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         </div>
       </header>
 
-      {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
-      {live && <WearableStrip live={live.crew} />}
       {CREW.find((c) => c.id === astronaut.id) && (
         <BodyMapDashboard
           crew={CREW.find((c) => c.id === astronaut.id)!}
           tNow={world.t}
           wx={spaceEnvironment}
           onOpenAiCall={onOpenAiCall}
+          hero
         />
       )}
+      {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
+      {live && <WearableStrip live={live.crew} />}
 
       {shelter && (
         <div className="rounded-2xl border-2 border-rose-400 bg-rose-50 p-4 text-rose-950 flex gap-3">

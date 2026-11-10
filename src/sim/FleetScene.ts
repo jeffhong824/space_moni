@@ -4,6 +4,7 @@ import { shipCrewStatus } from '../world/shipStatus.ts';
 import type { WorldState } from '../world/worldState.ts';
 import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
+import { crewHitBox } from './crewHit.ts';
 import { FLEET_LABEL_GAP, FLEET_LABEL_H, fleetLabelHeight, unionHitBox } from './fleetHit.ts';
 import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
@@ -23,11 +24,18 @@ const EARTH = { x: 170, y: 380 };
 const MOON = { x: 560, y: 180 };
 const MARS = { x: 980, y: 420 };
 
-function geomHit(obj: Phaser.GameObjects.GameObject, x: number, y: number, w: number, h: number) {
+function geomHit(
+  obj: Phaser.GameObjects.GameObject,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  hand = false
+) {
   obj.setInteractive({
     hitArea: new Phaser.Geom.Rectangle(x, y, w, h),
     hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    useHandCursor: true,
+    useHandCursor: hand,
     pixelPerfect: false,
   });
 }
@@ -194,7 +202,7 @@ class MapScene extends Phaser.Scene {
       color: '#5eead4',
     }).setOrigin(0.5, 0).setDepth(7).setVisible(false);
     const hit = this.add.rectangle(0, 0, 8, 8, 0x5eead4, 0.001).setOrigin(0, 0).setDepth(8);
-    geomHit(hit, 0, 0, 8, 8);
+    geomHit(hit, 0, 0, 8, 8, true);
     const pin: FleetPin = { id, kind, sprite, baseScale: scale, ring, glow, labelBg, title, sub, hint, hit, hovered: false };
     hit.on('pointerover', () => {
       pin.hovered = true;
@@ -320,6 +328,10 @@ class InteriorScene extends Phaser.Scene {
   private layout!: ShipLayout;
   private padX = 24;
   private padY = 40;
+  private hoveredCrewId: string | null = null;
+  private crewGlow!: Phaser.GameObjects.Ellipse;
+  private crewTagBg!: Phaser.GameObjects.Graphics;
+  private crewTag!: Phaser.GameObjects.Text;
 
   constructor() {
     super('interior');
@@ -428,11 +440,16 @@ class InteriorScene extends Phaser.Scene {
       const hy = this.ty(room.y0 + 1);
       const hw = Math.max(TILE, (room.x1 - room.x0 - 1) * TILE);
       const hh = Math.max(TILE, (room.y1 - room.y0 - 1) * TILE);
-      const hit = this.add.rectangle(hx, hy, hw, hh, 0x000000, co2 && room.id === 'eclss' ? 0.08 : 0.001).setOrigin(0, 0);
-      if (co2 && room.id === 'eclss') hit.setFillStyle(0xfb923c, 0.12);
-      if (storm && room.id === L.shelterRoom) hit.setFillStyle(0x38bdf8, 0.08);
-      geomHit(hit, 0, 0, hw, hh);
-      hit.on('pointerdown', () => {
+      const wash = this.add.rectangle(hx, hy, hw, hh, 0x000000, 0).setOrigin(0, 0).setDepth(2);
+      if (co2 && room.id === 'eclss') wash.setFillStyle(0xfb923c, 0.12);
+      else if (storm && room.id === L.shelterRoom) wash.setFillStyle(0x38bdf8, 0.08);
+
+      const lw = tw + 12;
+      const lh = 18;
+      const lx = x - tw / 2 - 6;
+      const labelHit = this.add.rectangle(lx, y, lw, lh, 0x000000, 0.001).setOrigin(0, 0).setDepth(16);
+      geomHit(labelHit, 0, 0, lw, lh, true);
+      labelHit.on('pointerdown', () => {
         const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
         if (shipId === 'hq-earth') onSelect?.({ kind: 'hq' });
         else onSelect?.({ kind: 'module', shipId, roomId: room.id });
@@ -470,6 +487,15 @@ class InteriorScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(20);
+
+    this.input.setTopOnly(true);
+    this.crewGlow = this.add.ellipse(0, 0, 44, 48, 0x5eead4, 0.22).setStrokeStyle(2, 0x99f6e4, 0.95).setVisible(false).setDepth(9);
+    this.crewTagBg = this.add.graphics().setDepth(14);
+    this.crewTag = this.add
+      .text(0, 0, '', { fontFamily: 'ui-sans-serif, system-ui, sans-serif', fontSize: '10px', color: '#f8fafc' })
+      .setOrigin(0.5, 1)
+      .setDepth(15)
+      .setVisible(false);
 
     this.cameras.main.setBounds(0, 0, worldW, worldH);
     const zoom = Math.max(1, Math.min(2, Math.floor(this.scale.height / (L.rows * TILE * 0.55)) || 1));
@@ -515,6 +541,51 @@ class InteriorScene extends Phaser.Scene {
     return sScaleElevated(this.ship()?.sScaleUsed);
   }
 
+  private bindCrewSprite(spr: Phaser.GameObjects.Sprite, crewId: string, name: string) {
+    const box = crewHitBox();
+    geomHit(spr, box.x, box.y, box.w, box.h, true);
+    spr.on('pointerover', () => this.showCrewHover(crewId, name, spr));
+    spr.on('pointerout', () => {
+      if (this.hoveredCrewId === crewId) this.hideCrewHover();
+    });
+    spr.on('pointerdown', () => {
+      const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
+      onSelect?.({ kind: 'crew', id: crewId });
+    });
+  }
+
+  private showCrewHover(crewId: string, name: string, spr: Phaser.GameObjects.Sprite) {
+    this.hoveredCrewId = crewId;
+    this.crewGlow.setPosition(spr.x + 16, spr.y + 16).setVisible(true);
+    this.crewTag.setText(name).setPosition(spr.x + 16, spr.y - 4).setVisible(true);
+    const tw = Math.ceil(this.crewTag.width) + 10;
+    const th = 16;
+    this.crewTagBg.clear();
+    this.crewTagBg.fillStyle(0x0f172a, 0.94);
+    this.crewTagBg.lineStyle(1, 0x5eead4, 1);
+    this.crewTagBg.fillRoundedRect(spr.x + 16 - tw / 2, spr.y - 4 - th, tw, th, 4);
+    this.crewTagBg.strokeRoundedRect(spr.x + 16 - tw / 2, spr.y - 4 - th, tw, th, 4);
+    this.crewTagBg.setVisible(true);
+  }
+
+  private hideCrewHover() {
+    this.hoveredCrewId = null;
+    this.crewGlow.setVisible(false);
+    this.crewTag.setVisible(false);
+    this.crewTagBg.clear();
+  }
+
+  private syncCrewHover() {
+    if (!this.hoveredCrewId) return;
+    const spr = this.crewSprites.get(this.hoveredCrewId);
+    if (!spr || !spr.visible) {
+      this.hideCrewHover();
+      return;
+    }
+    const name = this.crewTag.text;
+    this.showCrewHover(this.hoveredCrewId, name, spr);
+  }
+
   private syncCrew() {
     const ship = this.ship();
     if (!ship) {
@@ -528,23 +599,19 @@ class InteriorScene extends Phaser.Scene {
       seen.add(pose.crewId);
       let spr = this.crewSprites.get(pose.crewId);
       const key = `crew-${pose.sheet}`;
+      const crew = ship.crew.find((c) => c.def.id === pose.crewId);
       if (!spr) {
-        spr = this.add.sprite(this.tx(pose.x), this.ty(pose.y), key, 0).setOrigin(0, 0).setDepth(10);
-        geomHit(spr, 0, 0, 32, 32);
-        spr.on('pointerdown', () => {
-          const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
-          onSelect?.({ kind: 'crew', id: pose.crewId });
-        });
+        spr = this.add.sprite(this.tx(pose.x), this.ty(pose.y), key, 0).setOrigin(0, 0).setDepth(12);
+        this.bindCrewSprite(spr, pose.crewId, crew?.def.name ?? pose.crewId);
         this.crewSprites.set(pose.crewId, spr);
       }
       if (spr.texture.key !== key) spr.setTexture(key);
       spr.setPosition(this.tx(pose.x), this.ty(pose.y));
-      spr.setVisible(!pose.anim || true);
-      const crew = ship.crew.find((c) => c.def.id === pose.crewId);
       const hide = Boolean(crew && pose.anim && layoutOf(ship.def.id).rooms
         .flatMap((r) => r.stations)
         .some((s) => s.hideSprite && Math.abs(s.x - pose.x) < 0.4 && Math.abs(s.y - pose.y) < 0.4 && !pose.walking));
       spr.setVisible(!hide);
+      if (spr.input) spr.input.enabled = !hide;
       const animKey = `${key}-${pose.anim}`;
       if (this.anims.exists(animKey) && spr.anims.currentAnim?.key !== animKey) {
         spr.play(animKey);
@@ -552,10 +619,12 @@ class InteriorScene extends Phaser.Scene {
     }
     for (const [id, spr] of this.crewSprites) {
       if (!seen.has(id)) {
+        if (this.hoveredCrewId === id) this.hideCrewHover();
         spr.destroy();
         this.crewSprites.delete(id);
       }
     }
+    this.syncCrewHover();
   }
 
   private syncNpcs() {
