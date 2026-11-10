@@ -301,6 +301,7 @@
     "srcCabin": "艙內環境：",
     "srcWx": "空間天氣：",
     "noCabin": "未提供艙內讀數",
+    "notProvided": "未提供",
     "wxSnap": "官方饋送 {status}（擷取 {at}）",
     "noWx": "本次未附帶空間天氣快照",
     "rateLimited": "公開示範請求過於頻繁。請 {s} 秒後再試。",

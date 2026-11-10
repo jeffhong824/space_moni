@@ -301,6 +301,7 @@
     "srcCabin": "Cabin environment:",
     "srcWx": "Space weather:",
     "noCabin": "Cabin readings not provided",
+    "notProvided": "not provided",
     "wxSnap": "Official feed {status} (fetched {at})",
     "noWx": "No space-weather snapshot this turn",
     "rateLimited": "Public demo is busy. Try again in {s} seconds.",

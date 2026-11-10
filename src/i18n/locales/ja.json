@@ -301,6 +301,7 @@
     "srcCabin": "船内環境:",
     "srcWx": "宇宙天気:",
     "noCabin": "船内データなし",
+    "notProvided": "未提供",
     "wxSnap": "公式フィード {status}（取得 {at}）",
     "noWx": "今回は宇宙天気スナップショットなし",
     "rateLimited": "公開デモが混雑しています。{s} 秒後に再試行。",

@@ -301,6 +301,7 @@
     "srcCabin": "Cabina:",
     "srcWx": "Clima espacial:",
     "noCabin": "Sin lecturas de cabina",
+    "notProvided": "no proporcionado",
     "wxSnap": "Fuente oficial {status} (obtenido {at})",
     "noWx": "Sin instantánea de clima espacial",
     "rateLimited": "La demo pública está ocupada. Reintente en {s} s.",

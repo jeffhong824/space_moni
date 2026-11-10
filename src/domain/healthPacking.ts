@@ -92,6 +92,18 @@ function tr(lang: string, key: string, vars?: Record<string, string | number>) {
   return translate(lang, key, vars);
 }
 
+export function isFiniteVital(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n);
+}
+
+function vitalOrNotProvided(metric: PackedMetric | undefined, lang: string): string {
+  const value = metric?.value;
+  if (!value || !isFiniteVital(metric.numericValue) || /nan/i.test(value) || /infinity/i.test(value)) {
+    return tr(lang, 'ai.notProvided');
+  }
+  return value;
+}
+
 function analysisFor(
   id: keyof typeof THRESHOLDS,
   status: MetricStatus,
@@ -150,22 +162,27 @@ export function packHealthPayload(
   selfCheck?: SelfCheckEntry | null,
   lang: string = DEFAULT_LANG
 ): PackedHealthPayload {
-  const hr = statusRestingHR(record.restingHR);
-  const hrv = statusHrv(record.hrv);
-  const spo2 = statusSpo2(record.spo2);
-  const vo2 = statusVo2(record.vo2Max);
-  const sleep = statusSleep(record.avgSleepMinutes);
-  const exercise = statusExercise(record.avgExerciseMinutes);
+  const hr = isFiniteVital(record.restingHR) ? statusRestingHR(record.restingHR) : 'Normal';
+  const hrv = isFiniteVital(record.hrv) ? statusHrv(record.hrv) : 'Normal';
+  const spo2 = isFiniteVital(record.spo2) ? statusSpo2(record.spo2) : 'Normal';
+  const vo2 = isFiniteVital(record.vo2Max) ? statusVo2(record.vo2Max) : 'Normal';
+  const sleep = isFiniteVital(record.avgSleepMinutes) ? statusSleep(record.avgSleepMinutes) : 'Normal';
+  const exercise = isFiniteVital(record.avgExerciseMinutes) ? statusExercise(record.avgExerciseMinutes) : 'Normal';
 
-  const hrA = analysisFor('restingHR', hr, `${record.restingHR} bpm`, lang);
-  const hrvA = analysisFor('hrv', hrv, `${record.hrv} ms`, lang);
-  const spo2A = analysisFor('spo2', spo2, `${record.spo2}%`, lang);
-  const vo2A = analysisFor('vo2Max', vo2, `${record.vo2Max.toFixed(1)} mL/kg/min`, lang);
-  const sleepA = analysisFor('sleepMinutes', sleep, formatSleep(record.avgSleepMinutes), lang);
-  const exA = analysisFor('exerciseMinutes', exercise, `${record.avgExerciseMinutes} min`, lang);
+  const hrA = isFiniteVital(record.restingHR) ? analysisFor('restingHR', hr, `${record.restingHR} bpm`, lang) : null;
+  const hrvA = isFiniteVital(record.hrv) ? analysisFor('hrv', hrv, `${record.hrv} ms`, lang) : null;
+  const spo2A = isFiniteVital(record.spo2) ? analysisFor('spo2', spo2, `${record.spo2}%`, lang) : null;
+  const vo2A = isFiniteVital(record.vo2Max) ? analysisFor('vo2Max', vo2, `${record.vo2Max.toFixed(1)} mL/kg/min`, lang) : null;
+  const sleepA = isFiniteVital(record.avgSleepMinutes)
+    ? analysisFor('sleepMinutes', sleep, formatSleep(record.avgSleepMinutes), lang)
+    : null;
+  const exA = isFiniteVital(record.avgExerciseMinutes)
+    ? analysisFor('exerciseMinutes', exercise, `${record.avgExerciseMinutes} min`, lang)
+    : null;
 
-  const metrics: PackedMetric[] = [
-    {
+  const metrics: PackedMetric[] = [];
+  if (hrA && isFiniteVital(record.restingHR)) {
+    metrics.push({
       metric: tr(lang, 'metric.restingHR'),
       id: 'restingHR',
       value: `${record.restingHR} bpm`,
@@ -176,8 +193,10 @@ export function packHealthPayload(
       analysis: hrA.analysis,
       recommendations: hrA.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-    {
+    });
+  }
+  if (hrvA && isFiniteVital(record.hrv)) {
+    metrics.push({
       metric: tr(lang, 'metric.hrv'),
       id: 'hrv',
       value: `${record.hrv} ms`,
@@ -188,8 +207,10 @@ export function packHealthPayload(
       analysis: hrvA.analysis,
       recommendations: hrvA.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-    {
+    });
+  }
+  if (spo2A && isFiniteVital(record.spo2)) {
+    metrics.push({
       metric: tr(lang, 'metric.spo2'),
       id: 'spo2',
       value: `${record.spo2}%`,
@@ -200,8 +221,10 @@ export function packHealthPayload(
       analysis: spo2A.analysis,
       recommendations: spo2A.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-    {
+    });
+  }
+  if (vo2A && isFiniteVital(record.vo2Max)) {
+    metrics.push({
       metric: tr(lang, 'metric.vo2Max'),
       id: 'vo2Max',
       value: `${record.vo2Max.toFixed(1)} mL/kg/min`,
@@ -212,8 +235,10 @@ export function packHealthPayload(
       analysis: vo2A.analysis,
       recommendations: vo2A.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-    {
+    });
+  }
+  if (sleepA && isFiniteVital(record.avgSleepMinutes)) {
+    metrics.push({
       metric: tr(lang, 'metric.sleepMinutes'),
       id: 'sleepMinutes',
       value: formatSleep(record.avgSleepMinutes),
@@ -224,8 +249,10 @@ export function packHealthPayload(
       analysis: sleepA.analysis,
       recommendations: sleepA.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-    {
+    });
+  }
+  if (exA && isFiniteVital(record.avgExerciseMinutes)) {
+    metrics.push({
       metric: tr(lang, 'metric.exerciseMinutes'),
       id: 'exerciseMinutes',
       value: `${record.avgExerciseMinutes} min`,
@@ -236,8 +263,8 @@ export function packHealthPayload(
       analysis: exA.analysis,
       recommendations: exA.recommendations,
       source: tr(lang, 'badge.simTelemetry'),
-    },
-  ];
+    });
+  }
 
   const cardioStatus = hr === 'Critical' || hrv === 'Critical' ? 'Critical' : hr === 'Attention' || hrv === 'Attention' ? 'Attention' : 'Normal';
   const mentalStatus: MetricStatus = record.mentalStatus === 'Normal' ? 'Normal' : record.mentalStatus === 'Fatigued' ? 'Attention' : 'Attention';
@@ -252,8 +279,12 @@ export function packHealthPayload(
       status: cardioStatus,
       summary: cardioStatus === 'Normal' ? tr(lang, 'sys.cardioOk') : tr(lang, 'sys.cardioOff'),
       concerns: [
-        ...(hr !== 'Normal' ? [`${tr(lang, 'metric.restingHR')} ${record.restingHR} bpm (${statusLabel(lang, hr)})`] : []),
-        ...(hrv !== 'Normal' ? [`${tr(lang, 'metric.hrv')} ${record.hrv} ms (${statusLabel(lang, hrv)})`] : []),
+        ...(hr !== 'Normal' && isFiniteVital(record.restingHR)
+          ? [`${tr(lang, 'metric.restingHR')} ${record.restingHR} bpm (${statusLabel(lang, hr)})`]
+          : []),
+        ...(hrv !== 'Normal' && isFiniteVital(record.hrv)
+          ? [`${tr(lang, 'metric.hrv')} ${record.hrv} ms (${statusLabel(lang, hrv)})`]
+          : []),
       ],
       recommendations: cardioStatus === 'Normal' ? [tr(lang, 'rec.keepAred')] : [tr(lang, 'rec.hydrateLog'), tr(lang, 'rec.logGround')],
     },
@@ -261,22 +292,24 @@ export function packHealthPayload(
       system: 'Respiratory',
       status: spo2,
       summary: spo2 === 'Normal' ? tr(lang, 'sys.respOk') : tr(lang, 'sys.respOff'),
-      concerns: spo2 !== 'Normal' ? [`SpO₂ ${record.spo2}%`] : [],
+      concerns: spo2 !== 'Normal' && isFiniteVital(record.spo2) ? [`SpO₂ ${record.spo2}%`] : [],
       recommendations: spo2 === 'Normal' ? [tr(lang, 'rec.routineGas')] : [tr(lang, 'rec.checkEclss'), tr(lang, 'rec.noPeakSpo2')],
     },
     {
       system: 'Sleep',
       status: sleep,
       summary: sleep === 'Normal' ? tr(lang, 'sys.sleepOk') : tr(lang, 'sys.sleepOff'),
-      concerns: sleep !== 'Normal' ? [`${tr(lang, 'metric.sleepMinutes')} ${formatSleep(record.avgSleepMinutes)}`] : [],
-      recommendations: sleepA.recommendations,
+      concerns: sleep !== 'Normal' && isFiniteVital(record.avgSleepMinutes) ? [`${tr(lang, 'metric.sleepMinutes')} ${formatSleep(record.avgSleepMinutes)}`] : [],
+      recommendations: sleepA?.recommendations ?? [tr(lang, 'rec.sleepHabit')],
     },
     {
       system: 'Exercise',
       status: exercise,
       summary: exercise === 'Normal' ? tr(lang, 'sys.exOk') : tr(lang, 'sys.exOff'),
-      concerns: exercise !== 'Normal' ? [`${tr(lang, 'metric.exerciseMinutes')} ${record.avgExerciseMinutes} min`] : [],
-      recommendations: exA.recommendations,
+      concerns: exercise !== 'Normal' && isFiniteVital(record.avgExerciseMinutes)
+        ? [`${tr(lang, 'metric.exerciseMinutes')} ${record.avgExerciseMinutes} min`]
+        : [],
+      recommendations: exA?.recommendations ?? [tr(lang, 'rec.resistAerobic')],
     },
     {
       system: 'Mental',
@@ -369,8 +402,8 @@ export function buildOfflineTwoLevelAnalysis(
       name: astronaut.name,
       message,
       summary: overall.summary,
-      hr: hr?.value ?? '—',
-      spo2: spo2?.value ?? '—',
+      hr: vitalOrNotProvided(hr, lang),
+      spo2: vitalOrNotProvided(spo2, lang),
       action,
       wx: wxNote,
     }),

@@ -102,8 +102,8 @@ export const SimWorldPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="min-h-14 px-4 py-2 flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80">
+    <div className="h-dvh max-h-dvh overflow-hidden bg-slate-950 text-slate-100 flex flex-col">
+      <header className="min-h-14 shrink-0 px-4 py-2 flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-bold">{t('sim.title')}</h1>
@@ -143,8 +143,8 @@ export const SimWorldPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex-1 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,22rem)] min-h-0">
-        <div className="relative min-h-[280px] lg:min-h-0" ref={host}>
+      <div className="flex-1 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,22rem)] grid-rows-[minmax(8rem,1fr)_minmax(10rem,1fr)] lg:grid-rows-[minmax(0,1fr)] min-h-0 overflow-hidden">
+        <div className="relative min-h-0 overflow-hidden" ref={host}>
           {loading && (
             <p className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">{t('sim.loadingEngine')}</p>
           )}
@@ -154,7 +154,7 @@ export const SimWorldPage: React.FC = () => {
             </p>
           )}
         </div>
-        <aside className="border-t lg:border-t-0 lg:border-l border-slate-800 p-4 overflow-y-auto space-y-3 bg-slate-900">
+        <aside className="border-t lg:border-t-0 lg:border-l border-slate-800 p-4 min-h-0 overflow-y-auto overscroll-contain space-y-3 bg-slate-900">
           <p className="text-[11px] text-slate-400">{t('sim.clickHint')}</p>
           {mobile && <p className="text-[11px] text-slate-500">{t('sim.mobileHint')}</p>}
           {view.kind !== 'map' && (
@@ -263,7 +263,7 @@ function HqPanel({
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   return (
-    <div className="rounded-xl border border-sky-700/50 bg-slate-800 p-3 space-y-3">
+    <div className="rounded-xl border border-sky-700/50 bg-slate-800 p-3 space-y-3 max-h-full min-h-0 overflow-y-auto overscroll-contain">
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-bold">{t('hq.title')}</h2>
         <SimBadge />
@@ -282,7 +282,7 @@ function HqPanel({
           {board.weather.gScale} · {board.weather.rScale} · {board.weather.sScale}
         </span>
       </div>
-      <ul className="space-y-1">
+      <ul className="space-y-1 max-h-[min(28rem,calc(100dvh-16rem))] overflow-y-auto overscroll-contain pr-0.5">
         {board.ships.map((row) => {
           const st = row.status === 'Attention' ? 'Attention' : row.status;
           return (
