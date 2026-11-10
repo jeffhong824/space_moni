@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { boxContains, FLEET_CLICK_IDS, FLEET_LABEL_H, isFleetClickId, unionHitBox } from './fleetHit.ts';
+import {
+  boxContains,
+  FLEET_CLICK_IDS,
+  FLEET_HINT_H,
+  FLEET_LABEL_H,
+  fleetLabelHeight,
+  isFleetClickId,
+  unionHitBox,
+} from './fleetHit.ts';
 
 describe('fleet map hit areas', () => {
   it('lists every ship plus Earth HQ and no decorative craft', () => {
@@ -18,6 +26,17 @@ describe('fleet map hit areas', () => {
     expect(boxContains(box, 0, 147 / 2 + 6 + 4)).toBe(true);
     expect(boxContains(box, -60, 147 / 2 + 6 + FLEET_LABEL_H - 1)).toBe(true);
     expect(boxContains(box, 400, 400)).toBe(false);
+  });
+
+  it('keeps the hover “Click to enter” line inside the label card, not over nearby captions', () => {
+    expect(fleetLabelHeight(false)).toBe(FLEET_LABEL_H);
+    expect(fleetLabelHeight(true)).toBe(FLEET_LABEL_H + FLEET_HINT_H);
+    const rest = unionHitBox(96, 64, 1, 88, fleetLabelHeight(false));
+    const hover = unionHitBox(96, 64, 1, 88, fleetLabelHeight(true));
+    expect(hover.h).toBeGreaterThan(rest.h);
+    const hintY = 64 / 2 + 6 + FLEET_LABEL_H + 2;
+    expect(boxContains(hover, 0, hintY)).toBe(true);
+    expect(boxContains(rest, 0, hintY)).toBe(false);
   });
 
   it('grows with planet scale so Earth HQ is fully clickable', () => {

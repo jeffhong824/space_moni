@@ -4,7 +4,7 @@ import { shipCrewStatus } from '../world/shipStatus.ts';
 import type { WorldState } from '../world/worldState.ts';
 import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
-import { FLEET_LABEL_GAP, FLEET_LABEL_H, unionHitBox } from './fleetHit.ts';
+import { FLEET_LABEL_GAP, FLEET_LABEL_H, fleetLabelHeight, unionHitBox } from './fleetHit.ts';
 import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
 export type SimSelect =
@@ -126,13 +126,13 @@ interface FleetPin {
   labelBg: Phaser.GameObjects.Graphics;
   title: Phaser.GameObjects.Text;
   sub: Phaser.GameObjects.Text;
+  hint: Phaser.GameObjects.Text;
   hit: Phaser.GameObjects.Rectangle;
   hovered: boolean;
 }
 
 class MapScene extends Phaser.Scene {
   private pins: FleetPin[] = [];
-  private tooltip!: Phaser.GameObjects.Text;
 
   constructor() {
     super('map');
@@ -165,18 +165,6 @@ class MapScene extends Phaser.Scene {
       this.pins.push(this.makePin(id, 'ship', id, 1));
     }
 
-    this.tooltip = this.add
-      .text(0, 0, t('sim.clickEnter'), {
-        fontFamily: 'ui-monospace, monospace',
-        fontSize: '10px',
-        color: '#ecfeff',
-        backgroundColor: '#0f172a',
-        padding: { x: 6, y: 3 },
-      })
-      .setOrigin(0.5, 1)
-      .setDepth(30)
-      .setVisible(false);
-
     this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
     const fit = Math.min(this.scale.width / MAP_W, this.scale.height / MAP_H);
     this.cameras.main.setZoom(Math.max(1, Math.min(2, Math.floor(fit) || 1)));
@@ -200,9 +188,14 @@ class MapScene extends Phaser.Scene {
       fontSize: '9px',
       color: '#94a3b8',
     }).setOrigin(0.5, 0).setDepth(7);
+    const hint = this.add.text(0, 0, '', {
+      fontFamily: 'ui-monospace, monospace',
+      fontSize: '9px',
+      color: '#5eead4',
+    }).setOrigin(0.5, 0).setDepth(7).setVisible(false);
     const hit = this.add.rectangle(0, 0, 8, 8, 0x5eead4, 0.001).setOrigin(0, 0).setDepth(8);
     geomHit(hit, 0, 0, 8, 8);
-    const pin: FleetPin = { id, kind, sprite, baseScale: scale, ring, glow, labelBg, title, sub, hit, hovered: false };
+    const pin: FleetPin = { id, kind, sprite, baseScale: scale, ring, glow, labelBg, title, sub, hint, hit, hovered: false };
     hit.on('pointerover', () => {
       pin.hovered = true;
       this.input.setDefaultCursor('pointer');
@@ -264,7 +257,6 @@ class MapScene extends Phaser.Scene {
     const world: WorldState | undefined = this.registry.get('world');
     const t: SimTranslate = this.registry.get('t');
     if (!world) return;
-    let hoverTip: { x: number; y: number; text: string } | null = null;
     for (const pin of this.pins) {
       const pos = pin.kind === 'hq' ? EARTH : this.shipXY(pin.id, world);
       pin.sprite.setPosition(pos.x, pos.y);
@@ -274,17 +266,26 @@ class MapScene extends Phaser.Scene {
       const sub = pin.kind === 'hq' ? t('sim.earthHint') : `${t(ship?.def.kindKey ?? '')} · ${ship?.crew.length ?? 0}`;
       pin.title.setText(title);
       pin.sub.setText(sub);
-      const tw = Math.max(pin.title.width, pin.sub.width) + 16;
+      pin.hint.setText(t('sim.clickEnter'));
+      pin.hint.setVisible(pin.hovered);
+      const labelH = fleetLabelHeight(pin.hovered);
+      const tw = Math.max(pin.title.width, pin.sub.width, pin.hovered ? pin.hint.width : 0) + 16;
       const labelY = pos.y + pin.sprite.displayHeight / 2 + FLEET_LABEL_GAP;
+      const labelDepth = pin.hovered ? 16 : 6;
+      pin.labelBg.setDepth(labelDepth);
+      pin.title.setDepth(labelDepth + 1);
+      pin.sub.setDepth(labelDepth + 1);
+      pin.hint.setDepth(labelDepth + 1);
       pin.labelBg.clear();
-      pin.labelBg.fillStyle(0x0f172a, 0.92);
-      pin.labelBg.lineStyle(1, color, 1);
-      pin.labelBg.fillRoundedRect(pos.x - tw / 2, labelY, tw, FLEET_LABEL_H, 6);
-      pin.labelBg.strokeRoundedRect(pos.x - tw / 2, labelY, tw, FLEET_LABEL_H, 6);
+      pin.labelBg.fillStyle(0x0f172a, 0.96);
+      pin.labelBg.lineStyle(pin.hovered ? 2 : 1, pin.hovered ? 0xf0fdfa : color, 1);
+      pin.labelBg.fillRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
+      pin.labelBg.strokeRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
       pin.title.setPosition(pos.x, labelY + 3);
       pin.sub.setPosition(pos.x, labelY + 19);
+      pin.hint.setPosition(pos.x, labelY + FLEET_LABEL_H - 1);
 
-      const box = unionHitBox(pin.sprite.width, pin.sprite.height, pin.baseScale, tw, FLEET_LABEL_H, FLEET_LABEL_GAP);
+      const box = unionHitBox(pin.sprite.width, pin.sprite.height, pin.baseScale, tw, labelH, FLEET_LABEL_GAP);
       pin.hit.setPosition(pos.x + box.x, pos.y + box.y);
       pin.hit.setSize(box.w, box.h);
       const area = pin.hit.input?.hitArea;
@@ -294,7 +295,7 @@ class MapScene extends Phaser.Scene {
       pin.ring.clear();
       pin.ring.lineStyle(1, color, pulse);
       const rx = Math.max(pin.sprite.displayWidth, tw) / 2 + 10;
-      const ry = (pin.sprite.displayHeight + FLEET_LABEL_H + FLEET_LABEL_GAP) / 2 + 8;
+      const ry = (pin.sprite.displayHeight + labelH + FLEET_LABEL_GAP) / 2 + 8;
       pin.ring.strokeEllipse(pos.x, pos.y + FLEET_LABEL_GAP / 2, rx * 2, ry * 2);
 
       pin.glow.clear();
@@ -302,15 +303,9 @@ class MapScene extends Phaser.Scene {
         pin.sprite.setScale(pin.baseScale * 1.08);
         pin.glow.lineStyle(2, 0xf0fdfa, 0.9);
         pin.glow.strokeRoundedRect(pos.x + box.x - 2, pos.y + box.y - 2, box.w + 4, box.h + 4, 8);
-        hoverTip = { x: pos.x, y: pos.y + box.y - 6, text: t('sim.clickEnter') };
       } else {
         pin.sprite.setScale(pin.baseScale);
       }
-    }
-    if (hoverTip) {
-      this.tooltip.setText(hoverTip.text).setPosition(hoverTip.x, hoverTip.y).setVisible(true);
-    } else {
-      this.tooltip.setVisible(false);
     }
   }
 

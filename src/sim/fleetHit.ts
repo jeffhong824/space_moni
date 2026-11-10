@@ -1,7 +1,13 @@
 /** Pure hit-box helpers for fleet-map sprites + label cards. Sprite origin is center. */
 
 export const FLEET_LABEL_H = 36;
+export const FLEET_HINT_H = 16;
 export const FLEET_LABEL_GAP = 6;
+
+/** Resting vs hover card height. Hover adds an in-card “Click to enter” line. */
+export function fleetLabelHeight(hovered: boolean): number {
+  return hovered ? FLEET_LABEL_H + FLEET_HINT_H : FLEET_LABEL_H;
+}
 export const FLEET_CLICK_IDS = ['ship-harmony', 'ship-gateway', 'ship-ares', 'ship-mare', 'earth-hq'] as const;
 export type FleetClickId = (typeof FLEET_CLICK_IDS)[number];
 
