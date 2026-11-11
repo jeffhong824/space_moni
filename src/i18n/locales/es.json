@@ -1596,7 +1596,14 @@
     "preExercise": "PA/FC pre-ejercicio",
     "evening": "Registro nocturno (21:00)",
     "logNow": "Registrar ahora",
-    "later": "Mas tarde"
+    "later": "Mas tarde",
+    "nextCheckIn": "Proximo registro: {label}",
+    "preview": "Vista previa del aviso",
+    "when": {
+      "morning": "Manana 07:30",
+      "preExercise": "Pre-ejercicio 16:00",
+      "evening": "Noche 21:00"
+    }
   },
   "streak": {
     "chip": "Racha {n} dias · Hoy {done}/{total}"

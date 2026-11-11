@@ -59,7 +59,7 @@ const CITATIONS = [
     title: 'NASA image AS09-20-3064 (Apollo 9)',
     usedKey: 'sources.cite.apollo9.used',
     noteKey: 'sources.cite.apollo9.note',
-    url: 'https://images.nasa.gov/details-as09-20-3064',
+    url: 'https://images.nasa.gov/details/as09-20-3064',
   },
 ] as const;
 

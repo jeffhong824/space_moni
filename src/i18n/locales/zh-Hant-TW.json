@@ -1596,7 +1596,14 @@
     "preExercise": "運動前血壓／心率到期",
     "evening": "晚間紀錄（21:00）到期",
     "logNow": "現在記錄",
-    "later": "稍後"
+    "later": "稍後",
+    "nextCheckIn": "下次打卡：{label}",
+    "preview": "預覽提醒",
+    "when": {
+      "morning": "晨間 07:30",
+      "preExercise": "運動前 16:00",
+      "evening": "晚間 21:00"
+    }
   },
   "streak": {
     "chip": "連續 {n} 日 · 今日 {done}/{total}"

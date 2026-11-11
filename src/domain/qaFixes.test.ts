@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { flattenKeys, translate } from '../i18n/index.ts';
 import { LANGUAGES, LOCALE_TABLES } from '../i18n/registry.ts';
@@ -5,6 +8,8 @@ import { earthDelayForKind } from './earthDelay.ts';
 import { SCIENCE_ROWS } from './scienceTrace.ts';
 import { egressModeForKind, egressVerdict } from './egressReady.ts';
 import { THRESHOLDS } from './healthThresholds.ts';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 describe('QA fixes from production check 1573626', () => {
   it('science source cell has no leftover Gateway wording', () => {
@@ -73,6 +78,36 @@ describe('locale CJK / Han scan', () => {
       };
       walk(LOCALE_TABLES[lang], '');
       expect(hits, lang).toEqual([]);
+    }
+  });
+});
+
+describe('QA fixes from production check 6235bd1', () => {
+  it('Apollo 9 credit uses images.nasa.gov/details/as09-20-3064', () => {
+    const files = ['ASSETS_LICENSES.md', join('src', 'components', 'DataSourcesPage.tsx')];
+    for (const rel of files) {
+      const src = readFileSync(join(ROOT, rel), 'utf8');
+      expect(src, rel).toContain('https://images.nasa.gov/details/as09-20-3064');
+      expect(src, rel).not.toContain('details-as09-20-3064');
+    }
+  });
+
+  it('login hero photo and credit render on mobile, not only md:flex', () => {
+    const src = readFileSync(join(ROOT, 'src', 'components', 'LoginPage.tsx'), 'utf8');
+    expect(src).toContain('flex md:hidden');
+    expect(src).toContain('login.heroCaptionNasa');
+    expect(src).toContain('as09-20-3064.jpg');
+    expect(src).toMatch(/onStartTour/);
+  });
+
+  it('next check-in copy is localized and names Evening 21:00', () => {
+    expect(translate('en', 'prompt.nextCheckIn', { label: translate('en', 'prompt.when.evening') })).toBe(
+      'Next check-in: Evening 21:00'
+    );
+    expect(translate('en', 'prompt.preview')).toMatch(/preview/i);
+    for (const lang of LANGUAGES) {
+      expect(translate(lang.id, 'prompt.nextCheckIn', { label: translate(lang.id, 'prompt.when.evening') }).length).toBeGreaterThan(8);
+      expect(flattenKeys(LOCALE_TABLES[lang.id])).toEqual(expect.arrayContaining(['prompt.preview', 'prompt.when.evening']));
     }
   });
 });

@@ -9,15 +9,18 @@ export interface DailyPrompt {
   id: PromptId;
   dueMin: number;
   labelKey: string;
+  whenKey: string;
 }
 
 export const DAILY_PROMPTS: DailyPrompt[] = [
-  { id: 'morning', dueMin: 7 * 60 + 30, labelKey: 'prompt.morning' },
-  { id: 'preExercise', dueMin: 16 * 60, labelKey: 'prompt.preExercise' },
-  { id: 'evening', dueMin: 21 * 60, labelKey: 'prompt.evening' },
+  { id: 'morning', dueMin: 7 * 60 + 30, labelKey: 'prompt.morning', whenKey: 'prompt.when.morning' },
+  { id: 'preExercise', dueMin: 16 * 60, labelKey: 'prompt.preExercise', whenKey: 'prompt.when.preExercise' },
+  { id: 'evening', dueMin: 21 * 60, labelKey: 'prompt.evening', whenKey: 'prompt.when.evening' },
 ];
 
 export const SNOOZE_MS = 30 * 60 * 1000;
+/** Open toast window after dueMin, in minutes. */
+export const PROMPT_WINDOW_MIN = 90;
 
 export function promptsKey(account: string, dayIso: string): string {
   return `spacemoni.prompts.${account}.${dayIso}`;
@@ -59,8 +62,13 @@ export function promptState(
   if (nowMin < def.dueMin) return 'due';
   const snooze = store.snoozeUntil[id] ?? 0;
   if (nowMs < snooze) return 'due';
-  if (nowMin > def.dueMin + 90) return 'missed';
+  if (nowMin > def.dueMin + PROMPT_WINDOW_MIN) return 'missed';
   return 'due';
+}
+
+/** Next scheduled check-in (wraps to tomorrow morning after 21:00). */
+export function nextScheduledPrompt(nowMin: number): DailyPrompt {
+  return DAILY_PROMPTS.find((p) => nowMin < p.dueMin) ?? DAILY_PROMPTS[0];
 }
 
 export function duePrompts(account: string, dayIso: string, nowMin: number, nowMs = Date.now()): DailyPrompt[] {

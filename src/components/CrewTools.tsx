@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { METRIC_IDS } from '../domain/crewSystems';
-import { DAILY_PROMPTS, duePrompts, markPromptDone, snoozePrompt } from '../domain/dailyPrompts';
+import { duePrompts, markPromptDone, nextScheduledPrompt, snoozePrompt } from '../domain/dailyPrompts';
 import {
   EVA_POST_ITEMS,
   EVA_PRE_ITEMS,
@@ -114,33 +114,65 @@ export function PromptToast({
 }) {
   const { t } = useI18n();
   const [, bump] = useState(0);
+  const [preview, setPreview] = useState(false);
   const due = duePrompts(account, dayIso, nowMin);
-  if (!due.length) return null;
-  const p = due[0];
+  const next = nextScheduledPrompt(nowMin);
+  const live = due[0];
+  const showing = live ?? (preview ? next : null);
+
+  if (showing) {
+    const isPreview = !live;
+    return (
+      <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-3 py-2 flex flex-wrap items-center gap-2">
+        <p className="text-[12px] font-semibold flex-1">{t(showing.labelKey)}</p>
+        {isPreview && (
+          <span className="text-[10px] font-bold uppercase tracking-wide text-amber-800">{t('common.demo')}</span>
+        )}
+        <button
+          type="button"
+          className="h-8 px-3 rounded-full bg-[var(--sm-cobalt)] text-white text-[11px] font-semibold"
+          onClick={() => {
+            if (isPreview) {
+              setPreview(false);
+              onLog();
+              return;
+            }
+            markPromptDone(account, dayIso, showing.id, new Date().toISOString());
+            tickStreak(account, dayIso, 'prompt');
+            onLog();
+            bump((n) => n + 1);
+          }}
+        >
+          {t('prompt.logNow')}
+        </button>
+        <button
+          type="button"
+          className="h-8 px-3 rounded-full bg-white text-[11px] font-semibold"
+          onClick={() => {
+            if (isPreview) {
+              setPreview(false);
+              return;
+            }
+            snoozePrompt(account, dayIso, showing.id);
+            bump((n) => n + 1);
+          }}
+        >
+          {t('prompt.later')}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-3 py-2 flex flex-wrap items-center gap-2">
-      <p className="text-[12px] font-semibold flex-1">{t(p.labelKey)}</p>
+    <div className="rounded-[20px] bg-white/90 px-3 py-2 flex flex-wrap items-center gap-2 shadow-[var(--sm-shadow-soft)]">
+      <p className="text-[12px] text-stone-600 flex-1">{t('prompt.nextCheckIn', { label: t(next.whenKey) })}</p>
       <button
         type="button"
-        className="h-8 px-3 rounded-full bg-[var(--sm-cobalt)] text-white text-[11px] font-semibold"
-        onClick={() => {
-          markPromptDone(account, dayIso, p.id, new Date().toISOString());
-          tickStreak(account, dayIso, 'prompt');
-          onLog();
-          bump((n) => n + 1);
-        }}
+        className="h-8 px-3 rounded-full bg-white text-[11px] font-semibold border border-stone-200"
+        onClick={() => setPreview(true)}
       >
-        {t('prompt.logNow')}
-      </button>
-      <button
-        type="button"
-        className="h-8 px-3 rounded-full bg-white text-[11px] font-semibold"
-        onClick={() => {
-          snoozePrompt(account, dayIso, p.id);
-          bump((n) => n + 1);
-        }}
-      >
-        {t('prompt.later')}
+        {t('prompt.preview')}
+        <span className="ml-1 text-[10px] font-bold uppercase text-stone-400">{t('common.demo')}</span>
       </button>
     </div>
   );

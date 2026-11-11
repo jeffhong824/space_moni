@@ -15,9 +15,32 @@ import {
 
 interface LoginPageProps {
   onLogin: (user: AuthUser) => void;
+  onStartTour?: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+function ApolloHero({ compact = false }: { compact?: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <div className={`relative aspect-square ${compact ? 'w-24' : 'w-[min(78vw,420px)]'}`}>
+        <div className="absolute inset-0 rounded-full bg-white/50 shadow-[0_40px_80px_rgba(40,36,28,0.12)]" />
+        <div className={`absolute overflow-hidden shadow-inner ${compact ? 'inset-[4%]' : 'inset-[6%]'} rounded-full`}>
+          <img
+            src="/assets/nasa/as09-20-3064.jpg"
+            alt={t('login.heroAlt')}
+            className="w-full h-full object-cover scale-110"
+          />
+        </div>
+        <div className="absolute inset-0 rounded-full pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.55)]" />
+      </div>
+      <p className={`text-stone-500 ${compact ? 'mt-2 text-[11px] text-center leading-snug px-2' : 'mt-5 text-[13px]'}`}>
+        {t('login.heroCaptionNasa')}
+      </p>
+    </div>
+  );
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onStartTour }) => {
   const { t } = useI18n();
   const [role, setRole] = useState<UserRole>('Astronaut');
   const [account, setAccount] = useState<string>('alice_smith');
@@ -83,23 +106,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <LanguageGlobe />
       </div>
 
-      <div className="h-full w-full grid md:grid-cols-2 items-center gap-8 px-6 sm:px-12 lg:px-16">
+      <div className="h-full w-full grid md:grid-cols-2 items-center gap-4 md:gap-8 px-6 sm:px-12 lg:px-16">
         <div className="hidden md:flex flex-col items-center justify-center">
-          <div className="relative w-[min(78vw,420px)] aspect-square">
-            <div className="absolute inset-0 rounded-full bg-white/50 shadow-[0_40px_80px_rgba(40,36,28,0.12)]" />
-            <div className="absolute inset-[6%] rounded-full overflow-hidden shadow-inner">
-              <img
-                src="/assets/nasa/as09-20-3064.jpg"
-                alt={t('login.heroAlt')}
-                className="w-full h-full object-cover scale-110"
-              />
-            </div>
-            <div className="absolute inset-0 rounded-full pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.55)]" />
-          </div>
-          <p className="mt-5 text-[13px] text-stone-500">{t('login.heroCaptionNasa')}</p>
+          <ApolloHero />
         </div>
 
-        <div className="max-w-md w-full mx-auto py-10 max-h-full overflow-y-auto">
+        <div className="max-w-md w-full mx-auto py-6 md:py-10 max-h-full overflow-y-auto">
+          <div className="flex md:hidden justify-center mb-4">
+            <ApolloHero compact />
+          </div>
           <h1 className="font-display text-4xl sm:text-5xl text-stone-900">{t('login.welcome')}</h1>
           <p className="mt-2 text-sm text-stone-500">{t('login.subtitle')}</p>
 
@@ -217,6 +232,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <button
               type="button"
               onClick={() => {
+                if (onStartTour) {
+                  onStartTour();
+                  return;
+                }
                 window.history.pushState({}, '', '/tour?tour=1');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}

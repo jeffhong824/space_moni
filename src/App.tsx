@@ -31,6 +31,7 @@ import type { SelfCheckEntry } from './domain/healthThresholds';
 import type { CaseMeta } from './domain/clinicalCases';
 import { useI18n } from './i18n/I18nProvider';
 import { GUEST_ACCOUNT } from './world/accounts';
+import { TOUR_PATH, wantsTour } from './domain/tour';
 import { CREW, crewByLogin } from './world/catalog';
 import { calendarDayNumber, findCrewLive, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
 import { crewPanelAt } from './domain/crewSystems';
@@ -50,26 +51,30 @@ import type { EnvironmentalMetrics } from './types';
 
 const SimWorldPage = lazy(() => import('./sim/SimWorldPage').then((m) => ({ default: m.SimWorldPage })));
 
-function usePath() {
-  const [path, setPath] = useState(() => (typeof window === 'undefined' ? '/' : window.location.pathname));
+function useLocationPath() {
+  const [loc, setLoc] = useState(() =>
+    typeof window === 'undefined'
+      ? { path: '/', search: '' }
+      : { path: window.location.pathname, search: window.location.search }
+  );
   useEffect(() => {
-    const onPop = () => setPath(window.location.pathname);
+    const onPop = () => setLoc({ path: window.location.pathname, search: window.location.search });
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-  return path;
+  return loc;
 }
 
 export default function App() {
   const { t, lang } = useI18n();
-  const path = usePath();
+  const { path, search } = useLocationPath();
   const [now, setNow] = useState(() => Date.now());
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     const stored = readDemoSession();
     if (stored) return enrichUser(stored);
     if (typeof window !== 'undefined') {
       const p = window.location.pathname.replace(/\/+$/, '') || '/';
-      if (p === '/sim' || p === '/world' || p === '/science' || p === '/tour') {
+      if (p === '/sim' || p === '/world' || p === '/science' || wantsTour(p, window.location.search)) {
         writeDemoSession(GUEST_ACCOUNT);
         return GUEST_ACCOUNT;
       }
@@ -128,16 +133,16 @@ export default function App() {
   const envMetrics = { ...selectedShip.cabin, ...cabinPatch };
 
   const view: AppView = currentUser ? coerceView(path, currentUser.role) : defaultView('Astronaut');
-  const [tourOpen, setTourOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const p = window.location.pathname.replace(/\/+$/, '') || '/';
-    return p === '/tour' || new URLSearchParams(window.location.search).get('tour') === '1';
-  });
+  const [tourOpen, setTourOpen] = useState(() =>
+    typeof window === 'undefined' ? false : wantsTour(window.location.pathname, window.location.search)
+  );
   useEffect(() => {
-    const p = path.replace(/\/+$/, '') || '/';
-    const q = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tour') : null;
-    if (p === '/tour' || q === '1') setTourOpen(true);
-  }, [path]);
+    if (!wantsTour(path, search)) return;
+    setTourOpen(true);
+    if (currentUser) return;
+    writeDemoSession(GUEST_ACCOUNT);
+    setCurrentUser(GUEST_ACCOUNT);
+  }, [path, search, currentUser]);
   const pageView: AppView = view === 'tour' && currentUser ? defaultView(currentUser.role) : view;
 
   const go = useCallback((next: AppView) => {
@@ -203,15 +208,43 @@ export default function App() {
     setSelectedAstronaut(astro);
   };
 
-  const handleLogin = (user: AuthUser, opts?: { keepPath?: boolean }) => {
+  const handleLogin = useCallback((user: AuthUser, opts?: { keepPath?: boolean }) => {
     const enriched = enrichUser(user);
     writeDemoSession(enriched);
-    setCurrentUser(enriched);
+    setCurrentUser((prev) => (prev?.account === enriched.account ? prev : enriched));
     const crew = crewByLogin(enriched.account);
-    if (crew) setSelectedAstronaut(crewToProfile(crew, now));
-    else if (enriched.role === 'NASA') setSelectedAstronaut(crewToProfile(CREW[1], now));
+    if (crew) {
+      setSelectedAstronaut((prev) => (prev.id === crew.id ? prev : crewToProfile(crew, Date.now())));
+    } else if (enriched.role === 'NASA') {
+      setSelectedAstronaut((prev) => (prev.id === CREW[1].id ? prev : crewToProfile(CREW[1], Date.now())));
+    }
     if (!opts?.keepPath) replaceView(defaultView(enriched.role));
-  };
+  }, []);
+
+  const startTour = useCallback(() => {
+    setTourOpen(true);
+    setCurrentUser((prev) => {
+      if (prev) return prev;
+      writeDemoSession(GUEST_ACCOUNT);
+      return GUEST_ACCOUNT;
+    });
+    if (typeof window === 'undefined') return;
+    if (wantsTour(window.location.pathname, window.location.search)) return;
+    window.history.pushState({ view: 'tour' }, '', TOUR_PATH);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+
+  const onTourSignIn = useCallback(
+    (user: AuthUser) => {
+      handleLogin(user, { keepPath: true });
+    },
+    [handleLogin]
+  );
+
+  const onTourGo = useCallback((v: AppView) => {
+    if (v === 'sources') setTourOpen(false);
+    pushView(v);
+  }, []);
 
   const handleLogout = () => {
     clearDemoSession();
@@ -320,7 +353,7 @@ export default function App() {
   }, [loadWx]);
 
   if (!currentUser) {
-    return <LoginPage onLogin={handleLogin} />;
+    return <LoginPage onLogin={handleLogin} onStartTour={startTour} />;
   }
 
   const todayRecord = dailyRecords.find((r) => r.isToday) || dailyRecords[0];
@@ -535,11 +568,10 @@ export default function App() {
 
       {tourOpen && (
         <TourPage
-          onSignIn={(user) => handleLogin(user, { keepPath: true })}
-          onGo={(v) => {
-            if (v === 'sources') setTourOpen(false);
-            go(v);
-          }}
+          currentAccount={currentUser.account}
+          currentView={view}
+          onSignIn={onTourSignIn}
+          onGo={onTourGo}
           onExit={() => {
             setTourOpen(false);
             go(defaultView(currentUser.role));

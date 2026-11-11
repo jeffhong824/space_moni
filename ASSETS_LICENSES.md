@@ -122,7 +122,7 @@ Expanded 2026-11-10 crew (Harmony 7 / Gateway 4 / Ares 6 / Mare 4) **reuses** th
 
 | Asset | Source | Author | License | Notes |
 |---|---|---|---|---|
-| `public/assets/nasa/as09-20-3064.jpg` | [NASA image AS09-20-3064](https://images.nasa.gov/details-as09-20-3064) (`as09-20-3064~medium.jpg`) | NASA / Apollo 9 | NASA media (public domain still) | Apollo 9, 6 March 1969. Used as the login hero. **Not a NASA logo.** Caption in-app: “Apollo 9, 6 March 1969. Image: NASA (AS09-20-3064)”. |
+| `public/assets/nasa/as09-20-3064.jpg` | [NASA image AS09-20-3064](https://images.nasa.gov/details/as09-20-3064) (`as09-20-3064~medium.jpg`) | NASA / Apollo 9 | NASA media (public domain still) | Apollo 9, 6 March 1969. Used as the login hero. **Not a NASA logo.** Caption in-app: “Apollo 9, 6 March 1969. Image: NASA (AS09-20-3064)”. |
 
 ## Clinical body map (dashboard)
 

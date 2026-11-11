@@ -1596,7 +1596,14 @@
     "preExercise": "運動前の血圧／心拍",
     "evening": "夜の記録（21:00）",
     "logNow": "今すぐ記録",
-    "later": "後で"
+    "later": "後で",
+    "nextCheckIn": "次のチェックイン：{label}",
+    "preview": "リマインダーをプレビュー",
+    "when": {
+      "morning": "朝 07:30",
+      "preExercise": "運動前 16:00",
+      "evening": "夜 21:00"
+    }
   },
   "streak": {
     "chip": "連続 {n} 日 · 今日 {done}/{total}"

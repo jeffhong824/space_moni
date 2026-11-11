@@ -1596,7 +1596,14 @@
     "preExercise": "Pre-exercise BP/HR due",
     "evening": "Evening log due (21:00)",
     "logNow": "Log now",
-    "later": "Later"
+    "later": "Later",
+    "nextCheckIn": "Next check-in: {label}",
+    "preview": "Preview prompt",
+    "when": {
+      "morning": "Morning 07:30",
+      "preExercise": "Pre-exercise 16:00",
+      "evening": "Evening 21:00"
+    }
   },
   "streak": {
     "chip": "Streak {n} days · Today {done}/{total}"
