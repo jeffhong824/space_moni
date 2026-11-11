@@ -14,7 +14,7 @@ function walk(dir: string, acc: string[] = []): string[] {
 }
 
 const FORBIDDEN = [
-  '需注意',
+  '\u9700\u6ce8\u610f',
   'NOMINAL',
   'ABNORMAL TACHYCARDIA',
   '{day.status}',

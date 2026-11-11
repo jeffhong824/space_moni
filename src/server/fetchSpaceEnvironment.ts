@@ -60,7 +60,7 @@ async function fetchJson<T>(url: string, timeoutMs: number): Promise<FetchResult
       status: empty ? 'empty' : 'ok',
       latencyMs,
       observedAt: null,
-      noteZh: empty ? '視窗內無事件或觀測（非填補資料）' : '已取得官方 JSON',
+      noteZh: empty ? 'No events or observations in window (not filled in)' : 'Official JSON received',
     };
   } catch (err: unknown) {
     const latencyMs = Date.now() - started;
@@ -72,7 +72,7 @@ async function fetchJson<T>(url: string, timeoutMs: number): Promise<FetchResult
       status: timeout ? 'timeout' : 'error',
       latencyMs,
       observedAt: null,
-      noteZh: timeout ? `連線逾時（${timeoutMs} ms）` : message.slice(0, 180),
+      noteZh: timeout ? `Timed out (${timeoutMs} ms)` : message.slice(0, 180),
     };
   }
 }
@@ -308,9 +308,9 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
     );
   }
 
-  const g = kpValue != null ? kpToGScale(kpValue) : { code: 'G?', labelZh: '無 Kp 觀測' };
-  const r = goesClass ? goesClassToRScale(goesClass) : { code: 'R?', labelZh: '無 X 射線觀測' };
-  const s = pfu != null ? protonToSScale(pfu) : { code: 'S?', labelZh: '無質子通量觀測' };
+  const g = kpValue != null ? kpToGScale(kpValue) : { code: 'G?', labelKey: 'wx.gUnknown' };
+  const r = goesClass ? goesClassToRScale(goesClass) : { code: 'R?', labelKey: 'wx.rUnknown' };
+  const s = pfu != null ? protonToSScale(pfu) : { code: 'S?', labelKey: 'wx.sUnknown' };
 
   const goesXray =
     xrayLast?.flux != null

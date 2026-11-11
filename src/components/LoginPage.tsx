@@ -89,14 +89,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="absolute inset-0 rounded-full bg-white/50 shadow-[0_40px_80px_rgba(40,36,28,0.12)]" />
             <div className="absolute inset-[6%] rounded-full overflow-hidden shadow-inner">
               <img
-                src="/assets/aistudio/190207123342-xl-nasa-archives-p176_2f1b8d2d.jpg"
-                alt=""
+                src="/assets/nasa/as09-20-3064.jpg"
+                alt={t('login.heroAlt')}
                 className="w-full h-full object-cover scale-110"
               />
             </div>
             <div className="absolute inset-0 rounded-full pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.55)]" />
           </div>
-          <p className="mt-5 text-[13px] text-stone-500">{t('ui.archiveImagery')}</p>
+          <p className="mt-5 text-[13px] text-stone-500">{t('login.heroCaptionNasa')}</p>
         </div>
 
         <div className="max-w-md w-full mx-auto py-10 max-h-full overflow-y-auto">
@@ -213,6 +213,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </button>
             </div>
             <p className="mt-4 text-[11px] text-stone-400">{t('login.footer')}</p>
+            <p className="mt-1 text-[11px] text-amber-900 font-semibold">{t('notice.notDevice')}</p>
+            <button
+              type="button"
+              onClick={() => {
+                window.history.pushState({}, '', '/tour?tour=1');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              className="mt-3 h-10 w-full rounded-full bg-white text-[12px] font-semibold"
+            >
+              {t('tour.cta')}
+            </button>
             <p className="mt-1 text-[11px] text-stone-400 font-mono">{t('login.passwordHint')}</p>
           </div>
         </div>

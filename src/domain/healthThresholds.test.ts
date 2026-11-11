@@ -37,20 +37,20 @@ describe('shared healthThresholds interpreter', () => {
     expect(statusHrv(BAND_NUMBERS.hrv.criticalBelow - 1)).toBe('Critical');
   });
 
-  it('outputs only 正常 / 注意 / 危急', () => {
+  it('outputs only Normal / Caution / Critical internals', () => {
     const interp = interpretRecord(sample({ restingHR: 103, hrv: 14, avgSleepMinutes: 305, spo2: 95 }));
-    expect(interp.overallZh).toBe('危急');
-    expect(['正常', '注意', '危急']).toContain(interp.overallZh);
+    expect(interp.overall).toBe('Critical');
+    expect(['Normal', 'Caution', 'Critical']).toContain(interp.overallZh);
     for (const m of interp.metrics) {
-      expect(['正常', '注意', '危急']).toContain(m.statusZh);
+      expect(['Normal', 'Caution', 'Critical']).toContain(m.statusZh);
     }
   });
 
   it('maps Gemini/legacy enums through statusLabelZh', () => {
-    expect(statusLabelZh('Nominal')).toBe('正常');
-    expect(statusLabelZh('Attention Required')).toBe('注意');
-    expect(statusLabelZh('Critical')).toBe('危急');
-    expect(statusLabelZh('Optimal')).toBe('正常');
+    expect(statusLabelZh('Nominal')).toBe('Normal');
+    expect(statusLabelZh('Attention Required')).toBe('Caution');
+    expect(statusLabelZh('Critical')).toBe('Critical');
+    expect(statusLabelZh('Optimal')).toBe('Normal');
   });
 });
 

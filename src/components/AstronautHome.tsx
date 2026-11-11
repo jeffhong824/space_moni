@@ -7,7 +7,9 @@ import {
   type SelfCheckMood,
   type SelfCheckPain,
 } from '../domain/healthThresholds';
-import { buildCmoRecommendations } from '../domain/cmoSupport';
+import { evaluateCmoSupport } from '../domain/cmoSupport';
+import { defaultSigma, personalZ } from '../domain/baselines';
+import { EvaIllnessCard, PromptToast, SelfLogCard, StreakChip, useDayIso } from './CrewTools';
 import { simulatedEgressScores } from '../domain/egressReady';
 import { flagSans } from '../domain/sansCheck';
 import { scoreCheckin } from '../domain/moodCheckin';
@@ -121,12 +123,14 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   const delay = useEarthDelay(kind, live?.ship.location.auFromEarth);
   const shipId = live?.ship.def.id ?? astronaut.assignedStation ?? 'ship-harmony';
   const shipCrewIds = CREW.filter((c) => c.shipId === shipId).map((c) => c.id);
-  const surface = kind === 'lunar-south-pole' || kind === 'lunar-habitat';
   const interp = interpretRecord(todayRecord, selfCheck ?? null);
   const sansHist = sansHistory(astronaut.id);
   const lastMood = latestMood(astronaut.id);
-  const recs = buildCmoRecommendations({
+  const zHr = crew ? personalZ(hr, crew.baselineHr, defaultSigma(crew.baselineHr)) : null;
+  const zHrv = crew ? personalZ(todayRecord.hrv, crew.baselineHrv, defaultSigma(crew.baselineHrv)) : null;
+  const cmo = evaluateCmoSupport({
     hrStatus: interp.metrics.find((m) => m.id === 'restingHR')?.status,
+    hrvStatus: interp.metrics.find((m) => m.id === 'hrv')?.status,
     spo2Status: interp.metrics.find((m) => m.id === 'spo2')?.status,
     sleepMin: todayRecord.avgSleepMinutes,
     sScale,
@@ -135,7 +139,9 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
       : undefined,
     moodFlag: lastMood ? scoreCheckin(lastMood).flag : undefined,
     delaySec: delay.oneWaySec,
+    baselineZBand: zHrv?.band === 'caution' || zHrv?.band === 'off' ? zHrv.band : zHr?.band,
   });
+  const dayIso = useDayIso(world.t);
   const egressScores = simulatedEgressScores({
     hr,
     baselineHr: crew?.baselineHr ?? 72,
@@ -206,6 +212,8 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
               <p className="mt-1 text-[11px] font-mono text-stone-500 flex items-center gap-1.5">
                 <StatusDot tone={tone} />
                 {t('today.updated', { time: clock })} · {t('common.simulation')}
+                {' · '}
+                <StreakChip account={crew?.loginAccount ?? astronaut.id} dayIso={dayIso} />
               </p>
             </div>
             <button
@@ -218,6 +226,15 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             </button>
           </div>
         </section>
+
+        <div className="order-1 lg:col-span-12">
+          <PromptToast
+            account={crew?.loginAccount ?? astronaut.id}
+            dayIso={dayIso}
+            nowMin={nowMin}
+            onLog={() => setSleepOpen(true)}
+          />
+        </div>
 
         {shelter && (
           <div className="order-2 lg:col-span-12 px-4 py-2.5 rounded-[20px] bg-rose-50 text-rose-950">
@@ -333,8 +350,10 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
               baselineSpo2={crew.baselineSpo2}
             />
           )}
-          <EgressCard scores={egressScores} surface={surface} />
-          <CmoRecs recs={recs} />
+          <EgressCard scores={egressScores} kind={kind} />
+          <CmoRecs recs={cmo.recs} passed={cmo.passed} reviewedAt={cmo.reviewedAt} />
+          <SelfLogCard account={crew?.loginAccount ?? astronaut.id} dayIso={dayIso} />
+          <EvaIllnessCard crewId={astronaut.id} />
         </div>
 
         {hqMessages.length > 0 ? (

@@ -58,7 +58,9 @@
     "confirmTitle": "¿Entrar como {name} ({role}, {ship})?",
     "confirmHint": "Usuario y contraseña ya están rellenados. Confirmar inicia sesión; Cancelar deja el formulario. No se envía solo desde el sim de flota.",
     "confirm": "Confirmar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "heroAlt": "Apollo 9, 6 de marzo de 1969. Imagen: NASA (AS09-20-3064)",
+    "heroCaptionNasa": "Apollo 9, 6 de marzo de 1969. Imagen: NASA (AS09-20-3064)"
   },
   "role": {
     "astronaut": "Astronauta",
@@ -115,7 +117,8 @@
     "aiTitle": "Llamar al cirujano AURA",
     "logoutTitle": "Cerrar sesión y volver al acceso",
     "science": "Ciencia",
-    "scienceShort": "Ciencia"
+    "scienceShort": "Ciencia",
+    "tour": "Tour"
   },
   "glossary": {
     "met": "MET — Tiempo transcurrido de misión, desde la época demo (10 nov 2026, Taipéi).",
@@ -362,7 +365,9 @@
     "donkiSep": "SEP",
     "donkiNotes": "Aviso",
     "goesFlareSource": "La clase de llamarada se deriva del flujo de rayos X GOES de NOAA (0.1–0.8 nm). No se consulta DONKI FLR (404 en origen).",
-    "observedAt": "Observado {time}"
+    "observedAt": "Observado {time}",
+    "emptyWindow": "ventana vacia",
+    "partial": "Parcial"
   },
   "ai": {
     "offlineBanner": "Modelo de IA desconectado — usando reglas de umbral en el dispositivo",
@@ -476,8 +481,20 @@
       "anatomy": {
         "used": "Mapa corporal holográfico de frente y dorso en el panel del astronauta",
         "note": "Placas de anatomía holográfica generadas por IA para esta demo no comercial, con puntos calientes SVG originales. Los colores son estado simulado, no imagen médica."
+      },
+      "apollo9": {
+        "used": "Imagen de inicio: Apollo 9 AS09-20-3064.",
+        "note": "Imagen NASA AS09-20-3064, 6 de marzo de 1969. Dominio publico NASA. No es un logotipo de NASA."
       }
-    }
+    },
+    "band": {
+      "orWord": "o",
+      "hoursSuffix": "({n} h)"
+    },
+    "exerciseCopy": "Objetivo {min}–{max} min; por debajo de {min} o por encima de {max} → precaucion (sin banda critica).",
+    "aboutTitle": "Acerca de este proyecto",
+    "aboutBody": "SpaceMoni es un prototipo del tablero de monitoreo semi-autonomo HRP EIHSO-202, construido en Taipei para NASA Space Apps 2026 (Best Use of Science). Equipo: OGTech AI. Desafio: Create Health Monitoring Software for Astronauts on Space Missions.",
+    "mitNote": "Licencia MIT · 2026 OGTech AI team."
   },
   "metric": {
     "restingHR": "Frecuencia en reposo",
@@ -920,7 +937,9 @@
     "speOff": "Superposición de protones solares retirada"
   },
   "lang": {
-    "label": "Idioma"
+    "label": "Idioma",
+    "native": "Espanol",
+    "short": "ES"
   },
   "sys": {
     "cardioOk": "La adaptación cardiovascular es buena; FC y VFC en bandas de demo.",
@@ -1220,7 +1239,9 @@
     "nextPrefix": "Siguiente",
     "filterOpen": "Abierto",
     "filterReviewing": "En revisión",
-    "filterDone": "Hecho"
+    "filterDone": "Hecho",
+    "moonDay": "Luna · Dia {n}",
+    "marsSol": "Marte · Sol {n}"
   },
   "today": {
     "allInRange": "Todo dentro de rango",
@@ -1382,7 +1403,7 @@
     "calibrated": "Calibrado"
   },
   "hrp": {
-    "scienceKicker": "Best Use of Science · Space Apps 2026 Taipéi",
+    "scienceKicker": "Mejor uso de la ciencia · Space Apps 2026 Taipei",
     "scienceTitle": "Trazabilidad científica",
     "scienceLead": "Cada función de SpaceMoni se mapea a un riesgo HRP, una sección de NASA-STD-3001 y una fuente de datos. La tabla está en inglés para los jueces; el marco está localizado. Esto no es un producto de la NASA.",
     "scienceFoot": "LIVE = NOAA/GOES o DONKI en tiempo de ejecución. SOURCED-STATIC = publicación o norma citada. SIMULATION = tripulación/mundo demo. ASSUMPTION = fórmula demo etiquetada, no una ecuación de la NASA. El límite SPE de 250 mSv en 30 días es un PEL histórico no reafirmado en el Vol. 2 Rev F adjunto.",
@@ -1463,7 +1484,8 @@
     "egressTask": {
       "stand": "Ponerse de pie / caminar a la esclusa sin ayuda",
       "hatch": "Escotilla / donaje (agarre + visión)",
-      "eva": "EVA superficial temprana"
+      "eva": "EVA superficial temprana",
+      "earth": "Egreso de retorno a la Tierra"
     },
     "cmoTitle": "AURA · apoyo a decisión del CMO",
     "notDiagnosis": "No es un diagnóstico. AURA apoya al oficial médico de tripulación.",
@@ -1505,6 +1527,329 @@
       "inside": "dentro",
       "caution": "precaución",
       "off": "fuera"
+    },
+    "delayLeo": "Tiempo de luz LEO ~0 s (clase ISS)",
+    "delayMoon": "Luna ida {s} s (384 400 km / c)",
+    "delayMarsAu": "Marte ida {delay} desde AU simulado (analogia de orbita circular, no JPL Horizons)",
+    "delayMarsOverride": "Marte ida {delay} (elegido por la tripulacion; no JPL Horizons)",
+    "delayUnknown": "Estacion desconocida — retraso tratado como 0 s",
+    "realtimeLink": "Enlace en tiempo real · sin cola",
+    "sendNow": "Enviar ahora (entrega instantanea)",
+    "delivered": "Entregado",
+    "spePfu": "GOES ≥10 MeV {pfu10} pfu · ≥100 MeV {pfu100} pfu",
+    "speDrill": "Ejercicio / SIMULACION — previsualizar WATCH y SHELTER",
+    "careerBar": "PEL de carrera 600 mSv",
+    "speBar": "Limite SPE 250 mSv / 30 dias",
+    "logMarOd": "logMAR OD (ojo derecho)",
+    "logMarOs": "logMAR OS (ojo izquierdo)",
+    "egressReturnTitle": "Preparacion para el regreso a la Tierra",
+    "egressReturnCite": "[V2 7042] contramedidas ortostaticas; SM-106 / SM-206. Harmony: analogo de egreso de retorno. Puntuaciones SIMULACION.",
+    "readinessAcross": "Preparacion en todas las naves",
+    "cmoEmpty": "Sin recomendaciones abiertas · ultima revision {at}",
+    "cmoHrvTitle": "Precaucion de HRV",
+    "cmoHrvDetail": "La variabilidad de la frecuencia cardiaca esta fuera de la banda demo. Descanse, hidratese y vuelva a medir. Cita [V2 7042]. No es un diagnostico.",
+    "cmoZTitle": "z de la linea de base personal",
+    "cmoZDetail": "Esta metrica esta {band} frente a la linea de base de esa persona (|z| precaucion 1.5 / fuera 2.5 — politica demo, BH-201). No es un diagnostico.",
+    "tagSelf": "AUTOINFORMADO"
+  },
+  "notice": {
+    "notDevice": "SpaceMoni es un prototipo de hackaton, no un dispositivo medico. AURA es apoyo a la decision, no un diagnostico."
+  },
+  "tour": {
+    "cta": "Tour de 60 segundos",
+    "step": "Paso {n} de {total}",
+    "back": "Atras",
+    "next": "Siguiente",
+    "exit": "Salir",
+    "sources": "Abrir fuentes",
+    "todayTitle": "Hoy — Alice en Harmony",
+    "todayBody": "Inicio de tripulacion: vitales, retraso terrestre, SPE, recomendaciones CMO.",
+    "bodyTitle": "Mapa corporal",
+    "bodyBody": "Sistemas agrupados por HRP con Como / Por que / Cuando en cada metrica.",
+    "speTitle": "Evento de protones solares",
+    "speBody": "WATCH / SHELTER frente a 600 mSv de carrera y 250 mSv SPE. El ejercicio esta etiquetado SIMULACION.",
+    "delayTitle": "Retraso terrestre",
+    "delayBody": "LEO es un enlace en tiempo real. Luna y Marte ponen notas en cola a tiempo de luz.",
+    "scienceTitle": "Trazabilidad cientifica",
+    "scienceBody": "Cada funcion mapeada a HRP RAP, NASA-STD-3001 y LIVE / SOURCED-STATIC / SIMULATION.",
+    "crewTitle": "Tablero del comandante",
+    "crewBody": "Marcus ve la lista, SPE, retraso y CMO sin abrir AURA.",
+    "hqTitle": "NASA HQ + fuentes",
+    "hqBody": "Cola del cirujano de vuelo, preparacion entre naves, luego fuentes con DONKI vacio vs fallido."
+  },
+  "selfLog": {
+    "title": "Registrar una medicion",
+    "hint": "Glucosa, temperatura, presion, frecuencia cardiaca. AUTOINFORMADO. No el animo.",
+    "glucoseCite": "Banda de glucosa {min}–{max} mg/dL de OSD-575 CMP CSV (no inventada).",
+    "save": "Guardar",
+    "spark": "Ultimos {n}: {last}",
+    "metric": {
+      "glucose": "Glucosa",
+      "temp": "Temp. corporal",
+      "bpSys": "PAS",
+      "bpDia": "PAD",
+      "hr": "Frecuencia cardiaca"
     }
+  },
+  "prompt": {
+    "morning": "Vitales de manana (07:30)",
+    "preExercise": "PA/FC pre-ejercicio",
+    "evening": "Registro nocturno (21:00)",
+    "logNow": "Registrar ahora",
+    "later": "Mas tarde"
+  },
+  "streak": {
+    "chip": "Racha {n} dias · Hoy {done}/{total}"
+  },
+  "eva": {
+    "title": "EVA / DCS / enfermedad",
+    "cite": "HRR DCS ?i=168, polvo ?i=82, EVA ?i=84, cargas dinamicas ?i=167, inmune ?i=85, hospedador-microorganismo ?i=80. Sin umbrales numericos.",
+    "pre": "Pre-EVA (lista SIMULACION)",
+    "post": "Post-EVA",
+    "illness": "Registro de enfermedad",
+    "prebreathe": "Pre-respiracion completa",
+    "dcsBrief": "Briefing DCS completo",
+    "suitFit": "Ajuste del traje comprobado",
+    "skinJoint": "Piel / articulacion",
+    "eyeNasal": "Ojo / nariz / garganta",
+    "handShoulder": "Mano / hombro",
+    "fever": "Fiebre",
+    "soreThroat": "Dolor de garganta",
+    "skinInfection": "Infeccion cutanea",
+    "notifyCmo": "Avisar al CMO (moderado/grave — no es un diagnostico)",
+    "save": "Guardar EVA / enfermedad",
+    "sev": {
+      "none": "ninguno",
+      "mild": "leve",
+      "moderate": "moderado",
+      "severe": "grave"
+    }
+  },
+  "explain": {
+    "open": "Como / Por que / Cuando",
+    "how": "Como",
+    "why": "Por que (HRR)",
+    "when": "Cuando",
+    "hr": {
+      "how": "Lectura de demostración de hr. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "bpSys": {
+      "how": "Lectura de demostración de bpSys. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "bpDia": {
+      "how": "Lectura de demostración de bpDia. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "ecg": {
+      "how": "Lectura de demostración de ecg. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "ortho": {
+      "how": "Lectura de demostración de ortho. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "rr": {
+      "how": "Lectura de demostración de rr. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "spo2": {
+      "how": "Lectura de demostración de spo2. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "hrv": {
+      "how": "Lectura de demostración de hrv. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "ppco2": {
+      "how": "Lectura de demostración de ppco2. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "ppo2": {
+      "how": "Lectura de demostración de ppo2. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "cabinTemp": {
+      "how": "Lectura de demostración de cabinTemp. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "humidity": {
+      "how": "Lectura de demostración de humidity. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "doseDay": {
+      "how": "Lectura de demostración de doseDay. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "doseCum": {
+      "how": "Lectura de demostración de doseCum. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "careerPct": {
+      "how": "Lectura de demostración de careerPct. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "speShelter": {
+      "how": "Lectura de demostración de speShelter. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "goes": {
+      "how": "Lectura de demostración de goes. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "kp": {
+      "how": "Lectura de demostración de kp. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "bone": {
+      "how": "Lectura de demostración de bone. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "grip": {
+      "how": "Lectura de demostración de grip. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "ared": {
+      "how": "Lectura de demostración de ared. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "cevis": {
+      "how": "Lectura de demostración de cevis. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "t2": {
+      "how": "Lectura de demostración de t2. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "acuity": {
+      "how": "Lectura de demostración de acuity. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "headache": {
+      "how": "Lectura de demostración de headache. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "sleepH": {
+      "how": "Lectura de demostración de sleepH. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "sleepQ": {
+      "how": "Lectura de demostración de sleepQ. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "fatigue": {
+      "how": "Lectura de demostración de fatigue. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "workload": {
+      "how": "Lectura de demostración de workload. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "pvt": {
+      "how": "Lectura de demostración de pvt. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "kcal": {
+      "how": "Lectura de demostración de kcal. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "fluidIn": {
+      "how": "Lectura de demostración de fluidIn. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "fluidOut": {
+      "how": "Lectura de demostración de fluidOut. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "mass": {
+      "how": "Lectura de demostración de mass. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "mood": {
+      "how": "Lectura de demostración de mood. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "stress": {
+      "how": "Lectura de demostración de stress. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "isolation": {
+      "how": "Lectura de demostración de isolation. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "meds": {
+      "how": "Lectura de demostración de meds. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    },
+    "symptoms": {
+      "how": "Lectura de demostración de symptoms. La fisiología es telemetría simulada salvo etiqueta NOAA LIVE.",
+      "why": "Vinculado a un riesgo del Human Research Roadmap de NASA (verificado 2026-11-11). No es un diagnóstico.",
+      "when": "Ábralo si la banda es precaución/crítico, tras EVA o en la ventana de registro diario."
+    }
+  },
+  "hrr": {
+    "matrixTitle": "Matriz de cobertura HRR (22 filas)",
+    "matrixLead": "Riesgos del Human Research Roadmap cubiertos. Disco listado como inactivo. URL verificadas 2026-11-11.",
+    "radiation": "Space radiation dose vs PEL",
+    "cardio": "Adaptación cardiovascular",
+    "sans": "SANS ocular monitoring",
+    "bone": "Bone mineral analog",
+    "fitness": "Aerobic / resistive countermeasures",
+    "sensorimotor": "Sensorimotor / egress",
+    "behavioral": "Behavioral health indicators",
+    "team": "Team monitoring",
+    "sleep": "Oportunidad de sueño",
+    "immune": "Immune / CBC analog",
+    "hostMicro": "Host-microorganism",
+    "nutrition": "Nutrition / mass",
+    "renal": "Renal stone / fluids",
+    "medications": "In-mission medications",
+    "inMission": "In-mission medical",
+    "hypoxia": "Hypoxia / cabin gas",
+    "dust": "Lunar / planetary dust",
+    "dcs": "Decompression sickness",
+    "eva": "Operaciones EVA",
+    "dynamicLoads": "Dynamic loads",
+    "eihso": "Earth-independent health & performance",
+    "disc": "Disco intervertebral (inactivo en HRR)"
   }
 }

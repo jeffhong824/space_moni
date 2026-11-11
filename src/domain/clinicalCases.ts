@@ -10,10 +10,10 @@ import {
 export type CaseState = 'open' | 'reviewing' | 'acted' | 'closed';
 
 export const CASE_STATE_ZH: Record<CaseState, string> = {
-  open: '開啟',
-  reviewing: '審閱中',
-  acted: '已處置',
-  closed: '結案',
+  open: 'open',
+  reviewing: 'reviewing',
+  acted: 'acted',
+  closed: 'closed',
 };
 
 export const CASE_STATE_ORDER: CaseState[] = ['open', 'reviewing', 'acted', 'closed'];
@@ -91,7 +91,7 @@ export function mergeCaseMeta(cases: ClinicalCase[], meta: Record<string, CaseMe
 }
 
 export function sourceKindZh(kind: DataSourceKind): string {
-  if (kind === 'official') return '官方';
+  if (kind === 'official') return 'official';
   if (kind === 'ai') return 'AI';
-  return '示範';
+  return 'demo';
 }

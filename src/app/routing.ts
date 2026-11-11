@@ -1,7 +1,7 @@
 import type { UserRole } from '../types';
 
 /** In-app destinations that correspond 1:1 with URL paths. */
-export type AppView = 'today' | 'day' | 'body' | 'crew' | 'ops' | 'hq' | 'cases' | 'sources' | 'science' | 'sim';
+export type AppView = 'today' | 'day' | 'body' | 'crew' | 'ops' | 'hq' | 'cases' | 'sources' | 'science' | 'sim' | 'tour';
 
 export type DockItemId = AppView;
 
@@ -24,6 +24,7 @@ const PATH_BY_VIEW: Record<AppView, string> = {
   sources: '/sources',
   science: '/science',
   sim: '/sim',
+  tour: '/tour',
 };
 
 const VIEW_BY_PATH: Record<string, AppView> = Object.fromEntries(
@@ -33,6 +34,7 @@ const VIEW_BY_PATH: Record<string, AppView> = Object.fromEntries(
 VIEW_BY_PATH['/world'] = 'sim';
 VIEW_BY_PATH['/console'] = 'ops';
 VIEW_BY_PATH['/home'] = 'today';
+VIEW_BY_PATH['/tour'] = 'tour';
 
 export const SESSION_KEY = 'spacemoni.demoSession';
 
@@ -89,7 +91,10 @@ export function dockItemsForRole(role: UserRole): DockItemDef[] {
 }
 
 export function allowedViews(role: UserRole): Set<AppView> {
-  return new Set(dockItemsForRole(role).map((item) => item.view));
+  const set = new Set(dockItemsForRole(role).map((item) => item.view));
+  set.add('tour');
+  set.add('science');
+  return set;
 }
 
 /** Map a URL to a view this role may open; otherwise the role home. */

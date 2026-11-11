@@ -4,6 +4,7 @@ import type { CrewPanel, SystemGroup, SystemMetric } from '../domain/crewSystems
 import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import { StatusDot, toneFromRank } from '../ui/chrome';
+import { ExplainButton } from './CrewTools';
 
 function MiniSpark({ points, color }: { points: number[]; color: string }) {
   const w = 48;
@@ -43,8 +44,9 @@ export function MetricRow({ m }: { m: SystemMetric }) {
         warn ? 'bg-amber-50' : ''
       }`}
     >
-      <p className="text-[12px] font-medium truncate">
+      <p className="text-[12px] font-medium truncate inline-flex items-center gap-1">
         {t(m.labelKey)}
+        <ExplainButton metricId={m.id} />
         {m.source === 'noaa' ? <span className="ml-1 text-[9px] font-semibold text-emerald-700">{t('panel.noaaLive')}</span> : null}
       </p>
       <p className="text-[12px] tabular-nums font-semibold text-right">

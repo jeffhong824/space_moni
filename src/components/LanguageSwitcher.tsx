@@ -1,5 +1,6 @@
 import React from 'react';
 import { LANGUAGES } from '../i18n/registry';
+import { translate } from '../i18n/index';
 import { useI18n } from '../i18n/I18nProvider';
 
 export const LanguageSwitcher: React.FC<{ variant?: 'light' | 'dark' }> = ({ variant = 'light' }) => {
@@ -18,7 +19,7 @@ export const LanguageSwitcher: React.FC<{ variant?: 'light' | 'dark' }> = ({ var
       >
         {LANGUAGES.map((l) => (
           <option key={l.id} value={l.id}>
-            {l.nativeName}
+            {translate(l.id, 'lang.native')}
           </option>
         ))}
       </select>

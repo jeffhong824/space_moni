@@ -4,7 +4,7 @@
  * Empty catalogs and failed fetches must remain empty — never fabricate events.
  */
 
-export type SourceStatus = 'ok' | 'empty' | 'timeout' | 'error' | 'skipped';
+export type SourceStatus = 'ok' | 'empty' | 'timeout' | 'error' | 'skipped' | 'degraded';
 export type RadiationRisk = 'Low' | 'Moderate' | 'High' | 'Severe' | 'Unknown';
 export type FeedOverall = 'ok' | 'partial' | 'unavailable';
 export type NasaKeyMode = 'nasa_api_key' | 'demo_key';
@@ -132,13 +132,13 @@ export interface SpaceEnvironmentPayload {
 }
 
 /** NOAA G-scale from planetary Kp (https://www.swpc.noaa.gov/noaa-scales-explanation). */
-export function kpToGScale(kp: number): { code: string; labelZh: string } {
-  if (kp >= 9) return { code: 'G5', labelZh: '極端地磁暴' };
-  if (kp >= 8) return { code: 'G4', labelZh: '強烈地磁暴' };
-  if (kp >= 7) return { code: 'G3', labelZh: '強地磁暴' };
-  if (kp >= 6) return { code: 'G2', labelZh: '中等地磁暴' };
-  if (kp >= 5) return { code: 'G1', labelZh: '輕微地磁暴' };
-  return { code: 'G0', labelZh: '低於地磁暴門檻' };
+export function kpToGScale(kp: number): { code: string; labelKey: string } {
+  if (kp >= 9) return { code: 'G5', labelKey: 'wx.g5' };
+  if (kp >= 8) return { code: 'G4', labelKey: 'wx.g4' };
+  if (kp >= 7) return { code: 'G3', labelKey: 'wx.g3' };
+  if (kp >= 6) return { code: 'G2', labelKey: 'wx.g2' };
+  if (kp >= 5) return { code: 'G1', labelKey: 'wx.g1' };
+  return { code: 'G0', labelKey: 'wx.g0' };
 }
 
 /** GOES long-channel X-ray class from 0.1–0.8 nm flux (W/m²). */
@@ -192,35 +192,35 @@ export function parseGoesClass(goesClass: string | null | undefined): { letter: 
  * M1 = R1, M5 = R2, X1 = R3, X10 = R4, X20 = R5.
  * C-class and weaker is below R1 → R0. Empty input → R?.
  */
-export function goesClassToRScale(goesClass: string | null | undefined): { code: string; labelZh: string } {
+export function goesClassToRScale(goesClass: string | null | undefined): { code: string; labelKey: string } {
   if (goesClass == null || String(goesClass).trim() === '') {
-    return { code: 'R?', labelZh: '無 GOES X 射線峰值，無法判定 R 尺度' };
+    return { code: 'R?', labelKey: 'wx.rUnknown' };
   }
   const parsed = parseGoesClass(goesClass);
   if (!parsed) {
-    return { code: 'R?', labelZh: '無法解析 GOES 等級' };
+    return { code: 'R?', labelKey: 'wx.rParse' };
   }
   const { letter, magnitude } = parsed;
   if (letter === 'X') {
-    if (magnitude >= 20) return { code: 'R5', labelZh: '極端無線電黑障（X20 級以上）' };
-    if (magnitude >= 10) return { code: 'R4', labelZh: '強烈無線電黑障（X10 級以上）' };
-    return { code: 'R3', labelZh: '強無線電黑障（X1 級以上）' };
+    if (magnitude >= 20) return { code: 'R5', labelKey: 'wx.r5' };
+    if (magnitude >= 10) return { code: 'R4', labelKey: 'wx.r4' };
+    return { code: 'R3', labelKey: 'wx.r3' };
   }
   if (letter === 'M') {
-    if (magnitude >= 5) return { code: 'R2', labelZh: '中等無線電黑障（M5 級以上）' };
-    return { code: 'R1', labelZh: '輕微無線電黑障（M1 級以上）' };
+    if (magnitude >= 5) return { code: 'R2', labelKey: 'wx.r2' };
+    return { code: 'R1', labelKey: 'wx.r1' };
   }
-  return { code: 'R0', labelZh: '低於無線電黑障門檻（C 級或更弱）' };
+  return { code: 'R0', labelKey: 'wx.r0' };
 }
 
 /** NOAA S-scale from ≥10 MeV proton flux (pfu). */
-export function protonToSScale(pfu: number): { code: string; labelZh: string } {
-  if (pfu >= 100000) return { code: 'S5', labelZh: '極端太陽輻射暴' };
-  if (pfu >= 10000) return { code: 'S4', labelZh: '強烈太陽輻射暴' };
-  if (pfu >= 1000) return { code: 'S3', labelZh: '強太陽輻射暴' };
-  if (pfu >= 100) return { code: 'S2', labelZh: '中等太陽輻射暴' };
-  if (pfu >= 10) return { code: 'S1', labelZh: '輕微太陽輻射暴' };
-  return { code: 'S0', labelZh: '低於太陽輻射暴門檻' };
+export function protonToSScale(pfu: number): { code: string; labelKey: string } {
+  if (pfu >= 100000) return { code: 'S5', labelKey: 'wx.s5' };
+  if (pfu >= 10000) return { code: 'S4', labelKey: 'wx.s4' };
+  if (pfu >= 1000) return { code: 'S3', labelKey: 'wx.s3' };
+  if (pfu >= 100) return { code: 'S2', labelKey: 'wx.s2' };
+  if (pfu >= 10) return { code: 'S1', labelKey: 'wx.s1' };
+  return { code: 'S0', labelKey: 'wx.s0' };
 }
 
 export function scaleNumber(code: string | null | undefined, prefix: 'G' | 'R' | 'S'): number | null {
@@ -253,14 +253,54 @@ export function combineRadiationRisk(kp: number | null, goesClass: string | null
 
   return {
     risk,
-    basisZh: `依 NOAA 尺度推估：地磁 ${g}、無線電 ${r}、太陽輻射 ${s}。以 GOES / SWPC 觀測為準，非推估填補。`,
+    basisZh: `NOAA scales from GOES/SWPC: geomagnetic ${g}, radio ${r}, solar radiation ${s}. Observed, not interpolated.`,
   };
 }
 
-export const DEMO_SPE_NOTICE =
-  '示範太陽質子事件（SPE）情境：≥10 MeV 質子通量為示範疊加，不是 NOAA 即時觀測。Kp／X 射線若存在仍為官方讀數。';
+export type DonkiAggregate = {
+  status: 'ok' | 'empty' | 'degraded' | 'error';
+  observedAt: string | null;
+  endpoints: Array<{ id: string; short: string; status: SourceStatus }>;
+};
 
-const DEMO_SPE_PFU = 120; // S2 (≥100 pfu) — labeled 示範, not a live NOAA number
+const DONKI_SHORT: Record<string, string> = {
+  'nasa-donki-gst': 'GST',
+  'nasa-donki-cme': 'CME',
+  'nasa-donki-sep': 'SEP',
+  'nasa-donki-notifications': 'notifications',
+};
+
+export function aggregateDonki(sources: DataSourceReport[]): DonkiAggregate {
+  const endpoints = sources
+    .filter((s) => s.id.startsWith('nasa-donki-'))
+    .map((s) => ({
+      id: s.id,
+      short: DONKI_SHORT[s.id] ?? s.id.replace('nasa-donki-', ''),
+      status: s.status,
+    }));
+  if (!endpoints.length) {
+    return { status: 'error', observedAt: null, endpoints };
+  }
+  const ok = endpoints.filter((e) => e.status === 'ok');
+  const empty = endpoints.filter((e) => e.status === 'empty');
+  const bad = endpoints.filter((e) => e.status === 'timeout' || e.status === 'error');
+  const observedAt =
+    sources
+      .filter((s) => s.id.startsWith('nasa-donki-') && s.status === 'ok')
+      .map((s) => s.observedAt || s.fetchedAt)
+      .sort()
+      .at(-1) ?? null;
+  if (ok.length > 0 && bad.length === 0) return { status: 'ok', observedAt, endpoints };
+  if (ok.length > 0 && bad.length > 0) return { status: 'degraded', observedAt, endpoints };
+  if (empty.length === endpoints.length) return { status: 'empty', observedAt: null, endpoints };
+  if (ok.length === 0 && empty.length > 0 && bad.length > 0) return { status: 'degraded', observedAt: null, endpoints };
+  return { status: 'error', observedAt: null, endpoints };
+}
+
+export const DEMO_SPE_NOTICE =
+  'Demo solar-proton overlay: ≥10 MeV flux is a labeled scenario, not a live NOAA reading. Kp / X-ray remain official when present.';
+
+const DEMO_SPE_PFU = 120; // S2 (>=100 pfu) — labeled demo, not a live NOAA number
 
 function emptyDemoPayload(now: string): SpaceEnvironmentPayload {
   return {
@@ -277,30 +317,30 @@ function emptyDemoPayload(now: string): SpaceEnvironmentPayload {
       rScale: 'R?',
       sScale: 'S?',
       radiationRisk: 'Unknown',
-      basisZh: '官方饋送尚未載入。',
+      basisZh: 'Official feed not loaded.',
     },
     events: { solarFlares: [], geomagneticStorms: [], coronalMassEjections: [], swpcAlerts: [] },
     notices: [],
   };
 }
 
-/** Overlay a labeled 示範 SPE. Does not invent NOAA Kp / X-ray numbers. */
+/** Overlay a labeled demo SPE. Does not invent NOAA Kp / X-ray numbers. */
 export function overlayDemoSpe(payload: SpaceEnvironmentPayload | null): SpaceEnvironmentPayload {
   const now = new Date().toISOString();
   const base = payload ?? emptyDemoPayload(now);
   const demoProtons: ProtonObservation = {
     flux: DEMO_SPE_PFU,
     unit: 'pfu',
-    energy: '≥10 MeV',
-    satellite: '示範 SPE',
+    energy: '>=10 MeV',
+    satellite: 'demo SPE',
     observedAt: now,
     sourceId: 'demo-spe-scenario',
   };
   const s = protonToSScale(DEMO_SPE_PFU);
-  const g = base.observations.kp ? kpToGScale(base.observations.kp.value) : { code: 'G?', labelZh: '無 Kp' };
+  const g = base.observations.kp ? kpToGScale(base.observations.kp.value) : { code: 'G?', labelKey: 'wx.gUnknown' };
   const r = base.observations.goesXray
     ? goesClassToRScale(base.observations.goesXray.goesClass)
-    : { code: 'R?', labelZh: '無 X 射線' };
+    : { code: 'R?', labelKey: 'wx.rUnknown' };
   const combined = combineRadiationRisk(
     base.observations.kp?.value ?? null,
     base.observations.goesXray?.goesClass ?? null,

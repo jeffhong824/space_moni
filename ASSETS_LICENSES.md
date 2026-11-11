@@ -118,6 +118,12 @@ SpaceMoni is a **non-commercial** NASA Space Apps 2026 hackathon demo. No NASA l
 
 Expanded 2026-11-10 crew (Harmony 7 / Gateway 4 / Ares 6 / Mare 4) **reuses** the existing `crew/*.png` tgstation composites by role (commander, pilot, flight_engineer, science_officer, medical_officer, mission_specialist, eva_suit). No new sprite sheets were generated; additional fictional crew members share those sheets. See `docs/crew-composition.md`.
 
+## Login hero (dashboard)
+
+| Asset | Source | Author | License | Notes |
+|---|---|---|---|---|
+| `public/assets/nasa/as09-20-3064.jpg` | [NASA image AS09-20-3064](https://images.nasa.gov/details-as09-20-3064) (`as09-20-3064~medium.jpg`) | NASA / Apollo 9 | NASA media (public domain still) | Apollo 9, 6 March 1969. Used as the login hero. **Not a NASA logo.** Caption in-app: “Apollo 9, 6 March 1969. Image: NASA (AS09-20-3064)”. |
+
 ## Clinical body map (dashboard)
 
 | Asset | Source | Author | License | Notes |

@@ -32,6 +32,9 @@ import {
   PanelRightOpen,
 } from 'lucide-react';
 import { DailyHealthRecord, DailyActivityItem, UserRole, AstronautProfile } from '../types';
+import { CREW } from '../world/catalog';
+import { minutesInTaipei } from '../domain/todayStatus';
+import { PromptToast, SelfLogCard, useDayIso } from './CrewTools';
 import { ConditioningDetailCard } from './ConditioningDetailCard';
 import { ConditioningCategory } from '../data/conditioningData';
 import {
@@ -72,6 +75,8 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   onToggleRightPanel,
 }) => {
   const { t, lang } = useI18n();
+  const dayIso = useDayIso(Date.now());
+  const logAccount = CREW.find((c) => c.id === currentAstronaut.id)?.loginAccount ?? currentAstronaut.id;
   // If focusedDate is set, other days are hidden and only this day's full 24-hour detail is displayed
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [showCommanderModal, setShowCommanderModal] = useState<boolean>(false);
@@ -601,6 +606,8 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
     <section id="main-records" className="flex-1 flex flex-col h-full overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 lg:px-6 lg:pt-6 space-y-4 sm-page-pad">
+        <PromptToast account={logAccount} dayIso={dayIso} nowMin={minutesInTaipei(Date.now())} onLog={() => undefined} />
+        <SelfLogCard account={logAccount} dayIso={dayIso} />
         {/* Header bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>

@@ -13,6 +13,7 @@ import { CommanderHome } from './components/CommanderHome';
 import { SurgeonHome } from './components/SurgeonHome';
 import { DataSourcesPage } from './components/DataSourcesPage';
 import { SciencePage } from './components/SciencePage';
+import { TourPage } from './components/TourPage';
 import { DelayBadge, SolClockChip } from './components/HrpPanels';
 import { earthDelayForKind } from './domain/earthDelay';
 import { marsDelayOverride } from './world/crewLogs';
@@ -68,7 +69,7 @@ export default function App() {
     if (stored) return enrichUser(stored);
     if (typeof window !== 'undefined') {
       const p = window.location.pathname.replace(/\/+$/, '') || '/';
-      if (p === '/sim' || p === '/world' || p === '/science') {
+      if (p === '/sim' || p === '/world' || p === '/science' || p === '/tour') {
         writeDemoSession(GUEST_ACCOUNT);
         return GUEST_ACCOUNT;
       }
@@ -127,6 +128,17 @@ export default function App() {
   const envMetrics = { ...selectedShip.cabin, ...cabinPatch };
 
   const view: AppView = currentUser ? coerceView(path, currentUser.role) : defaultView('Astronaut');
+  const [tourOpen, setTourOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const p = window.location.pathname.replace(/\/+$/, '') || '/';
+    return p === '/tour' || new URLSearchParams(window.location.search).get('tour') === '1';
+  });
+  useEffect(() => {
+    const p = path.replace(/\/+$/, '') || '/';
+    const q = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tour') : null;
+    if (p === '/tour' || q === '1') setTourOpen(true);
+  }, [path]);
+  const pageView: AppView = view === 'tour' && currentUser ? defaultView(currentUser.role) : view;
 
   const go = useCallback((next: AppView) => {
     pushView(next);
@@ -191,14 +203,14 @@ export default function App() {
     setSelectedAstronaut(astro);
   };
 
-  const handleLogin = (user: AuthUser) => {
+  const handleLogin = (user: AuthUser, opts?: { keepPath?: boolean }) => {
     const enriched = enrichUser(user);
     writeDemoSession(enriched);
     setCurrentUser(enriched);
     const crew = crewByLogin(enriched.account);
     if (crew) setSelectedAstronaut(crewToProfile(crew, now));
     else if (enriched.role === 'NASA') setSelectedAstronaut(crewToProfile(CREW[1], now));
-    replaceView(defaultView(enriched.role));
+    if (!opts?.keepPath) replaceView(defaultView(enriched.role));
   };
 
   const handleLogout = () => {
@@ -388,7 +400,7 @@ export default function App() {
         onSwitchUser={handleLogin}
         isRightPanelCollapsed={isRightPanelCollapsed}
         onToggleRightPanel={() => setIsRightPanelCollapsed((prev) => !prev)}
-        view={view}
+        view={pageView}
         onChangeView={go}
         speDemo={speDemo}
         onToggleSpeDemo={() => {
@@ -411,8 +423,9 @@ export default function App() {
         })}
         clockExtra={
           <>
-            <SolClockChip now={now} />
+            <SolClockChip now={now} compact />
             <DelayBadge
+              compact
               delay={earthDelayForKind(
                 selectedShip.def.kind,
                 selectedShip.location.auFromEarth,
@@ -423,7 +436,7 @@ export default function App() {
         }
       />
 
-      {view === 'sim' && (
+      {pageView === 'sim' && (
         <div className="flex-1 min-h-0">
           <Suspense fallback={<div className="p-8 text-sm text-slate-500">{t('sim.loadingEngine')}</div>}>
             <SimWorldPage
@@ -436,9 +449,9 @@ export default function App() {
         </div>
       )}
 
-      {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
-      {(view === 'today' || view === 'crew' || view === 'cases') && currentUser.role !== 'Guest' && roleHome}
-      {view === 'body' && (
+      {pageView === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
+      {(pageView === 'today' || pageView === 'crew' || pageView === 'cases') && currentUser.role !== 'Guest' && roleHome}
+      {pageView === 'body' && (
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
           {CREW.find((c) => c.id === selectedAstronaut.id) && (
             <BodyMapDashboard
@@ -450,7 +463,7 @@ export default function App() {
           )}
         </div>
       )}
-      {view === 'sources' && (
+      {pageView === 'sources' && (
         <DataSourcesPage
           onBack={() => go(defaultView(currentUser.role))}
           wx={displayWx}
@@ -460,8 +473,8 @@ export default function App() {
           onRetry={() => void loadWx(true)}
         />
       )}
-      {view === 'science' && <SciencePage onBack={() => go(defaultView(currentUser.role))} />}
-      {isConsoleView(view) && (
+      {pageView === 'science' && <SciencePage onBack={() => go(defaultView(currentUser.role))} />}
+      {isConsoleView(pageView) && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto sm-page-pad">
             <AstronautSidebar
@@ -518,6 +531,20 @@ export default function App() {
             onToggleCollapse={() => setIsRightPanelCollapsed((prev) => !prev)}
           />
         </div>
+      )}
+
+      {tourOpen && (
+        <TourPage
+          onSignIn={(user) => handleLogin(user, { keepPath: true })}
+          onGo={(v) => {
+            if (v === 'sources') setTourOpen(false);
+            go(v);
+          }}
+          onExit={() => {
+            setTourOpen(false);
+            go(defaultView(currentUser.role));
+          }}
+        />
       )}
 
       {todayRecord && (

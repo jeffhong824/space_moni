@@ -8,6 +8,7 @@ import { sScaleElevated, type SpaceEnvironmentPayload } from '../domain/spaceWea
 import { WearableHud } from '../components/WearableHud';
 import type { AuthUser } from '../types';
 import { isGuestUser } from '../world/accounts';
+import { StreakChip, useDayIso } from '../components/CrewTools';
 import { findCrewLive, overallRank, worldStateAt, type WorldState } from '../world/worldState';
 import type { SimSelect, SimView } from './FleetScene';
 import { simFocusForUser } from './focusStation';
@@ -46,6 +47,7 @@ export const SimWorldPage: React.FC<{
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fleetOverview, setFleetOverview] = useState(() => simFocusForUser(user).mode === 'fleet');
   const guest = isGuestUser(user);
+  const dayIso = useDayIso(world.t);
   const focus = simFocusForUser(user);
   const mobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
@@ -211,6 +213,11 @@ export const SimWorldPage: React.FC<{
           <p className="pointer-events-none absolute top-3 left-3 z-10 max-w-[min(100%-2.5rem,28rem)] rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium text-white/90">
             {t('sim.notNasa')}
           </p>
+          {!guest && user?.account && (
+            <div className="pointer-events-none absolute bottom-4 left-3 z-20">
+              <StreakChip account={user.account} dayIso={dayIso} />
+            </div>
+          )}
           <div className="hidden lg:flex absolute top-3 right-3 z-20 flex-wrap justify-end gap-2">
             {focus.mode === 'station' && !fleetOverview && (
               <button

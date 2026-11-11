@@ -58,7 +58,9 @@
     "confirmTitle": "{name}（{role}、{ship}）としてログインしますか？",
     "confirmHint": "アカウントとパスワードは入力済みです。確認でログイン、キャンセルでこのフォームのままです。艦隊シミュから自動送信はしません。",
     "confirm": "確認",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "heroAlt": "Apollo 9、1969年3月6日。画像: NASA（AS09-20-3064）",
+    "heroCaptionNasa": "Apollo 9、1969年3月6日。画像: NASA（AS09-20-3064）"
   },
   "role": {
     "astronaut": "宇宙飛行士",
@@ -115,7 +117,8 @@
     "aiTitle": "AURA飛行外科医に通話",
     "logoutTitle": "ログアウトしてログインへ",
     "science": "科学トレーサビリティ",
-    "scienceShort": "科学"
+    "scienceShort": "科学",
+    "tour": "ツアー"
   },
   "glossary": {
     "met": "MET — ミッション経過時間。デモ起点（2026年11月10日台北）から数えます。",
@@ -362,7 +365,9 @@
     "donkiSep": "SEP",
     "donkiNotes": "通知",
     "goesFlareSource": "フレアクラスは NOAA GOES X線フラックス（0.1–0.8 nm）から導出。NASA DONKI FLR は照会しません（上流 404）。",
-    "observedAt": "観測 {time}"
+    "observedAt": "観測 {time}",
+    "emptyWindow": "空の窓",
+    "partial": "部分"
   },
   "ai": {
     "offlineBanner": "AI モデルはオフライン — 端末上の閾値ルールを使用",
@@ -476,8 +481,20 @@
       "anatomy": {
         "used": "宇宙飛行士ダッシュボードの正面／背面ホログラフィック・ボディマップ",
         "note": "本非商用デモ用のAI生成ホログラフィック解剖図とオリジナルSVGホットスポット。色は模擬ステータスであり医用画像ではありません。"
+      },
+      "apollo9": {
+        "used": "ログイン画像: Apollo 9 AS09-20-3064。",
+        "note": "NASA 画像 AS09-20-3064、1969年3月6日。NASA パブリックドメイン。NASA ロゴではありません。"
       }
-    }
+    },
+    "band": {
+      "orWord": "または",
+      "hoursSuffix": "（{n} 時間）"
+    },
+    "exerciseCopy": "目標 {min}–{max} 分；{min} 未満または {max} 超 → 注意（重大帯なし）。",
+    "aboutTitle": "このプロジェクトについて",
+    "aboutBody": "SpaceMoni は HRP EIHSO-202 半自律クルー監視ダッシュボードの原型で、台北の NASA Space Apps 2026（Best Use of Science）向けです。チーム: OGTech AI。課題: Create Health Monitoring Software for Astronauts on Space Missions。",
+    "mitNote": "MIT ライセンス · 2026 OGTech AI team。"
   },
   "metric": {
     "restingHR": "安静時心拍数",
@@ -920,7 +937,9 @@
     "speOff": "デモ太陽陽子の重畳を解除しました"
   },
   "lang": {
-    "label": "言語"
+    "label": "言語",
+    "native": "日本語",
+    "short": "JA"
   },
   "sys": {
     "cardioOk": "循環適応は良好。安静時心拍とHRVはデモ帯域内。",
@@ -1220,7 +1239,9 @@
     "nextPrefix": "次",
     "filterOpen": "未処理",
     "filterReviewing": "審査中",
-    "filterDone": "完了"
+    "filterDone": "完了",
+    "moonDay": "月 · 第 {n} 日",
+    "marsSol": "火星 · Sol {n}"
   },
   "today": {
     "allInRange": "すべて範囲内",
@@ -1382,7 +1403,7 @@
     "calibrated": "校正済み"
   },
   "hrp": {
-    "scienceKicker": "Best Use of Science · Space Apps 2026 台北",
+    "scienceKicker": "科学の最良利用 · Space Apps 2026 台北",
     "scienceTitle": "科学トレーサビリティ",
     "scienceLead": "SpaceMoni の各機能を HRP リスク、NASA-STD-3001 節、データ源に対応づけています。表は審査用に英語、周囲の UI は各言語です。NASA 製品ではありません。",
     "scienceFoot": "LIVE = 実行時の NOAA/GOES または DONKI。SOURCED-STATIC = 引用した文献・規格。SIMULATION = デモ乗員／世界。ASSUMPTION = ラベル付きデモ式であり NASA の式ではない。250 mSv の 30 日 SPE 限界は歴史的 PEL で、添付の Vol 2 Rev F には再掲されていません。",
@@ -1463,7 +1484,8 @@
     "egressTask": {
       "stand": "補助なし起立／エアロックまで歩行",
       "hatch": "ハッチ／スーツ装着（握力＋視力）",
-      "eva": "初期の表面 EVA"
+      "eva": "初期の表面 EVA",
+      "earth": "地球帰還エグレス"
     },
     "cmoTitle": "AURA · CMO 意思決定支援",
     "notDiagnosis": "診断ではありません。AURA は乗員医官の意思決定支援です。",
@@ -1505,6 +1527,329 @@
       "inside": "範囲内",
       "caution": "注意",
       "off": "逸脱"
+    },
+    "delayLeo": "LEO 光時間 ~0 秒（ISS 級）",
+    "delayMoon": "月 片道 {s} 秒（384 400 km / c）",
+    "delayMarsAu": "火星 片道 {delay}、模擬 AU から（円軌道アナログ、JPL Horizons ではない）",
+    "delayMarsOverride": "火星 片道 {delay}（クルー選択；JPL Horizons ではない）",
+    "delayUnknown": "未知のステーション — 遅延は 0 秒",
+    "realtimeLink": "リアルタイム回線 · キューなし",
+    "sendNow": "今すぐ送信（即時配達）",
+    "delivered": "配達済み",
+    "spePfu": "GOES ≥10 MeV {pfu10} pfu · ≥100 MeV {pfu100} pfu",
+    "speDrill": "訓練／シミュレーション — WATCH と SHELTER をプレビュー",
+    "careerBar": "生涯 600 mSv PEL",
+    "speBar": "250 mSv 30 日 SPE 境界",
+    "logMarOd": "logMAR 右眼（OD）",
+    "logMarOs": "logMAR 左眼（OS）",
+    "egressReturnTitle": "地球帰還の準備",
+    "egressReturnCite": "[V2 7042] 起立不耐対策；SM-106／SM-206。Harmony: 地球帰還エグレスのアナログ。スコアはシミュレーション。",
+    "readinessAcross": "各船の準備",
+    "cmoEmpty": "未決の推奨なし · 最終確認 {at}",
+    "cmoHrvTitle": "HRV 注意",
+    "cmoHrvDetail": "心拍変動がデモ帯から外れています。休息・補水のうえ再測。[V2 7042]。診断ではありません。",
+    "cmoZTitle": "個人ベースライン z",
+    "cmoZDetail": "この指標は本人ベースラインに対し {band}（|z| 注意 1.5／逸脱 2.5 — デモ方針、BH-201）。診断ではありません。",
+    "tagSelf": "自己申告"
+  },
+  "notice": {
+    "notDevice": "SpaceMoni はハッカソン原型であり医療機器ではありません。AURA は意思決定支援であり診断ではありません。"
+  },
+  "tour": {
+    "cta": "60 秒ツアー",
+    "step": "ステップ {n}／{total}",
+    "back": "戻る",
+    "next": "次へ",
+    "exit": "終了",
+    "sources": "ソースを開く",
+    "todayTitle": "今日 — Harmony の Alice",
+    "todayBody": "クルーホーム: バイタル、地球遅延、SPE、CMO 推奨。生理は模擬、天気は NOAA ライブ。",
+    "bodyTitle": "ボディマップ",
+    "bodyBody": "HRP 分類のシステム。各指標に How / Why / When。",
+    "speTitle": "太陽陽子現象",
+    "speBody": "WATCH／SHELTER を生涯 600 mSv と SPE 250 mSv に対照。訓練は SIMULATION 表示。",
+    "delayTitle": "地球遅延",
+    "delayBody": "LEO はリアルタイム。月と火星は光時間でメモをキュー。",
+    "scienceTitle": "科学トレーサビリティ",
+    "scienceBody": "各機能を HRP RAP、NASA-STD-3001、LIVE／SOURCED-STATIC／SIMULATION に対応。",
+    "crewTitle": "指揮官クルーボード",
+    "crewBody": "Marcus は名簿、SPE、遅延、CMO を AURA なしで見られます。",
+    "hqTitle": "NASA HQ とソース",
+    "hqBody": "航空医キュー、各船の準備、DONKI 空窓と失敗のソース頁。"
+  },
+  "selfLog": {
+    "title": "測定を記録",
+    "hint": "血糖、体温、血圧、心拍数。自己申告。気分は含みません。",
+    "glucoseCite": "血糖帯 {min}–{max} mg/dL は OSD-575 CMP CSV（創作ではない）。",
+    "save": "保存",
+    "spark": "直近 {n}: {last}",
+    "metric": {
+      "glucose": "血糖",
+      "temp": "体温",
+      "bpSys": "収縮期血圧",
+      "bpDia": "拡張期血圧",
+      "hr": "心拍数"
     }
+  },
+  "prompt": {
+    "morning": "朝のバイタル（07:30）",
+    "preExercise": "運動前の血圧／心拍",
+    "evening": "夜の記録（21:00）",
+    "logNow": "今すぐ記録",
+    "later": "後で"
+  },
+  "streak": {
+    "chip": "連続 {n} 日 · 今日 {done}/{total}"
+  },
+  "eva": {
+    "title": "EVA／DCS／疾病ログ",
+    "cite": "HRR DCS ?i=168、ダスト ?i=82、EVA ?i=84、動的負荷 ?i=167、免疫 ?i=85、宿主微生物 ?i=80。数値の医学閾値なし。",
+    "pre": "EVA 前（シミュレーションチェックリスト）",
+    "post": "EVA 後",
+    "illness": "疾病ログ",
+    "prebreathe": "プレブリーズ完了",
+    "dcsBrief": "DCS ブリーフィング完了",
+    "suitFit": "スーツ適合を確認",
+    "skinJoint": "皮膚／関節",
+    "eyeNasal": "眼／鼻／喉",
+    "handShoulder": "手／肩",
+    "fever": "発熱",
+    "soreThroat": "喉の痛み",
+    "skinInfection": "皮膚感染",
+    "notifyCmo": "CMO に通知（中等／重度 — 診断ではない）",
+    "save": "EVA／疾病ログを保存",
+    "sev": {
+      "none": "なし",
+      "mild": "軽",
+      "moderate": "中",
+      "severe": "重"
+    }
+  },
+  "explain": {
+    "open": "How / Why / When",
+    "how": "How",
+    "why": "Why (HRR)",
+    "when": "When",
+    "hr": {
+      "how": "hr のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "bpSys": {
+      "how": "bpSys のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "bpDia": {
+      "how": "bpDia のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "ecg": {
+      "how": "ecg のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "ortho": {
+      "how": "ortho のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "rr": {
+      "how": "rr のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "spo2": {
+      "how": "spo2 のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "hrv": {
+      "how": "hrv のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "ppco2": {
+      "how": "ppco2 のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "ppo2": {
+      "how": "ppo2 のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "cabinTemp": {
+      "how": "cabinTemp のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "humidity": {
+      "how": "humidity のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "doseDay": {
+      "how": "doseDay のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "doseCum": {
+      "how": "doseCum のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "careerPct": {
+      "how": "careerPct のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "speShelter": {
+      "how": "speShelter のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "goes": {
+      "how": "goes のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "kp": {
+      "how": "kp のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "bone": {
+      "how": "bone のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "grip": {
+      "how": "grip のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "ared": {
+      "how": "ared のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "cevis": {
+      "how": "cevis のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "t2": {
+      "how": "t2 のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "acuity": {
+      "how": "acuity のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "headache": {
+      "how": "headache のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "sleepH": {
+      "how": "sleepH のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "sleepQ": {
+      "how": "sleepQ のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "fatigue": {
+      "how": "fatigue のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "workload": {
+      "how": "workload のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "pvt": {
+      "how": "pvt のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "kcal": {
+      "how": "kcal のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "fluidIn": {
+      "how": "fluidIn のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "fluidOut": {
+      "how": "fluidOut のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "mass": {
+      "how": "mass のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "mood": {
+      "how": "mood のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "stress": {
+      "how": "stress のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "isolation": {
+      "how": "isolation のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "meds": {
+      "how": "meds のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    },
+    "symptoms": {
+      "how": "symptoms のデモ値。生理は模擬クルーテレメトリ（NOAA LIVE 表示時を除く）。",
+      "why": "NASA Human Research Roadmap のリスクに対応（2026-11-11 確認）。診断ではありません。",
+      "when": "注意／重大、EVA 後、または日次ログの時間帯に開いてください。"
+    }
+  },
+  "hrr": {
+    "matrixTitle": "HRR カバレッジ行列（22 行）",
+    "matrixLead": "このデモが扱う Human Research Roadmap リスク。椎間板は inactive。URL は 2026-11-11 確認。",
+    "radiation": "Space radiation dose vs PEL",
+    "cardio": "循環適応",
+    "sans": "SANS ocular monitoring",
+    "bone": "Bone mineral analog",
+    "fitness": "Aerobic / resistive countermeasures",
+    "sensorimotor": "Sensorimotor / egress",
+    "behavioral": "Behavioral health indicators",
+    "team": "Team monitoring",
+    "sleep": "睡眠機会",
+    "immune": "Immune / CBC analog",
+    "hostMicro": "Host-microorganism",
+    "nutrition": "Nutrition / mass",
+    "renal": "Renal stone / fluids",
+    "medications": "In-mission medications",
+    "inMission": "In-mission medical",
+    "hypoxia": "Hypoxia / cabin gas",
+    "dust": "Lunar / planetary dust",
+    "dcs": "Decompression sickness",
+    "eva": "船外活動",
+    "dynamicLoads": "Dynamic loads",
+    "eihso": "Earth-independent health & performance",
+    "disc": "椎間板（HRR では inactive）"
   }
 }

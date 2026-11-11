@@ -6,15 +6,16 @@
  * applet are simulated demonstration telemetry (see TELEMETRY_SOURCE).
  *
  * All health UI must go through interpretRecord / statusLabelZh — never a
- * per-component numeric band. User-facing status is only 正常 / 注意 / 危急.
+ * per-component numeric band. User-facing status is only Normal / Caution / Critical.
  */
 
 import type { DailyHealthRecord, HourlyVitalPoint } from '../types.ts';
+import { translate } from '../i18n/index.ts';
 
 export type ClinicalStatus = 'Normal' | 'Attention' | 'Critical';
 export type MetricStatus = ClinicalStatus;
 export type OverallStatus = ClinicalStatus;
-export type StatusZh = '正常' | '注意' | '危急';
+export type StatusZh = string;
 
 export interface ThresholdBand {
   id: string;
@@ -27,20 +28,20 @@ export interface ThresholdBand {
 
 export const TELEMETRY_SOURCE = {
   kind: 'simulated_demo' as const,
-  labelZh: '模擬機組遙測（示範資料）',
-  noteZh: '非即時飛行硬體串流。數值來自示範任務日誌，供作業台與 AURA 分析使用。',
+  labelZh: 'Simulated crew telemetry (demo)',
+  noteZh: 'Not a live vehicle stream. Values come from the demo mission log for the ops desk and AURA.',
 };
 
 export const CABIN_ENV_SOURCE = {
   kind: 'simulated_eclss_demo' as const,
-  labelZh: '艙內 ECLSS 示範讀數',
-  noteZh: '氧氣、二氧化碳、氣壓等為示範艙內環境，非 NASA 公開 API。',
+  labelZh: 'Cabin ECLSS demo readings',
+  noteZh: 'O2, CO2, and pressure are demo cabin environment, not a NASA public API.',
 };
 
 export const STATUS_ZH: Record<ClinicalStatus, StatusZh> = {
-  Normal: '正常',
-  Attention: '注意',
-  Critical: '危急',
+  Normal: 'Normal',
+  Attention: 'Caution',
+  Critical: 'Critical',
 };
 
 const STATUS_RANK: Record<ClinicalStatus, number> = { Normal: 0, Attention: 1, Critical: 2 };
@@ -59,15 +60,15 @@ export const BAND_NUMBERS = {
 export const THRESHOLDS = {
   restingHR: {
     id: 'restingHR',
-    labelZh: '靜息心率',
+    labelZh: 'Resting heart rate',
     unit: 'bpm',
     normal: '50–90',
-    attention: '91–100 或 45–49',
-    critical: `>${BAND_NUMBERS.restingHR.criticalHigh} 或 <${BAND_NUMBERS.restingHR.criticalLow}`,
+    attention: '91–100 or 45–49',
+    critical: `>${BAND_NUMBERS.restingHR.criticalHigh} or <${BAND_NUMBERS.restingHR.criticalLow}`,
   },
   hrv: {
     id: 'hrv',
-    labelZh: '心率變異性 (HRV)',
+    labelZh: 'Heart-rate variability (HRV)',
     unit: 'ms',
     normal: `≥${BAND_NUMBERS.hrv.attentionBelow}`,
     attention: `${BAND_NUMBERS.hrv.criticalBelow}–${BAND_NUMBERS.hrv.attentionBelow - 1}`,
@@ -75,7 +76,7 @@ export const THRESHOLDS = {
   },
   spo2: {
     id: 'spo2',
-    labelZh: '血氧飽和度 (SpO₂)',
+    labelZh: 'Oxygen saturation (SpO2)',
     unit: '%',
     normal: `≥${BAND_NUMBERS.spo2.attentionBelow}`,
     attention: `${BAND_NUMBERS.spo2.criticalBelow}–${BAND_NUMBERS.spo2.attentionBelow - 1}`,
@@ -83,7 +84,7 @@ export const THRESHOLDS = {
   },
   vo2Max: {
     id: 'vo2Max',
-    labelZh: '最大攝氧量 (VO₂ max)',
+    labelZh: 'VO2 max',
     unit: 'mL/kg/min',
     normal: `≥${BAND_NUMBERS.vo2Max.attentionBelow.toFixed(1)}`,
     attention: `${BAND_NUMBERS.vo2Max.criticalBelow.toFixed(1)}–${(BAND_NUMBERS.vo2Max.attentionBelow - 0.1).toFixed(1)}`,
@@ -91,18 +92,18 @@ export const THRESHOLDS = {
   },
   sleepMinutes: {
     id: 'sleepMinutes',
-    labelZh: '平均睡眠時間',
+    labelZh: 'Average sleep',
     unit: 'min',
-    normal: `≥${BAND_NUMBERS.sleepMinutes.attentionBelow}（7 小時）`,
+    normal: `>=${BAND_NUMBERS.sleepMinutes.attentionBelow} (7 h)`,
     attention: `${BAND_NUMBERS.sleepMinutes.criticalBelow}–${BAND_NUMBERS.sleepMinutes.attentionBelow - 1}`,
     critical: `<${BAND_NUMBERS.sleepMinutes.criticalBelow}`,
   },
   exerciseMinutes: {
     id: 'exerciseMinutes',
-    labelZh: '運動對策時數',
+    labelZh: 'Exercise countermeasure',
     unit: 'min',
     normal: `${BAND_NUMBERS.exerciseMinutes.min}–${BAND_NUMBERS.exerciseMinutes.max}`,
-    attention: `<${BAND_NUMBERS.exerciseMinutes.min} 或 >${BAND_NUMBERS.exerciseMinutes.max}`,
+    attention: `<${BAND_NUMBERS.exerciseMinutes.min} or >${BAND_NUMBERS.exerciseMinutes.max}`,
     critical: '—',
   },
 } as const satisfies Record<string, ThresholdBand>;
@@ -145,13 +146,18 @@ export function statusExercise(minutes: number): ClinicalStatus {
 
 export function normalizeClinicalStatus(status: string | null | undefined): ClinicalStatus {
   const s = (status || '').trim();
-  if (s === 'Critical' || s === '危急' || s === 'Alert') return 'Critical';
+  const zhCrit = translate('zh-Hant-TW', 'status.critical');
+  const zhCaution = translate('zh-Hant-TW', 'status.caution');
+  const jaCrit = translate('ja', 'status.critical');
+  const esCrit = translate('es', 'status.critical');
+  const esCaution = translate('es', 'status.caution');
+  if (s === 'Critical' || s === zhCrit || s === jaCrit || s === esCrit || s === 'Alert') return 'Critical';
   if (
     s === 'Attention' ||
     s === 'Attention Required' ||
     s === 'Elevated' ||
-    s === '注意' ||
-    s === '需注意' ||
+    s === zhCaution ||
+    s === esCaution ||
     s === 'Elevated Stress' ||
     s === 'Fatigued' ||
     s === 'Mild Strain' ||
@@ -232,9 +238,9 @@ export interface VitalInterpretation {
 
 function bandFor(id: keyof typeof THRESHOLDS, status: ClinicalStatus): string {
   const t = THRESHOLDS[id];
-  if (status === 'Critical') return `危急 ${t.critical}`;
-  if (status === 'Attention') return `注意 ${t.attention}`;
-  return `正常 ${t.normal}`;
+  if (status === 'Critical') return `Critical ${t.critical}`;
+  if (status === 'Attention') return `Caution ${t.attention}`;
+  return `Normal ${t.normal}`;
 }
 
 function metricOf(
@@ -262,10 +268,10 @@ function primaryReason(metrics: MetricInterpretation[], extras: string[]): strin
   const ordered = [...metrics].sort((a, b) => STATUS_RANK[b.status] - STATUS_RANK[a.status]);
   const worst = ordered.find((m) => m.status !== 'Normal');
   if (worst) {
-    return `${worst.labelZh} ${worst.valueLabel}（${worst.statusZh}，${worst.thresholdBand}）`;
+    return `${worst.labelZh} ${worst.valueLabel} (${worst.statusZh}, ${worst.thresholdBand})`;
   }
   if (extras.length) return extras[0];
-  return '各項示範門檻均在正常區間。';
+  return 'All demo bands are in the normal range.';
 }
 
 /** Single interpreter for every health UI surface. */
@@ -290,51 +296,51 @@ export function interpretRecord(record: DailyHealthRecord, selfCheck?: SelfCheck
     if (sleepMetric && selfCheck.sleepQuality <= 2) {
       sleepMetric.status = worseStatus(sleepMetric.status, 'Attention');
       sleepMetric.statusZh = STATUS_ZH[sleepMetric.status];
-      extras.push(`自我檢核睡眠品質 ${selfCheck.sleepQuality}/5`);
+      extras.push(`Self-check sleep quality ${selfCheck.sleepQuality}/5`);
     }
     if (selfCheck.mood !== 'normal') {
       const moodStatus: ClinicalStatus = selfCheck.mood === 'fatigued' ? 'Attention' : 'Attention';
       metrics.push({
         id: 'selfCheck',
-        labelZh: '自我檢核心情',
-        valueLabel: selfCheck.mood === 'stressed' ? '壓力偏高' : '疲勞',
+        labelZh: 'Self-check mood',
+        valueLabel: selfCheck.mood === 'stressed' ? 'elevated stress' : 'fatigue',
         numericValue: 0,
         unit: '',
         status: moodStatus,
         statusZh: STATUS_ZH[moodStatus],
-        thresholdBand: '注意：自我回報非正常',
+        thresholdBand: 'Caution: self-report not normal',
         sourceKind: 'demo',
-        sourceLabelZh: '組員自我檢核（示範）',
+        sourceLabelZh: 'Crew self-check (demo)',
       });
     }
     if (selfCheck.pain === 'moderate') {
       metrics.push({
         id: 'selfCheck',
-        labelZh: '自我檢核疼痛',
-        valueLabel: '中度疼痛',
+        labelZh: 'Self-check pain',
+        valueLabel: 'moderate pain',
         numericValue: 0,
         unit: '',
         status: 'Attention',
-        statusZh: '注意',
-        thresholdBand: '注意：自我回報中度疼痛',
+        statusZh: STATUS_ZH.Attention,
+        thresholdBand: 'Caution: self-reported moderate pain',
         sourceKind: 'demo',
-        sourceLabelZh: '組員自我檢核（示範）',
+        sourceLabelZh: 'Crew self-check (demo)',
       });
     } else if (selfCheck.pain === 'mild') {
-      extras.push('自我檢核：輕度疼痛');
+      extras.push('Self-check: mild pain');
     }
     if (selfCheck.symptoms.trim()) {
       metrics.push({
         id: 'selfCheck',
-        labelZh: '自我檢核症狀',
+        labelZh: 'Self-check symptoms',
         valueLabel: selfCheck.symptoms.trim().slice(0, 40),
         numericValue: 0,
         unit: '',
         status: 'Attention',
-        statusZh: '注意',
-        thresholdBand: '注意：自我回報症狀',
+        statusZh: STATUS_ZH.Attention,
+        thresholdBand: 'Caution: self-reported symptoms',
         sourceKind: 'demo',
-        sourceLabelZh: '組員自我檢核（示範）',
+        sourceLabelZh: 'Crew self-check (demo)',
       });
     }
   }

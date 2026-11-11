@@ -58,9 +58,9 @@ export function statusI18nKey(status: string | null | undefined): 'status.normal
   const s = (status || '').trim();
   if (
     s === 'Critical' ||
-    s === '危急' ||
-    s === '危険' ||
-    s === 'Crítico' ||
+    s === translate('zh-Hant-TW', 'status.critical') ||
+    s === translate('ja', 'status.critical') ||
+    s === translate('es', 'status.critical') ||
     s === 'Alert'
   ) {
     return 'status.critical';
@@ -70,8 +70,8 @@ export function statusI18nKey(status: string | null | undefined): 'status.normal
     s === 'Attention Required' ||
     s === 'Caution' ||
     s === 'Elevated' ||
-    s === '注意' ||
-    s === 'Precaución' ||
+    s === translate('zh-Hant-TW', 'status.caution') ||
+    s === translate('es', 'status.caution') ||
     s === 'Elevated Stress' ||
     s === 'Fatigued' ||
     s === 'Mild Strain' ||

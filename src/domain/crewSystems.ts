@@ -28,6 +28,51 @@ export const SYSTEM_IDS = [
 
 export type SystemId = (typeof SYSTEM_IDS)[number];
 
+/** Metric ids rendered on the crew-systems panel (A4 How/Why/When). */
+export const METRIC_IDS = [
+  'hr',
+  'bpSys',
+  'bpDia',
+  'ecg',
+  'ortho',
+  'rr',
+  'spo2',
+  'hrv',
+  'ppco2',
+  'ppo2',
+  'cabinTemp',
+  'humidity',
+  'doseDay',
+  'doseCum',
+  'careerPct',
+  'speShelter',
+  'goes',
+  'kp',
+  'bone',
+  'grip',
+  'ared',
+  'cevis',
+  't2',
+  'acuity',
+  'headache',
+  'sleepH',
+  'sleepQ',
+  'fatigue',
+  'workload',
+  'pvt',
+  'kcal',
+  'fluidIn',
+  'fluidOut',
+  'mass',
+  'mood',
+  'stress',
+  'isolation',
+  'meds',
+  'symptoms',
+] as const;
+
+export type MetricId = (typeof METRIC_IDS)[number];
+
 export type MetricSource = 'simulation' | 'noaa';
 
 export interface SystemMetric {

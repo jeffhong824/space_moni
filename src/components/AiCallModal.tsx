@@ -22,7 +22,9 @@ import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, StationTask,
 import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
 import { callAiDoctor } from '../api/aiDoctor';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
-import { buildCmoRecommendations } from '../domain/cmoSupport';
+import { evaluateCmoSupport } from '../domain/cmoSupport';
+import { defaultSigma, personalZ } from '../domain/baselines';
+import { CREW } from '../world/catalog';
 import { CmoRecs } from './HrpPanels';
 import { latestMood, sansHistory } from '../world/crewLogs';
 import { flagSans } from '../domain/sansCheck';
@@ -68,8 +70,13 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang, crewPanel);
   const sansHist = sansHistory(astronaut.id);
   const lastMood = latestMood(astronaut.id);
-  const cmoRecs = buildCmoRecommendations({
+  const crewDef = CREW.find((c) => c.id === astronaut.id);
+  const zHrv = crewDef
+    ? personalZ(todayRecord.hrv, crewDef.baselineHrv, defaultSigma(crewDef.baselineHrv))
+    : null;
+  const cmo = evaluateCmoSupport({
     hrStatus: packed.metrics.find((m) => m.id === 'restingHR')?.status,
+    hrvStatus: packed.metrics.find((m) => m.id === 'hrv')?.status,
     spo2Status: packed.metrics.find((m) => m.id === 'spo2')?.status,
     sleepMin: todayRecord.avgSleepMinutes,
     sScale: spaceEnvironment?.scales.sScale,
@@ -77,6 +84,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
       ? flagSans(sansHist[sansHist.length - 1], sansHist[sansHist.length - 2]).flag
       : undefined,
     moodFlag: lastMood ? scoreCheckin(lastMood).flag : undefined,
+    baselineZBand: zHrv?.band,
   });
   const liveHr = liveVitals?.hr ?? todayRecord.restingHR;
   const liveHrv = liveVitals?.hrv ?? todayRecord.hrv;
@@ -406,6 +414,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   {t('ai.offlineBanner')}
                 </p>
               )}
+              <p className="mt-1 text-[10px] text-stone-500">{t('notice.notDevice')}</p>
             </div>
           </div>
 
@@ -454,6 +463,10 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
               {t('ui.report')}
             </button>
           </div>
+        </div>
+
+        <div className="px-5 pb-2">
+          <CmoRecs recs={cmo.recs} passed={cmo.passed} reviewedAt={cmo.reviewedAt} />
         </div>
 
         {auraTab === 'report' && lastAi?.healthAssessment && (
@@ -588,9 +601,6 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                             dataQuality={msg.dataQuality}
                             analysisMode={msg.analysisMode}
                           />
-                          <div className="mt-2">
-                            <CmoRecs recs={cmoRecs} />
-                          </div>
                         </div>
                       )}
                     </div>

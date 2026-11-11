@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { earthDelayForKind, formatDelay, type EarthDelay } from '../domain/earthDelay';
+import type { CmoPassedCheck, CmoRecommendation } from '../domain/cmoSupport';
+import type { SpeStage } from '../domain/speAlert';
+import { egressModeForKind, egressVerdict, type EgressMode, type EgressScores } from '../domain/egressReady';
 import { analogI4Crew, OSDR_I4 } from '../data/osdrInspiration4';
 import { personalZ, defaultSigma } from '../domain/baselines';
 import { aggregateTeam, scoreCheckin, type MoodCheckin } from '../domain/moodCheckin';
 import { flagSans } from '../domain/sansCheck';
-import { egressVerdict, type EgressScores } from '../domain/egressReady';
 import { buildSpeAlert } from '../domain/speAlert';
 import { circadianDriftHours, pvtFromSleep, sleepDebtHours, solClockAt } from '../domain/solClock';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import type { ShipKind } from '../world/catalog';
 import { WORLD_EPOCH_MS } from '../world/worldState';
-import { etaMs, formatEta, pendingUplink, sendCrewUplink } from '../world/comms';
+import { deliveredUplink, etaMs, formatEta, pendingUplink, sendCrewUplink } from '../world/comms';
 import {
   cmoDecisions,
   latestMood,
@@ -28,31 +30,38 @@ import {
 } from '../world/crewLogs';
 import { useI18n } from '../i18n/I18nProvider';
 import { SourceTag } from './SourceTag';
-import type { CmoRecommendation } from '../domain/cmoSupport';
 
 function Card({ children }: { children: React.ReactNode }) {
   return <section className="rounded-[24px] bg-white/90 p-3.5 shadow-[var(--sm-shadow-soft)] space-y-2">{children}</section>;
 }
 
-export function DelayBadge({ delay }: { delay: EarthDelay }) {
+export function DelayBadge({ delay, compact }: { delay: EarthDelay; compact?: boolean }) {
   const { t } = useI18n();
+  const title = t(delay.labelKey, delay.labelVars);
   return (
     <span
-      title={delay.label}
-      className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-[var(--sm-shadow-soft)]"
+      title={title}
+      className={`inline-flex items-center gap-1 rounded-full bg-white/90 font-semibold text-stone-600 shadow-[var(--sm-shadow-soft)] ${
+        compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
+      }`}
     >
-      {t('hrp.delayBadge', { delay: formatDelay(delay.oneWaySec) })}
+      {compact ? formatDelay(delay.oneWaySec) : t('hrp.delayBadge', { delay: formatDelay(delay.oneWaySec) })}
       <SourceTag kind={delay.method === 'mars-sim-au' || delay.method === 'mars-override' ? 'ASSUMPTION' : 'SOURCED-STATIC'} />
     </span>
   );
 }
 
-export function SolClockChip({ now }: { now: number }) {
+export function SolClockChip({ now, compact }: { now: number; compact?: boolean }) {
   const { t } = useI18n();
   const sol = solClockAt(WORLD_EPOCH_MS, now);
   return (
-    <span title={t('hrp.solCite')} className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-mono text-stone-600">
-      {sol.label}
+    <span
+      title={t('hrp.solCite')}
+      className={`inline-flex items-center gap-1 rounded-full bg-white/90 font-mono text-stone-600 ${
+        compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
+      }`}
+    >
+      {compact ? sol.label.replace('Sol ', 'S') : sol.label}
       <SourceTag kind="SOURCED-STATIC" />
     </span>
   );
@@ -75,7 +84,7 @@ export const EarthIndependentPanel: React.FC<{
         <SourceTag kind="SOURCED-STATIC" title="EIHSO-202" />
       </div>
       <p className="text-[11px] text-stone-600 leading-snug">{t('hrp.eihsoCite')}</p>
-      <p className="text-[11px] font-mono text-stone-700">{delay.label}</p>
+      <p className="text-[11px] font-mono text-stone-700">{t(delay.labelKey, delay.labelVars)}</p>
       <p className="text-[10px] text-stone-500">{t('hrp.roundTrip', { delay: formatDelay(delay.roundTripSec) })}</p>
       {kind === 'mars-transit' && (
         <label className="flex items-center gap-2 text-[11px]">
@@ -105,25 +114,68 @@ export const EarthIndependentPanel: React.FC<{
           <p className="text-amber-800 mt-0.5">{t('hrp.groundActList')}</p>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          sendCrewUplink(shipId, t('hrp.queuedNote'), delay.oneWaySec, Date.now());
-          bump((n) => n + 1);
-        }}
-        className="h-9 w-full rounded-full bg-stone-100 text-[11px] font-semibold"
-      >
-        {t('hrp.queueGround')}
-      </button>
-      {pending.map((m) => (
-        <p key={m.id} className="text-[11px] font-mono text-amber-800">
-          {t('hrp.eta', { eta: formatEta(etaMs(m, Date.now())) })}
-        </p>
-      ))}
+      {delay.oneWaySec === 0 ? (
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-2 space-y-1.5">
+          <p className="text-[11px] font-semibold text-emerald-900">{t('hrp.realtimeLink')}</p>
+          <button
+            type="button"
+            onClick={() => {
+              sendCrewUplink(shipId, t('hrp.queuedNote'), 0, Date.now());
+              bump((n) => n + 1);
+            }}
+            className="h-9 w-full rounded-full bg-white text-[11px] font-semibold"
+          >
+            {t('hrp.sendNow')}
+          </button>
+          {deliveredUplink(shipId, Date.now())
+            .slice(-3)
+            .reverse()
+            .map((m) => (
+              <p key={m.id} className="text-[11px] font-mono text-emerald-800">
+                {t('hrp.delivered')}
+              </p>
+            ))}
+        </div>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              sendCrewUplink(shipId, t('hrp.queuedNote'), delay.oneWaySec, Date.now());
+              bump((n) => n + 1);
+            }}
+            className="h-9 w-full rounded-full bg-stone-100 text-[11px] font-semibold"
+          >
+            {t('hrp.queueGround')}
+          </button>
+          {pending.map((m) => (
+            <p key={m.id} className="text-[11px] font-mono text-amber-800">
+              {t('hrp.eta', { eta: formatEta(etaMs(m, Date.now())) })}
+            </p>
+          ))}
+        </>
+      )}
       {auFromEarth != null && <p className="text-[10px] text-stone-400">{t('hrp.auNote', { au: auFromEarth.toFixed(3) })}</p>}
     </Card>
   );
 };
+
+function DoseBar({ label, value, limit, unit }: { label: string; value: number; limit: number; unit: string }) {
+  const pct = Math.max(0, Math.min(100, (value / limit) * 100));
+  return (
+    <div className="space-y-0.5">
+      <div className="flex justify-between text-[10px] font-semibold">
+        <span>{label}</span>
+        <span className="font-mono">
+          {value.toFixed(1)} / {limit} {unit} ({pct.toFixed(1)}%)
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
+        <div className="h-full bg-[var(--sm-cobalt)]" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
 
 export const SpeAlertCard: React.FC<{
   wx: SpaceEnvironmentPayload | null;
@@ -131,43 +183,88 @@ export const SpeAlertCard: React.FC<{
   baselineMsvDay: number;
 }> = ({ wx, missionDays, baselineMsvDay }) => {
   const { t } = useI18n();
-  const alert = buildSpeAlert(wx);
+  const live = buildSpeAlert(wx);
+  const [drill, setDrill] = useState<'off' | SpeStage>('off');
+  const stage: SpeStage = drill === 'off' ? live.stage : drill;
   const ticks = shelterTicks();
   const [, bump] = useState(0);
-  const gcr = alert.estimatedGcrMsvDay * missionDays;
-  const speExtra = (alert.estimatedSpeExtraMsvHour ?? 0) * (alert.stage === 'shelter' ? 6 : alert.stage === 'watch' ? 1 : 0);
+  const gcr = live.estimatedGcrMsvDay * missionDays;
+  const speExtra = (live.estimatedSpeExtraMsvHour ?? 0) * (stage === 'shelter' ? 6 : stage === 'watch' ? 1 : 0);
   const total = gcr + speExtra;
-  const tone = alert.stage === 'shelter' ? 'bg-rose-50 border-rose-200' : alert.stage === 'watch' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200';
+  const ladder: SpeStage[] = ['quiet', 'watch', 'shelter'];
+  const labelFor = (s: SpeStage) => (s === 'shelter' ? t('hrp.speShelter') : s === 'watch' ? t('hrp.speWatch') : t('hrp.speQuiet'));
   return (
     <Card>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-bold">{t('hrp.speTitle')}</h2>
-        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${tone}`}>
-          {alert.stage === 'shelter' ? t('hrp.speShelter') : alert.stage === 'watch' ? t('hrp.speWatch') : t('hrp.speQuiet')}
-        </span>
+        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-slate-50">{labelFor(stage)}</span>
       </div>
-      <p className="text-[11px] text-stone-600">{alert.reasons.join(' · ') || t('hrp.speQuietDetail')}</p>
+      <ol className="flex items-center gap-1 text-[10px] font-bold uppercase">
+        {ladder.map((s, i) => (
+          <li
+            key={s}
+            className={`flex-1 text-center rounded-full px-1 py-1 border ${
+              s === stage ? 'bg-[var(--sm-cobalt)] text-white border-transparent' : 'bg-white text-stone-500'
+            }`}
+          >
+            {i > 0 ? '→ ' : ''}
+            {labelFor(s)}
+          </li>
+        ))}
+      </ol>
+      <p className="text-[11px] text-stone-600">{live.reasons.join(' · ') || t('hrp.speQuietDetail')}</p>
+      <p className="text-[11px] font-mono">
+        {t('hrp.spePfu', {
+          pfu10: live.pfu10 != null ? live.pfu10.toFixed(2) : t('common.none'),
+          pfu100: live.pfu100 != null ? live.pfu100.toFixed(2) : t('common.none'),
+        })}
+      </p>
+      <label className="flex items-center gap-2 text-[11px] font-semibold">
+        <input
+          type="checkbox"
+          checked={drill !== 'off'}
+          onChange={(e) => setDrill(e.target.checked ? 'watch' : 'off')}
+        />
+        {t('hrp.speDrill')}
+        <SourceTag kind="SIMULATION" />
+      </label>
+      {drill !== 'off' && (
+        <div className="flex gap-1">
+          {(['watch', 'shelter'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setDrill(s)}
+              className={`flex-1 h-8 rounded-full text-[10px] font-bold ${drill === s ? 'bg-amber-200' : 'bg-stone-100'}`}
+            >
+              {labelFor(s)}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap gap-1">
         <SourceTag kind="LIVE" title="NOAA GOES / DONKI SEP" />
         <SourceTag kind="SOURCED-STATIC" title={t('hrp.artemisCite')} />
-        <SourceTag kind="ASSUMPTION" title={alert.speExtraAssumption} />
+        <SourceTag kind="ASSUMPTION" title={live.speExtraAssumption} />
         <SourceTag kind="SIMULATION" title={t('hrp.careerSim')} />
       </div>
+      <DoseBar label={t('hrp.careerBar')} value={total} limit={live.careerLimitMsv} unit="mSv" />
+      <DoseBar label={t('hrp.speBar')} value={speExtra} limit={live.spe30DayLimitMsv} unit="mSv" />
       <p className="text-[11px] font-mono">
         {t('hrp.doseLine', {
           gcr: gcr.toFixed(1),
           spe: speExtra.toFixed(2),
           total: total.toFixed(1),
-          career: alert.careerLimitMsv,
-          spe30: alert.spe30DayLimitMsv,
-          pctC: ((total / alert.careerLimitMsv) * 100).toFixed(1),
-          pctS: ((speExtra / alert.spe30DayLimitMsv) * 100).toFixed(1),
+          career: live.careerLimitMsv,
+          spe30: live.spe30DayLimitMsv,
+          pctC: ((total / live.careerLimitMsv) * 100).toFixed(1),
+          pctS: ((speExtra / live.spe30DayLimitMsv) * 100).toFixed(1),
         })}
       </p>
       <p className="text-[10px] text-stone-500 leading-snug">{t('hrp.artemisCite')}</p>
-      {(alert.stage === 'watch' || alert.stage === 'shelter') && (
+      {(stage === 'watch' || stage === 'shelter') && (
         <ul className="space-y-1">
-          {alert.shelterChecklist.map((item) => (
+          {live.shelterChecklist.map((item) => (
             <li key={item.id}>
               <label className="flex items-start gap-2 text-[11px]">
                 <input
@@ -293,11 +390,11 @@ export const SansCheckCard: React.FC<{ crewId: string }> = ({ crewId }) => {
       </label>
       <div className="flex gap-2 text-[11px]">
         <label className="flex-1">
-          logMAR OD
+          {t('hrp.logMarOd')}
           <input value={od} onChange={(e) => setOd(e.target.value)} className="w-full h-8 rounded-lg border px-2" />
         </label>
         <label className="flex-1">
-          logMAR OS
+          {t('hrp.logMarOs')}
           <input value={os} onChange={(e) => setOs(e.target.value)} className="w-full h-8 rounded-lg border px-2" />
         </label>
       </div>
@@ -391,17 +488,22 @@ export const SleepSolCard: React.FC<{ sleepMin: number; now: number }> = ({ slee
   );
 };
 
-export const EgressCard: React.FC<{ scores: EgressScores; surface: boolean }> = ({ scores, surface }) => {
+export const EgressCard: React.FC<{
+  scores: EgressScores;
+  mode?: EgressMode;
+  kind?: string;
+  title?: string;
+}> = ({ scores, mode, kind, title }) => {
   const { t } = useI18n();
-  if (!surface) return null;
-  const v = egressVerdict(scores);
+  const resolved = mode ?? (kind ? egressModeForKind(kind) : 'landing');
+  const v = egressVerdict(scores, resolved);
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold">{t('hrp.egressTitle')}</h2>
+        <h2 className="text-sm font-bold">{title ?? t(resolved === 'return' ? 'hrp.egressReturnTitle' : 'hrp.egressTitle')}</h2>
         <SourceTag kind="SIMULATION" title="[V2 7042] SM-106" />
       </div>
-      <p className="text-[11px] text-stone-600">{t('hrp.egressCite')}</p>
+      <p className="text-[11px] text-stone-600">{t(resolved === 'return' ? 'hrp.egressReturnCite' : 'hrp.egressCite')}</p>
       <p className="text-sm font-bold uppercase">{t(`hrp.go.${v.overall}`)}</p>
       <ul className="text-[11px] space-y-0.5">
         {v.tasks.map((task) => (
@@ -415,11 +517,14 @@ export const EgressCard: React.FC<{ scores: EgressScores; surface: boolean }> = 
   );
 };
 
-export const CmoRecs: React.FC<{ recs: CmoRecommendation[] }> = ({ recs }) => {
+export const CmoRecs: React.FC<{
+  recs: CmoRecommendation[];
+  passed?: CmoPassedCheck[];
+  reviewedAt?: string;
+}> = ({ recs, passed = [], reviewedAt }) => {
   const { t } = useI18n();
   const [, bump] = useState(0);
   const decisions = cmoDecisions();
-  if (!recs.length) return null;
   return (
     <Card>
       <div className="flex items-center justify-between">
@@ -428,6 +533,18 @@ export const CmoRecs: React.FC<{ recs: CmoRecommendation[] }> = ({ recs }) => {
       </div>
       <p className="text-[11px] font-semibold text-amber-800">{t('hrp.notDiagnosis')}</p>
       <p className="text-[10px] text-stone-500">{t('hrp.docInABox')}</p>
+      {recs.length === 0 && (
+        <div className="rounded-xl border border-stone-100 bg-stone-50 p-2">
+          <p className="text-[11px] font-semibold">{t('hrp.cmoEmpty', { at: reviewedAt ? reviewedAt.slice(11, 16) : '—' })}</p>
+          <ul className="mt-1 space-y-0.5">
+            {passed.map((p) => (
+              <li key={p.id} className="text-[10px] text-stone-600">
+                {t(p.titleKey)} · {p.citeId}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <ul className="space-y-2">
         {recs.map((r) => (
           <li key={r.id} className="rounded-xl border border-stone-200 p-2 text-[11px]">

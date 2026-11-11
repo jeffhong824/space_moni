@@ -18,9 +18,9 @@ export interface LanguageDef {
  */
 export const LANGUAGES: LanguageDef[] = [
   { id: 'en', nativeName: 'English', htmlLang: 'en' },
-  { id: 'zh-Hant-TW', nativeName: '繁體中文', htmlLang: 'zh-Hant-TW' },
-  { id: 'es', nativeName: 'Español', htmlLang: 'es' },
-  { id: 'ja', nativeName: '日本語', htmlLang: 'ja' },
+  { id: 'zh-Hant-TW', nativeName: 'Chinese (Taiwan)', htmlLang: 'zh-Hant-TW' },
+  { id: 'es', nativeName: 'Espanol', htmlLang: 'es' },
+  { id: 'ja', nativeName: 'Japanese', htmlLang: 'ja' },
 ];
 
 export const LOCALE_TABLES: Record<string, unknown> = {

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { BookOpen, BookText, ClipboardList, Globe2, HeartPulse, LayoutGrid, LogOut, Orbit, UserRound, Users, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { LANGUAGES } from '../i18n/registry';
+import { translate } from '../i18n/index';
 import { allDemoAccounts } from '../world/accounts';
 import type { AuthUser } from '../types';
 import { taipeiHour } from '../world/worldState';
@@ -10,13 +11,6 @@ import { dockItemsForRole, type AppView } from '../app/routing';
 import { bindEscapeClose, bindOutsidePointerClose } from './escapeClose';
 
 export type { AppView };
-
-const LANG_SHORT: Record<string, string> = {
-  en: 'EN',
-  'zh-Hant-TW': '繁',
-  es: 'ES',
-  ja: 'JA',
-};
 
 export type RankTone = 'ok' | 'warn' | 'crit' | 'lilac' | 'info';
 
@@ -30,7 +24,14 @@ export const TONE_HEX: Record<RankTone, string> = {
 
 export function toneFromRank(status?: string): RankTone {
   if (!status) return 'info';
-  if (status === 'Critical' || status === 'Severe' || status === 'unavailable' || status === '危急' || status === '危険' || status === 'Crítico')
+  if (
+    status === 'Critical' ||
+    status === 'Severe' ||
+    status === 'unavailable' ||
+    status === translate('zh-Hant-TW', 'status.critical') ||
+    status === translate('ja', 'status.critical') ||
+    status === translate('es', 'status.critical')
+  )
     return 'crit';
   if (
     status === 'Attention' ||
@@ -40,11 +41,18 @@ export function toneFromRank(status?: string): RankTone {
     status === 'Moderate' ||
     status === 'partial' ||
     status === 'Elevated' ||
-    status === '注意' ||
-    status === 'Precaución'
+    status === translate('zh-Hant-TW', 'status.caution') ||
+    status === translate('es', 'status.caution')
   )
     return 'warn';
-  if (status === 'Nominal' || status === 'Normal' || status === 'Low' || status === 'ok' || status === '正常') return 'ok';
+  if (
+    status === 'Nominal' ||
+    status === 'Normal' ||
+    status === 'Low' ||
+    status === 'ok' ||
+    status === translate('zh-Hant-TW', 'status.normal')
+  )
+    return 'ok';
   return 'info';
 }
 
@@ -329,7 +337,7 @@ export const LanguageGlobe: React.FC<{ variant?: 'light' | 'dark' }> = ({ varian
         }`}
       >
         <Globe2 className="w-4 h-4" />
-        <span className="hidden sm:inline">{LANG_SHORT[current.id] ?? current.id.slice(0, 2).toUpperCase()}</span>
+        <span className="hidden sm:inline">{t('lang.short')}</span>
       </button>
       {open && (
         <ul className="absolute right-0 mt-2 z-50 min-w-[10rem] p-1.5 rounded-3xl bg-white shadow-[var(--sm-shadow)]">
@@ -345,7 +353,7 @@ export const LanguageGlobe: React.FC<{ variant?: 'light' | 'dark' }> = ({ varian
                   l.id === lang ? 'bg-[var(--sm-cobalt)] text-white' : 'text-stone-700 hover:bg-stone-50'
                 }`}
               >
-                {l.nativeName}
+                {translate(l.id, 'lang.native')}
               </button>
             </li>
           ))}
@@ -790,6 +798,7 @@ const DOCK_ICON: Record<string, React.ReactNode> = {
   sources: <BookOpen className="w-4 h-4" />,
   science: <BookText className="w-4 h-4" />,
   sim: <Orbit className="w-4 h-4" />,
+  tour: <BookOpen className="w-4 h-4" />,
 };
 
 const GLOSSARY_KEYS = [

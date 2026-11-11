@@ -63,12 +63,12 @@ export const TopNav: React.FC<TopNavProps> = ({
           {clockLabel && (
             <span
               title={t('glossary.met')}
-              className="hidden xl:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[22rem]"
+              className="hidden sm:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[10rem] xl:max-w-[22rem]"
             >
               {clockLabel}
             </span>
           )}
-          {clockExtra && <span className="hidden xl:inline-flex items-center gap-1.5">{clockExtra}</span>}
+          {clockExtra && <span className="inline-flex items-center gap-1 max-w-[42vw] overflow-x-auto">{clockExtra}</span>}
         </div>
 
         {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}

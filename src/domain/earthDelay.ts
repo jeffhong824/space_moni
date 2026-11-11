@@ -23,7 +23,10 @@ export interface EarthDelay {
   oneWaySec: number;
   roundTripSec: number;
   method: DelayMethod;
+  /** English fallback for tests / titles. UI should prefer labelKey. */
   label: string;
+  labelKey: string;
+  labelVars?: Record<string, string | number>;
   /** True when crew must act before a ground reply can arrive. */
   earthIndependent: boolean;
 }
@@ -59,6 +62,7 @@ export function earthDelayForKind(
       roundTripSec: 0,
       method: 'leo-negligible',
       label: 'LEO light-time ~0 s (ISS-class)',
+      labelKey: 'hrp.delayLeo',
       earthIndependent: false,
     };
   }
@@ -69,6 +73,8 @@ export function earthDelayForKind(
       roundTripSec: s * 2,
       method: 'moon-light-time',
       label: `Moon one-way ${s.toFixed(2)} s (384 400 km / c)`,
+      labelKey: 'hrp.delayMoon',
+      labelVars: { s: s.toFixed(2) },
       earthIndependent: true,
     };
   }
@@ -80,6 +86,8 @@ export function earthDelayForKind(
         roundTripSec: s * 2,
         method: 'mars-override',
         label: `Mars one-way ${formatDelay(s)} (crew-selected; not JPL Horizons)`,
+        labelKey: 'hrp.delayMarsOverride',
+        labelVars: { delay: formatDelay(s) },
         earthIndependent: true,
       };
     }
@@ -90,6 +98,8 @@ export function earthDelayForKind(
       roundTripSec: clamped * 2,
       method: 'mars-sim-au',
       label: `Mars one-way ${formatDelay(clamped)} from simulated AU (circular-orbit analog, not JPL Horizons)`,
+      labelKey: 'hrp.delayMarsAu',
+      labelVars: { delay: formatDelay(clamped) },
       earthIndependent: true,
     };
   }
@@ -98,6 +108,7 @@ export function earthDelayForKind(
     roundTripSec: 0,
     method: 'leo-negligible',
     label: 'Unknown station — delay treated as 0 s',
+    labelKey: 'hrp.delayUnknown',
     earthIndependent: false,
   };
 }

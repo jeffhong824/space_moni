@@ -20,8 +20,14 @@ import { buildRiskMatrix, crewPanelAt } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
-import { CmoRecs, MoodCheckinCard, SpeAlertCard } from './HrpPanels';
-import { buildCmoRecommendations } from '../domain/cmoSupport';
+import { CmoRecs, EgressCard, MoodCheckinCard, SpeAlertCard } from './HrpPanels';
+import { evaluateCmoSupport } from '../domain/cmoSupport';
+import { earthDelayForKind } from '../domain/earthDelay';
+import { simulatedEgressScores } from '../domain/egressReady';
+import { defaultSigma, personalZ } from '../domain/baselines';
+import { latestMood, marsDelayOverride, sansHistory } from '../world/crewLogs';
+import { flagSans } from '../domain/sansCheck';
+import { scoreCheckin } from '../domain/moodCheckin';
 
 interface SurgeonHomeProps {
   surgeonName: string;
@@ -357,15 +363,39 @@ function CaseInspector({
           analysisMode="offline_fallback"
         />
       )}
-      <CmoRecs
-        recs={buildCmoRecommendations({
+      {(() => {
+        const worldNow = worldStateAt(tNow, spaceEnvironment);
+        const def = CREW.find((c) => c.id === selectedAstro.id);
+        const ship = worldNow.ships.find((s) => s.crew.some((c) => c.def.id === selectedAstro.id));
+        const delay = earthDelayForKind(ship?.def.kind ?? 'leo-station', ship?.location.auFromEarth, marsDelayOverride());
+        const hrvVal = analysis.detailedAnalysis.metrics.find((m) => m.id === 'hrv')?.numericValue ?? def?.baselineHrv ?? 22;
+        const z = def ? personalZ(hrvVal, def.baselineHrv, defaultSigma(def.baselineHrv)) : null;
+        const hist = sansHistory(selectedAstro.id);
+        const mood = latestMood(selectedAstro.id);
+        const review = evaluateCmoSupport({
           hrStatus: analysis.detailedAnalysis.metrics.find((m) => m.id === 'restingHR')?.status,
+          hrvStatus: analysis.detailedAnalysis.metrics.find((m) => m.id === 'hrv')?.status,
           spo2Status: analysis.detailedAnalysis.metrics.find((m) => m.id === 'spo2')?.status,
           sleepMin: analysis.detailedAnalysis.metrics.find((m) => m.id === 'sleepMinutes')?.numericValue,
           sScale: spaceEnvironment?.scales.sScale,
-          delaySec: 0,
-        })}
-      />
+          sansFlag: hist.length ? flagSans(hist[hist.length - 1], hist[hist.length - 2]).flag : undefined,
+          moodFlag: mood ? scoreCheckin(mood).flag : undefined,
+          delaySec: delay.oneWaySec,
+          baselineZBand: z?.band,
+        });
+        const scores = simulatedEgressScores({
+          hr: analysis.detailedAnalysis.metrics.find((m) => m.id === 'restingHR')?.numericValue ?? 72,
+          baselineHr: def?.baselineHr ?? 72,
+          spo2: analysis.detailedAnalysis.metrics.find((m) => m.id === 'spo2')?.numericValue ?? 98,
+          missionDays: selectedAstro.missionDaysElapsed,
+        });
+        return (
+          <>
+            <CmoRecs recs={review.recs} passed={review.passed} reviewedAt={review.reviewedAt} />
+            <EgressCard scores={scores} kind={ship?.def.kind} />
+          </>
+        );
+      })()}
 
       {selected.state !== 'closed' && (
         <button

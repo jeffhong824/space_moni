@@ -58,7 +58,9 @@
     "confirmTitle": "Log in as {name} ({role}, {ship})?",
     "confirmHint": "Username and password are filled in. Confirm signs in; Cancel leaves the form as-is. This does not auto-submit from the fleet sim.",
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "heroAlt": "Apollo 9, 6 March 1969. Image: NASA (AS09-20-3064)",
+    "heroCaptionNasa": "Apollo 9, 6 March 1969. Image: NASA (AS09-20-3064)"
   },
   "role": {
     "astronaut": "Astronaut",
@@ -115,7 +117,8 @@
     "aiTitle": "Call AURA flight surgeon",
     "logoutTitle": "Log out and return to sign-in",
     "science": "Science",
-    "scienceShort": "Science"
+    "scienceShort": "Science",
+    "tour": "Tour"
   },
   "glossary": {
     "met": "MET — Mission elapsed time, counted from the demo epoch (10 Nov 2026, Taipei).",
@@ -362,7 +365,9 @@
     "donkiSep": "SEP",
     "donkiNotes": "Notice",
     "goesFlareSource": "Flare class is derived from NOAA GOES X-ray flux (0.1–0.8 nm). NASA DONKI FLR is not queried (upstream 404).",
-    "observedAt": "Observed {time}"
+    "observedAt": "Observed {time}",
+    "emptyWindow": "empty window",
+    "partial": "Partial"
   },
   "ai": {
     "offlineBanner": "AI model offline — using on-device threshold rules",
@@ -443,7 +448,7 @@
       },
       "proton": {
         "used": "≥10 MeV integral proton flux → S-scale",
-        "note": "Verified public URL. The demo SPE scenario is labeled separately and never overwrite as official."
+        "note": "Verified public URL. The demo SPE scenario is labeled separately and never overwritten as official."
       },
       "donki": {
         "used": "GST / CME / SEP / notifications catalog (FLR is not queried)",
@@ -476,8 +481,20 @@
       "anatomy": {
         "used": "Front/back holographic body map on the astronaut dashboard",
         "note": "AI-generated holographic anatomy plates for this non-commercial demo, with original SVG hotspots. Region colors are simulation status, not medical imaging."
+      },
+      "apollo9": {
+        "used": "Login hero still: Apollo 9 Earthrise-class photograph AS09-20-3064.",
+        "note": "NASA image AS09-20-3064, 6 March 1969. Public domain NASA still. Not a NASA logo."
       }
-    }
+    },
+    "band": {
+      "orWord": "or",
+      "hoursSuffix": "({n} h)"
+    },
+    "exerciseCopy": "Target {min}–{max} min; below {min} or above {max} → caution (no critical band).",
+    "aboutTitle": "About this project",
+    "aboutBody": "SpaceMoni is a prototype of the HRP EIHSO-202 semi-autonomous crew monitoring dashboard, built in Taipei for NASA Space Apps 2026 (Best Use of Science). Team: OGTech AI. Challenge: Create Health Monitoring Software for Astronauts on Space Missions.",
+    "mitNote": "MIT License · 2026 OGTech AI team."
   },
   "metric": {
     "restingHR": "Resting heart rate",
@@ -920,7 +937,9 @@
     "speOff": "Demo solar-proton overlay cleared"
   },
   "lang": {
-    "label": "Language"
+    "label": "Language",
+    "native": "English",
+    "short": "EN"
   },
   "sys": {
     "cardioOk": "Cardiovascular adaptation is good; resting HR and HRV are in the demo bands.",
@@ -1220,7 +1239,9 @@
     "nextPrefix": "Next",
     "filterOpen": "Open",
     "filterReviewing": "Reviewing",
-    "filterDone": "Done"
+    "filterDone": "Done",
+    "moonDay": "Moon · Day {n}",
+    "marsSol": "Mars · Sol {n}"
   },
   "today": {
     "allInRange": "All within range",
@@ -1463,7 +1484,8 @@
     "egressTask": {
       "stand": "Unassisted stand / walk to airlock",
       "hatch": "Hatch / suit donning (grip + vision)",
-      "eva": "Early surface EVA"
+      "eva": "Early surface EVA",
+      "earth": "Return-to-Earth egress"
     },
     "cmoTitle": "AURA · CMO decision support",
     "notDiagnosis": "Not a diagnosis. AURA is decision support for the crew medical officer.",
@@ -1505,6 +1527,329 @@
       "inside": "inside",
       "caution": "caution",
       "off": "off"
+    },
+    "delayLeo": "LEO light-time ~0 s (ISS-class)",
+    "delayMoon": "Moon one-way {s} s (384 400 km / c)",
+    "delayMarsAu": "Mars one-way {delay} from simulated AU (circular-orbit analog, not JPL Horizons)",
+    "delayMarsOverride": "Mars one-way {delay} (crew-selected; not JPL Horizons)",
+    "delayUnknown": "Unknown station — delay treated as 0 s",
+    "realtimeLink": "Real-time link · no queue",
+    "sendNow": "Send now (delivers instantly)",
+    "delivered": "Delivered",
+    "spePfu": "GOES ≥10 MeV {pfu10} pfu · ≥100 MeV {pfu100} pfu",
+    "speDrill": "Drill / SIMULATION — preview WATCH and SHELTER",
+    "careerBar": "Career 600 mSv PEL",
+    "speBar": "250 mSv 30-day SPE bound",
+    "logMarOd": "logMAR OD (right eye)",
+    "logMarOs": "logMAR OS (left eye)",
+    "egressReturnTitle": "Readiness for return to Earth",
+    "egressReturnCite": "[V2 7042] orthostatic countermeasures; SM-106 / SM-206. Harmony: return-to-Earth egress analog. Scores are SIMULATION.",
+    "readinessAcross": "Readiness across ships",
+    "cmoEmpty": "No open recommendations · last reviewed {at}",
+    "cmoHrvTitle": "HRV caution",
+    "cmoHrvDetail": "Heart-rate variability is off the demo band. Rest, hydrate, and recheck. Cited [V2 7042]. Not a diagnosis.",
+    "cmoZTitle": "Personal baseline z-score",
+    "cmoZDetail": "This metric is {band} vs that person's own baseline (|z| caution 1.5 / off 2.5 — demo policy, BH-201). Not a diagnosis.",
+    "tagSelf": "SELF-REPORTED"
+  },
+  "notice": {
+    "notDevice": "SpaceMoni is a hackathon prototype, not a medical device. AURA is decision support, not a diagnosis."
+  },
+  "tour": {
+    "cta": "Take the 60-second tour",
+    "step": "Step {n} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "exit": "Exit",
+    "sources": "Open sources",
+    "todayTitle": "Today — Alice on Harmony",
+    "todayBody": "Crew home: vitals, Earth-delay, SPE, CMO recs. Simulated physiology, live NOAA weather.",
+    "bodyTitle": "Body map",
+    "bodyBody": "HRP-grouped systems with How / Why / When on every metric.",
+    "speTitle": "Solar proton event",
+    "speBody": "WATCH / SHELTER vs 600 mSv career and 250 mSv SPE bounds. Drill is labeled SIMULATION.",
+    "delayTitle": "Earth delay",
+    "delayBody": "LEO is a real-time link. Moon and Mars queue notes one-way at light-time.",
+    "scienceTitle": "Science traceability",
+    "scienceBody": "Every feature mapped to HRP RAP, NASA-STD-3001, and LIVE / SOURCED-STATIC / SIMULATION.",
+    "crewTitle": "Commander crew board",
+    "crewBody": "Marcus sees the roster, SPE, delay, and CMO recs without opening AURA.",
+    "hqTitle": "NASA HQ + sources",
+    "hqBody": "Flight surgeon queue, readiness across ships, then the sources page with DONKI empty vs failed."
+  },
+  "selfLog": {
+    "title": "Log a measurement",
+    "hint": "Glucose, temperature, blood pressure, heart rate. SELF-REPORTED. Not mood.",
+    "glucoseCite": "Glucose band {min}–{max} mg/dL from OSD-575 CMP CSV (not invented).",
+    "save": "Save",
+    "spark": "Last {n}: {last}",
+    "metric": {
+      "glucose": "Glucose",
+      "temp": "Body temp",
+      "bpSys": "Systolic BP",
+      "bpDia": "Diastolic BP",
+      "hr": "Heart rate"
     }
+  },
+  "prompt": {
+    "morning": "Morning vitals due (07:30)",
+    "preExercise": "Pre-exercise BP/HR due",
+    "evening": "Evening log due (21:00)",
+    "logNow": "Log now",
+    "later": "Later"
+  },
+  "streak": {
+    "chip": "Streak {n} days · Today {done}/{total}"
+  },
+  "eva": {
+    "title": "EVA / DCS / illness log",
+    "cite": "HRR DCS ?i=168, dust ?i=82, EVA ?i=84, dynamic loads ?i=167, immune ?i=85, host-microorganism ?i=80. No numeric medical thresholds.",
+    "pre": "Pre-EVA (SIMULATION checklist)",
+    "post": "Post-EVA",
+    "illness": "Illness log",
+    "prebreathe": "Prebreathe complete",
+    "dcsBrief": "DCS brief complete",
+    "suitFit": "Suit fit checked",
+    "skinJoint": "Skin / joint",
+    "eyeNasal": "Eye / nasal / throat",
+    "handShoulder": "Hand / shoulder",
+    "fever": "Fever",
+    "soreThroat": "Sore throat",
+    "skinInfection": "Skin infection",
+    "notifyCmo": "Notify CMO (moderate/severe — not a diagnosis)",
+    "save": "Save EVA / illness log",
+    "sev": {
+      "none": "none",
+      "mild": "mild",
+      "moderate": "moderate",
+      "severe": "severe"
+    }
+  },
+  "explain": {
+    "open": "How / Why / When",
+    "how": "How",
+    "why": "Why (HRR)",
+    "when": "When",
+    "hr": {
+      "how": "Demo readout for hr. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "bpSys": {
+      "how": "Demo readout for bpSys. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "bpDia": {
+      "how": "Demo readout for bpDia. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "ecg": {
+      "how": "Demo readout for ecg. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "ortho": {
+      "how": "Demo readout for ortho. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "rr": {
+      "how": "Demo readout for rr. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "spo2": {
+      "how": "Demo readout for spo2. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "hrv": {
+      "how": "Demo readout for hrv. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "ppco2": {
+      "how": "Demo readout for ppco2. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "ppo2": {
+      "how": "Demo readout for ppo2. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "cabinTemp": {
+      "how": "Demo readout for cabinTemp. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "humidity": {
+      "how": "Demo readout for humidity. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "doseDay": {
+      "how": "Demo readout for doseDay. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "doseCum": {
+      "how": "Demo readout for doseCum. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "careerPct": {
+      "how": "Demo readout for careerPct. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "speShelter": {
+      "how": "Demo readout for speShelter. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "goes": {
+      "how": "Demo readout for goes. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "kp": {
+      "how": "Demo readout for kp. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "bone": {
+      "how": "Demo readout for bone. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "grip": {
+      "how": "Demo readout for grip. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "ared": {
+      "how": "Demo readout for ared. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "cevis": {
+      "how": "Demo readout for cevis. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "t2": {
+      "how": "Demo readout for t2. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "acuity": {
+      "how": "Demo readout for acuity. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "headache": {
+      "how": "Demo readout for headache. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "sleepH": {
+      "how": "Demo readout for sleepH. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "sleepQ": {
+      "how": "Demo readout for sleepQ. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "fatigue": {
+      "how": "Demo readout for fatigue. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "workload": {
+      "how": "Demo readout for workload. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "pvt": {
+      "how": "Demo readout for pvt. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "kcal": {
+      "how": "Demo readout for kcal. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "fluidIn": {
+      "how": "Demo readout for fluidIn. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "fluidOut": {
+      "how": "Demo readout for fluidOut. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "mass": {
+      "how": "Demo readout for mass. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "mood": {
+      "how": "Demo readout for mood. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "stress": {
+      "how": "Demo readout for stress. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "isolation": {
+      "how": "Demo readout for isolation. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "meds": {
+      "how": "Demo readout for meds. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    },
+    "symptoms": {
+      "how": "Demo readout for symptoms. Physiology is simulated crew telemetry unless tagged NOAA LIVE.",
+      "why": "Mapped to a NASA Human Research Roadmap risk (verified 2026-11-11). Not a diagnosis.",
+      "when": "Open when the band is caution/critical, after EVA, or during the daily log window."
+    }
+  },
+  "hrr": {
+    "matrixTitle": "HRR coverage matrix (22 rows)",
+    "matrixLead": "Human Research Roadmap risks this demo covers. Disc is listed as inactive. URLs verified 2026-11-11.",
+    "radiation": "Space radiation dose vs PEL",
+    "cardio": "Cardiovascular adaptation",
+    "sans": "SANS ocular monitoring",
+    "bone": "Bone mineral analog",
+    "fitness": "Aerobic / resistive countermeasures",
+    "sensorimotor": "Sensorimotor / egress",
+    "behavioral": "Behavioral health indicators",
+    "team": "Team monitoring",
+    "sleep": "Sleep opportunity",
+    "immune": "Immune / CBC analog",
+    "hostMicro": "Host-microorganism",
+    "nutrition": "Nutrition / mass",
+    "renal": "Renal stone / fluids",
+    "medications": "In-mission medications",
+    "inMission": "In-mission medical",
+    "hypoxia": "Hypoxia / cabin gas",
+    "dust": "Lunar / planetary dust",
+    "dcs": "Decompression sickness",
+    "eva": "EVA operations",
+    "dynamicLoads": "Dynamic loads",
+    "eihso": "Earth-independent health & performance",
+    "disc": "Intervertebral disc (inactive in HRR)"
   }
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { BAND_NUMBERS, THRESHOLDS } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
-import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import { aggregateDonki, type SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { SimChip } from '../ui/chrome';
 import { feedImpact } from './SpaceEnvironmentPanel';
 
@@ -55,6 +55,12 @@ const CITATIONS = [
     noteKey: 'sources.cite.sans.note',
     url: 'https://www.nasa.gov/humans-in-space/spaceflight-associated-neuro-ocular-syndrome-sans/',
   },
+  {
+    title: 'NASA image AS09-20-3064 (Apollo 9)',
+    usedKey: 'sources.cite.apollo9.used',
+    noteKey: 'sources.cite.apollo9.note',
+    url: 'https://images.nasa.gov/details-as09-20-3064',
+  },
 ] as const;
 
 function Track({
@@ -94,6 +100,10 @@ function Track({
   );
 }
 
+function localizeBand(text: string, t: (k: string, v?: Record<string, string | number>) => string): string {
+  return text.replace(/\bor\b/g, t('sources.band.orWord')).replace('(7 h)', t('sources.band.hoursSuffix', { n: 7 }));
+}
+
 function fmtTime(iso?: string | null) {
   if (!iso) return '—';
   const d = new Date(iso.endsWith('Z') || iso.includes('T') ? iso : iso.replace(' ', 'T') + 'Z');
@@ -120,7 +130,7 @@ export const DataSourcesPage: React.FC<{
   const src = (id: string) => wx?.sources.find((s) => s.id === id || s.name.toLowerCase().includes(id.toLowerCase()));
   const noaa = src('kp') || src('swpc') || wx?.sources.find((s) => s.agency === 'NOAA');
   const goes = src('goes') || src('xray') || wx?.sources.find((s) => s.name.toLowerCase().includes('goes'));
-  const donki = src('donki') || wx?.sources.find((s) => s.agency === 'NASA');
+  const donkiAgg = aggregateDonki(wx?.sources ?? []);
 
   const hr = BAND_NUMBERS.restingHR;
   const hrv = BAND_NUMBERS.hrv;
@@ -186,10 +196,16 @@ export const DataSourcesPage: React.FC<{
           unit={THRESHOLDS.exerciseMinutes.unit}
           marker={BAND_NUMBERS.exerciseMinutes.min}
           min={0}
-          max={BAND_NUMBERS.exerciseMinutes.max}
+          max={BAND_NUMBERS.exerciseMinutes.max + 30}
           cautionAt={BAND_NUMBERS.exerciseMinutes.min}
-          criticalAt={BAND_NUMBERS.exerciseMinutes.max}
+          criticalAt={BAND_NUMBERS.exerciseMinutes.max + 999}
         />
+        <p className="text-[11px] text-stone-500">
+          {t('sources.exerciseCopy', {
+            min: BAND_NUMBERS.exerciseMinutes.min,
+            max: BAND_NUMBERS.exerciseMinutes.max,
+          })}
+        </p>
         <Track
           label={t('metric.sleepMinutes')}
           unit="h"
@@ -206,7 +222,7 @@ export const DataSourcesPage: React.FC<{
         <div className="flex flex-wrap gap-2">
           <LiveBadge name="NOAA SWPC" src={noaa} />
           <LiveBadge name="GOES" src={goes} />
-          <LiveBadge name="NASA DONKI" src={donki} />
+          <DonkiBadge agg={donkiAgg} />
         </div>
       </section>
 
@@ -281,13 +297,25 @@ export const DataSourcesPage: React.FC<{
                   {t(`metric.${row.id}`)}
                   <span className="block text-[10px] font-mono text-stone-400">{row.unit}</span>
                 </td>
-                <td className="py-1.5 pr-2 font-mono">{row.normal}</td>
-                <td className="py-1.5 pr-2 font-mono">{row.attention}</td>
-                <td className="py-1.5 font-mono">{row.critical}</td>
+                <td className="py-1.5 pr-2 font-mono">{localizeBand(row.normal, t)}</td>
+                <td className="py-1.5 pr-2 font-mono">{localizeBand(row.attention, t)}</td>
+                <td className="py-1.5 font-mono">{localizeBand(row.critical, t)}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className="mt-10 max-w-3xl rounded-[24px] bg-white/80 px-4 py-4 space-y-2">
+        <h2 className="text-sm font-semibold">{t('sources.aboutTitle')}</h2>
+        <p className="text-[12px] text-stone-600 leading-relaxed">{t('sources.aboutBody')}</p>
+        <p className="text-[11px] font-mono">
+          <a className="text-sky-800 underline" href="https://github.com/jeffhong824/space_moni" target="_blank" rel="noreferrer">
+            https://github.com/jeffhong824/space_moni
+          </a>
+        </p>
+        <p className="text-[11px] text-stone-500">{t('sources.mitNote')}</p>
+        <p className="text-[11px] text-amber-900 font-semibold">{t('notice.notDevice')}</p>
       </section>
 
       <button type="button" onClick={onBack} className="mt-8 mb-24 h-10 px-4 rounded-full bg-white text-xs font-semibold">
@@ -306,13 +334,57 @@ function LiveBadge({
 }) {
   const { t } = useI18n();
   const ok = src?.status === 'ok';
+  const empty = src?.status === 'empty';
   const when = src?.observedAt || src?.fetchedAt;
   return (
     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-[var(--sm-shadow-soft)] text-[12px]">
-      <span className={`w-2 h-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-stone-300'}`} />
+      <span className={`w-2 h-2 rounded-full ${ok ? 'bg-emerald-400' : empty ? 'bg-stone-400' : 'bg-rose-300'}`} />
       {name}
       {when && <span className="text-stone-400 text-[10px] font-mono">{new Date(when).toISOString().slice(11, 16)} UTC</span>}
-      {ok ? <SimChip live className="!px-1.5 !py-0" /> : <span className="text-[10px] text-stone-400">{t('wx.fail')}</span>}
+      {ok ? (
+        <SimChip live className="!px-1.5 !py-0" />
+      ) : empty ? (
+        <span className="text-[10px] text-stone-500">{t('wx.emptyWindow')}</span>
+      ) : (
+        <span className="text-[10px] text-stone-400">{t('wx.fail')}</span>
+      )}
+    </span>
+  );
+}
+
+function DonkiBadge({
+  agg,
+}: {
+  agg: ReturnType<typeof aggregateDonki>;
+}) {
+  const { t } = useI18n();
+  const tone =
+    agg.status === 'ok' ? 'bg-emerald-400' : agg.status === 'empty' ? 'bg-stone-400' : agg.status === 'degraded' ? 'bg-amber-400' : 'bg-rose-300';
+  const label =
+    agg.status === 'ok'
+      ? null
+      : agg.status === 'empty'
+        ? t('wx.emptyWindow')
+        : agg.status === 'degraded'
+          ? t('wx.partial')
+          : t('wx.fail');
+  return (
+    <span className="inline-flex flex-col gap-1 px-4 py-2 rounded-[20px] bg-white shadow-[var(--sm-shadow-soft)] text-[12px]">
+      <span className="inline-flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${tone}`} />
+        NASA DONKI
+        {agg.observedAt && (
+          <span className="text-stone-400 text-[10px] font-mono">{new Date(agg.observedAt).toISOString().slice(11, 16)} UTC</span>
+        )}
+        {agg.status === 'ok' ? <SimChip live className="!px-1.5 !py-0" /> : <span className="text-[10px] text-stone-500">{label}</span>}
+      </span>
+      <span className="flex flex-wrap gap-1 text-[10px] font-mono text-stone-500">
+        {agg.endpoints.map((e) => (
+          <span key={e.id}>
+            {e.short}: {e.status}
+          </span>
+        ))}
+      </span>
     </span>
   );
 }

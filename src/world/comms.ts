@@ -85,6 +85,10 @@ export function pendingUplink(shipId: string, now: number): HqMessage[] {
   return loadMessages().filter((m) => m.shipId === shipId && m.from === 'crew' && now < m.deliverAt);
 }
 
+export function deliveredUplink(shipId: string, now: number): HqMessage[] {
+  return loadMessages().filter((m) => m.shipId === shipId && m.from === 'crew' && now >= m.deliverAt);
+}
+
 export function formatEta(ms: number): string {
   const s = Math.ceil(ms / 1000);
   if (s < 60) return `${s}s`;

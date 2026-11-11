@@ -16,7 +16,7 @@ export async function handleSpaceEnvironment(req: ApiRequest, res: ApiResponse) 
     return res.status(503).json({
       fetchedAt: new Date().toISOString(),
       overallStatus: 'unavailable',
-      notices: ['官方空間天氣饋送暫時無法使用。未填補任何 NASA／NOAA 數值。'],
+      notices: ['Official space-weather feed unavailable. No NASA/NOAA values were filled in.'],
       sources: [],
       observations: { kp: null, goesXray: null, solarWind: null, protons: null },
       events: { solarFlares: [], geomagneticStorms: [], coronalMassEjections: [], swpcAlerts: [] },

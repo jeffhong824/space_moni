@@ -1,5 +1,5 @@
 /** Science traceability rows for /science (judges). Provenance: LIVE / SOURCED-STATIC / SIMULATION / ASSUMPTION. */
-export type Provenance = 'LIVE' | 'SOURCED-STATIC' | 'SIMULATION' | 'ASSUMPTION';
+export type Provenance = 'LIVE' | 'SOURCED-STATIC' | 'SIMULATION' | 'ASSUMPTION' | 'SELF-REPORTED';
 
 export interface ScienceRow {
   feature: string;
@@ -133,7 +133,7 @@ export const SCIENCE_ROWS: ScienceRow[] = [
     feature: 'Moon Base · South Pole station',
     hrp: 'Lunar deliverable / Artemis RAP symbols',
     std3001: '—',
-    source: 'Hypothetical surface base (Mar 2026 Gateway pivot). Not a real NASA crew manifest.',
+    source: 'Hypothetical lunar south-pole surface base, per NASA Moon Base direction, Mar 2026. Not a real NASA crew manifest.',
     provenance: 'SIMULATION',
   },
   {

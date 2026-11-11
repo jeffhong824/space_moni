@@ -109,7 +109,8 @@ describe('path ↔ view', () => {
         seen.add(item.view);
       }
       expect(seen.size).toBe(items.length);
-      expect(allowedViews(role).size).toBe(items.length);
+      expect(allowedViews(role).size).toBeGreaterThanOrEqual(items.length);
+      expect(allowedViews(role).has('tour')).toBe(true);
     }
   });
 });

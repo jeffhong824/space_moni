@@ -58,7 +58,9 @@
     "confirmTitle": "要以 {name}（{role}，{ship}）登入嗎？",
     "confirmHint": "帳號與密碼已填入。確認即登入；取消則留在此表單。從艦隊模擬點進來不會自動送出。",
     "confirm": "確認",
-    "cancel": "取消"
+    "cancel": "取消",
+    "heroAlt": "Apollo 9，1969 年 3 月 6 日。影像：NASA（AS09-20-3064）",
+    "heroCaptionNasa": "Apollo 9，1969 年 3 月 6 日。影像：NASA（AS09-20-3064）"
   },
   "role": {
     "astronaut": "太空人",
@@ -115,7 +117,8 @@
     "aiTitle": "與 AURA 飛行外科醫師通話",
     "logoutTitle": "登出並返回登入頁",
     "science": "科學追溯",
-    "scienceShort": "科學"
+    "scienceShort": "科學",
+    "tour": "導覽"
   },
   "glossary": {
     "met": "MET — 任務經過時間，自示範曆元（2026年11月10日台北）起算。",
@@ -362,7 +365,9 @@
     "donkiSep": "SEP",
     "donkiNotes": "通報",
     "goesFlareSource": "閃焰等級由 NOAA GOES X 射線通量（0.1–0.8 nm）推導。未查詢 NASA DONKI FLR（上游 404）。",
-    "observedAt": "觀測 {time}"
+    "observedAt": "觀測 {time}",
+    "emptyWindow": "空窗",
+    "partial": "部分"
   },
   "ai": {
     "offlineBanner": "AI 模型離線 — 改用裝置上門檻規則",
@@ -476,8 +481,20 @@
       "anatomy": {
         "used": "太空人儀表板的正／背面全息人體圖",
         "note": "本非商業示範用 AI 生成全息解剖圖，疊加原創 SVG 熱點。顏色為模擬狀態，非醫學影像。"
+      },
+      "apollo9": {
+        "used": "登入主圖：Apollo 9 AS09-20-3064。",
+        "note": "NASA 影像 AS09-20-3064，1969 年 3 月 6 日。NASA 公有領域靜照。不是 NASA 標誌。"
       }
-    }
+    },
+    "band": {
+      "orWord": "或",
+      "hoursSuffix": "（{n} 小時）"
+    },
+    "exerciseCopy": "目標 {min}–{max} 分；低於 {min} 或高於 {max} → 注意（無危急帶）。",
+    "aboutTitle": "關於本專案",
+    "aboutBody": "SpaceMoni 是 HRP EIHSO-202 半自主組員監測儀表板原型，於台北為 NASA Space Apps 2026（Best Use of Science）打造。團隊：OGTech AI（歐碁科技有限公司）。挑戰：Create Health Monitoring Software for Astronauts on Space Missions。",
+    "mitNote": "MIT 授權 · 2026 OGTech AI team（歐碁科技有限公司）。"
   },
   "metric": {
     "restingHR": "靜息心率",
@@ -920,7 +937,9 @@
     "speOff": "已清除示範太陽質子疊加"
   },
   "lang": {
-    "label": "語言"
+    "label": "語言",
+    "native": "繁體中文",
+    "short": "繁"
   },
   "sys": {
     "cardioOk": "心血管系統適應良好，靜息心率與 HRV 均在示範門檻內。",
@@ -1220,7 +1239,9 @@
     "nextPrefix": "下一步",
     "filterOpen": "未處理",
     "filterReviewing": "審核中",
-    "filterDone": "完成"
+    "filterDone": "完成",
+    "moonDay": "月球 · 第 {n} 日",
+    "marsSol": "火星 · Sol {n}"
   },
   "today": {
     "allInRange": "各項均在範圍內",
@@ -1382,7 +1403,7 @@
     "calibrated": "已校正"
   },
   "hrp": {
-    "scienceKicker": "Best Use of Science · Space Apps 2026 台北",
+    "scienceKicker": "科學最佳應用 · Space Apps 2026 台北",
     "scienceTitle": "科學追溯",
     "scienceLead": "每一項 SpaceMoni 功能對應 HRP 風險、NASA-STD-3001 章節與資料來源。表格以英文供評審對照；週遭介面已在地化。本系統不是 NASA 產品。",
     "scienceFoot": "LIVE = 執行時 NOAA/GOES 或 DONKI。SOURCED-STATIC = 有引用的文獻或標準。SIMULATION = 示範組員／世界。ASSUMPTION = 已標示的示範公式，非 NASA 方程式。250 mSv 30 日 SPE 界限為歷史 PEL，未在所附 Vol 2 Rev F 重述。",
@@ -1463,7 +1484,8 @@
     "egressTask": {
       "stand": "無輔助站立／步行至氣閘",
       "hatch": "艙蓋／穿裝（握力＋視力）",
-      "eva": "早期表面 EVA"
+      "eva": "早期表面 EVA",
+      "earth": "返回地球出艙"
     },
     "cmoTitle": "AURA · CMO 決策支援",
     "notDiagnosis": "不是診斷。AURA 是組員醫官的決策支援。",
@@ -1505,6 +1527,329 @@
       "inside": "區間內",
       "caution": "警戒",
       "off": "偏離"
+    },
+    "delayLeo": "近地軌道光時延 ~0 秒（ISS 級）",
+    "delayMoon": "月球單程 {s} 秒（384 400 km / c）",
+    "delayMarsAu": "火星單程 {delay}，由模擬 AU 計算（圓軌道類比，非 JPL Horizons）",
+    "delayMarsOverride": "火星單程 {delay}（組員自選；非 JPL Horizons）",
+    "delayUnknown": "未知站點 — 延遲以 0 秒計",
+    "realtimeLink": "即時連線 · 無佇列",
+    "sendNow": "立即送出（即時送達）",
+    "delivered": "已送達",
+    "spePfu": "GOES ≥10 MeV {pfu10} pfu · ≥100 MeV {pfu100} pfu",
+    "speDrill": "演練／模擬 — 預覽 WATCH 與 SHELTER",
+    "careerBar": "生涯 600 mSv PEL",
+    "speBar": "250 mSv 30 日 SPE 界限",
+    "logMarOd": "logMAR 右眼（OD）",
+    "logMarOs": "logMAR 左眼（OS）",
+    "egressReturnTitle": "返回地球整備",
+    "egressReturnCite": "[V2 7042] 姿勢性不耐對策；SM-106／SM-206。和諧號：返回地球出艙類比。分數為模擬。",
+    "readinessAcross": "各船整備",
+    "cmoEmpty": "無未決建議 · 上次檢視 {at}",
+    "cmoHrvTitle": "HRV 注意",
+    "cmoHrvDetail": "心率變異性偏離示範帶。休息、補液並複測。引用 [V2 7042]。不是診斷。",
+    "cmoZTitle": "個人基線 z 分數",
+    "cmoZDetail": "此指標相對本人基線為 {band}（|z| 注意 1.5／偏離 2.5 — 示範政策，BH-201）。不是診斷。",
+    "tagSelf": "自我回報"
+  },
+  "notice": {
+    "notDevice": "SpaceMoni 是黑客松原型，不是醫療器材。AURA 是決策支援，不是診斷。"
+  },
+  "tour": {
+    "cta": "60 秒導覽",
+    "step": "第 {n}／{total} 步",
+    "back": "上一步",
+    "next": "下一步",
+    "exit": "離開",
+    "sources": "開啟來源",
+    "todayTitle": "今日 — 和諧號 Alice",
+    "todayBody": "組員首頁：生命徵象、地球延遲、SPE、CMO 建議。生理為模擬，天氣為 NOAA 即時。",
+    "bodyTitle": "身體圖",
+    "bodyBody": "依 HRP 分組的系統，每項指標都有如何／為何／何時。",
+    "speTitle": "太陽質子事件",
+    "speBody": "WATCH／SHELTER 對照 600 mSv 生涯與 250 mSv SPE。演練標示為模擬。",
+    "delayTitle": "地球延遲",
+    "delayBody": "近地軌道為即時連線。月球與火星以光時延佇列備註。",
+    "scienceTitle": "科學追溯",
+    "scienceBody": "每一功能對應 HRP RAP、NASA-STD-3001，以及 LIVE／SOURCED-STATIC／SIMULATION。",
+    "crewTitle": "指揮官組員板",
+    "crewBody": "Marcus 可看名冊、SPE、延遲與 CMO 建議，不必打開 AURA。",
+    "hqTitle": "NASA 總部與來源",
+    "hqBody": "航醫佇列、各船整備，以及 DONKI 空窗與失敗的來源頁。"
+  },
+  "selfLog": {
+    "title": "記錄量測",
+    "hint": "血糖、體溫、血壓、心率。自我回報。不含心情。",
+    "glucoseCite": "血糖帶 {min}–{max} mg/dL 來自 OSD-575 CMP CSV（非自編）。",
+    "save": "儲存",
+    "spark": "近 {n} 筆：{last}",
+    "metric": {
+      "glucose": "血糖",
+      "temp": "體溫",
+      "bpSys": "收縮壓",
+      "bpDia": "舒張壓",
+      "hr": "心率"
     }
+  },
+  "prompt": {
+    "morning": "晨間生命徵象（07:30）到期",
+    "preExercise": "運動前血壓／心率到期",
+    "evening": "晚間紀錄（21:00）到期",
+    "logNow": "現在記錄",
+    "later": "稍後"
+  },
+  "streak": {
+    "chip": "連續 {n} 日 · 今日 {done}/{total}"
+  },
+  "eva": {
+    "title": "EVA／減壓病／疾病紀錄",
+    "cite": "HRR DCS ?i=168、塵埃 ?i=82、EVA ?i=84、動態負荷 ?i=167、免疫 ?i=85、宿主－微生物 ?i=80。無數值醫療門檻。",
+    "pre": "EVA 前（模擬檢查單）",
+    "post": "EVA 後",
+    "illness": "疾病紀錄",
+    "prebreathe": "預呼吸完成",
+    "dcsBrief": "減壓病簡報完成",
+    "suitFit": "已檢查艙外服貼合",
+    "skinJoint": "皮膚／關節",
+    "eyeNasal": "眼／鼻／喉",
+    "handShoulder": "手／肩",
+    "fever": "發燒",
+    "soreThroat": "喉嚨痛",
+    "skinInfection": "皮膚感染",
+    "notifyCmo": "通知 CMO（中度／重度 — 不是診斷）",
+    "save": "儲存 EVA／疾病紀錄",
+    "sev": {
+      "none": "無",
+      "mild": "輕",
+      "moderate": "中",
+      "severe": "重"
+    }
+  },
+  "explain": {
+    "open": "如何／為何／何時",
+    "how": "如何",
+    "why": "為何（HRR）",
+    "when": "何時",
+    "hr": {
+      "how": "hr 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "bpSys": {
+      "how": "bpSys 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "bpDia": {
+      "how": "bpDia 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "ecg": {
+      "how": "ecg 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "ortho": {
+      "how": "ortho 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "rr": {
+      "how": "rr 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "spo2": {
+      "how": "spo2 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "hrv": {
+      "how": "hrv 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "ppco2": {
+      "how": "ppco2 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "ppo2": {
+      "how": "ppo2 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "cabinTemp": {
+      "how": "cabinTemp 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "humidity": {
+      "how": "humidity 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "doseDay": {
+      "how": "doseDay 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "doseCum": {
+      "how": "doseCum 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "careerPct": {
+      "how": "careerPct 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "speShelter": {
+      "how": "speShelter 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "goes": {
+      "how": "goes 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "kp": {
+      "how": "kp 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "bone": {
+      "how": "bone 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "grip": {
+      "how": "grip 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "ared": {
+      "how": "ared 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "cevis": {
+      "how": "cevis 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "t2": {
+      "how": "t2 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "acuity": {
+      "how": "acuity 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "headache": {
+      "how": "headache 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "sleepH": {
+      "how": "sleepH 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "sleepQ": {
+      "how": "sleepQ 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "fatigue": {
+      "how": "fatigue 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "workload": {
+      "how": "workload 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "pvt": {
+      "how": "pvt 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "kcal": {
+      "how": "kcal 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "fluidIn": {
+      "how": "fluidIn 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "fluidOut": {
+      "how": "fluidOut 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "mass": {
+      "how": "mass 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "mood": {
+      "how": "mood 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "stress": {
+      "how": "stress 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "isolation": {
+      "how": "isolation 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "meds": {
+      "how": "meds 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    },
+    "symptoms": {
+      "how": "symptoms 示範讀數。生理為模擬組員遙測，除非標示 NOAA LIVE。",
+      "why": "對應 NASA 人體研究路線圖風險（2026-11-11 核對）。不是診斷。",
+      "when": "狀態為注意／危急、EVA 後，或每日紀錄時段再開看。"
+    }
+  },
+  "hrr": {
+    "matrixTitle": "HRR 涵蓋矩陣（22 列）",
+    "matrixLead": "本示範涵蓋的人體研究路線圖風險。椎間盤列為停用。網址於 2026-11-11 核對。",
+    "radiation": "太空輻射劑量與 PEL",
+    "cardio": "心血管適應",
+    "sans": "SANS 眼部監測",
+    "bone": "骨密度類比",
+    "fitness": "有氧／阻抗對策",
+    "sensorimotor": "感覺運動與出艙",
+    "behavioral": "行為健康指標",
+    "team": "團隊監測",
+    "sleep": "睡眠時段",
+    "immune": "免疫／CBC 類比",
+    "hostMicro": "宿主－微生物",
+    "nutrition": "營養／體重",
+    "renal": "腎結石／體液",
+    "medications": "任務中用藥",
+    "inMission": "任務中醫療",
+    "hypoxia": "低氧／艙氣",
+    "dust": "月球／行星塵",
+    "dcs": "減壓病",
+    "eva": "艙外活動",
+    "dynamicLoads": "動態負荷",
+    "eihso": "地球獨立健康與作業",
+    "disc": "椎間盤（HRR 已停用）"
   }
 }

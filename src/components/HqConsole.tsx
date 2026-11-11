@@ -20,7 +20,14 @@ import { AvatarBubble, DelayCaption, Segmented, Sheet, StatusDot, TONE_HEX, tone
 import { StatusPill } from '../ui/StatusPill';
 import { buildRiskMatrix } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
-import { EarthIndependentPanel, MoodCheckinCard, SpeAlertCard, useEarthDelay } from './HrpPanels';
+import { CmoRecs, EarthIndependentPanel, EgressCard, MoodCheckinCard, SpeAlertCard, useEarthDelay } from './HrpPanels';
+import { evaluateCmoSupport } from '../domain/cmoSupport';
+import { simulatedEgressScores } from '../domain/egressReady';
+import { defaultSigma, personalZ } from '../domain/baselines';
+import { latestMood, sansHistory } from '../world/crewLogs';
+import { flagSans } from '../domain/sansCheck';
+import { scoreCheckin } from '../domain/moodCheckin';
+import { statusHrv, statusRestingHR, statusSpo2 } from '../domain/healthThresholds';
 
 interface HqConsoleProps {
   world: WorldState;
@@ -100,6 +107,43 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
             delay={delay}
           />
           {shipCrewIds[0] && <MoodCheckinCard crewId={shipCrewIds[0]} shipCrewIds={shipCrewIds} />}
+          {(() => {
+            const lead = ship.crew[0];
+            if (!lead) return null;
+            const hist = sansHistory(lead.def.id);
+            const mood = latestMood(lead.def.id);
+            const z = personalZ(lead.wearable.hrv, lead.def.baselineHrv, defaultSigma(lead.def.baselineHrv));
+            const review = evaluateCmoSupport({
+              hrStatus: statusRestingHR(lead.wearable.hr),
+              hrvStatus: statusHrv(lead.wearable.hrv),
+              spo2Status: statusSpo2(lead.wearable.spo2),
+              sScale: wx?.scales.sScale,
+              sansFlag: hist.length ? flagSans(hist[hist.length - 1], hist[hist.length - 2]).flag : undefined,
+              moodFlag: mood ? scoreCheckin(mood).flag : undefined,
+              delaySec: delay.oneWaySec,
+              baselineZBand: z?.band,
+            });
+            return <CmoRecs recs={review.recs} passed={review.passed} reviewedAt={review.reviewedAt} />;
+          })()}
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {world.ships.map((row) => {
+            const lead = row.crew[0];
+            if (!lead) return null;
+            return (
+              <EgressCard
+                key={row.def.id}
+                scores={simulatedEgressScores({
+                  hr: lead.wearable.hr,
+                  baselineHr: lead.def.baselineHr,
+                  spo2: lead.wearable.spo2,
+                  missionDays: world.missionDay,
+                })}
+                kind={row.def.kind}
+                title={`${t(row.def.nameKey)} · ${t('hrp.readinessAcross')}`}
+              />
+            );
+          })}
         </div>
 
         {alerts.length > 0 && (

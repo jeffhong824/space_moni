@@ -180,8 +180,8 @@ export const INITIAL_DAILY_RECORDS: DailyHealthRecord[] = [
       { id: 'act-1', title: 'Plant molecular observation', completed: true, timeSlot: '08:30 - 11:00', category: 'Research' },
       { id: 'act-2', title: 'Microgravity experiment of plant cells', completed: true, timeSlot: '12:00 - 14:30', category: 'Research' },
       { id: 'act-3', title: 'Plant catalyst in space experiment', completed: false, timeSlot: '16:00 - 18:30', category: 'Research' },
-      { id: 'act-cm-1', title: '等滲補液與電解質平衡', completed: false, timeSlot: '19:00 - 19:20', category: 'Health Countermeasure' },
-      { id: 'act-cm-2', title: '恢復窗：降低 T2 峰值負荷', completed: false, timeSlot: '晚班', category: 'Health Countermeasure' },
+      { id: 'act-cm-1', title: 'Isotonic fluid and electrolyte balance', completed: false, timeSlot: '19:00 - 19:20', category: 'Health Countermeasure' },
+      { id: 'act-cm-2', title: 'Recovery window: reduce T2 peak load', completed: false, timeSlot: 'evening', category: 'Health Countermeasure' },
     ],
     hourlyTimeline: TODAY_24H_VITALS,
   },
@@ -324,7 +324,7 @@ export const INITIAL_STATION_TASKS: StationTask[] = [
   },
   {
     id: 'tsk-eva',
-    title: 'Quest Airlock EVA 艙外活動',
+    title: 'Quest Airlock EVA',
     module: 'Station Exterior',
     priority: 'High',
     status: 'Scheduled',
@@ -338,7 +338,7 @@ export const INITIAL_STATION_TASKS: StationTask[] = [
   },
   {
     id: 'tsk-t2',
-    title: 'T2 高強度有氧對策（峰值負荷）',
+    title: 'T2 peak-load aerobic countermeasure',
     module: 'Tranquility ECLSS',
     priority: 'Medium',
     status: 'Scheduled',
@@ -347,7 +347,7 @@ export const INITIAL_STATION_TASKS: StationTask[] = [
       { name: 'Alice Smith', role: 'Botanist', avatarBg: 'bg-cyan-600' },
     ],
     deadline: 'Today, 17:00 UTC',
-    description: 'Peak-load T2 treadmill countermeasure. Defer when cardiovascular status is 危急 or S-scale is elevated.',
+    description: 'Peak-load T2 treadmill countermeasure. Defer when cardiovascular status is Critical or S-scale is elevated.',
   },
   {
     id: 'tsk-05',

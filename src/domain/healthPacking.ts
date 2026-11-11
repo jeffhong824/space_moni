@@ -495,6 +495,6 @@ export function buildOfflineTwoLevelAnalysis(
 
 export function thresholdTableForPrompt(): string {
   return Object.values(THRESHOLDS)
-    .map((t) => `- ${t.labelZh}（${t.unit}）：正常 ${t.normal}；注意 ${t.attention}；危急 ${t.critical}`)
+    .map((t) => `- ${t.id} (${t.unit}): normal ${t.normal}; caution ${t.attention}; critical ${t.critical}`)
     .join('\n');
 }

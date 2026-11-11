@@ -16,13 +16,19 @@ import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 import {
+  CmoRecs,
   EarthIndependentPanel,
   EgressCard,
   MoodCheckinCard,
   SpeAlertCard,
   useEarthDelay,
 } from './HrpPanels';
-import { simulatedEgressScores } from '../domain/egressReady';
+import { evaluateCmoSupport } from '../domain/cmoSupport';
+import { defaultSigma, personalZ } from '../domain/baselines';
+import { latestMood, sansHistory } from '../world/crewLogs';
+import { flagSans } from '../domain/sansCheck';
+import { scoreCheckin } from '../domain/moodCheckin';
+import { egressModeForKind, simulatedEgressScores } from '../domain/egressReady';
 
 interface CommanderHomeProps {
   astronauts: AstronautProfile[];
@@ -84,7 +90,6 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   const delay = useEarthDelay(kind, live?.ship.location.auFromEarth);
   const shipId = live?.ship.def.id ?? astronauts[0]?.assignedStation ?? 'ship-harmony';
   const shipCrewIds = CREW.filter((c) => c.shipId === shipId).map((c) => c.id);
-  const surface = kind === 'lunar-south-pole' || kind === 'lunar-habitat';
   const cmdId = commanderId || astronauts[0]?.id;
   const cmdLive = live?.crew;
   const egressScores = simulatedEgressScores({
@@ -92,6 +97,23 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
     baselineHr: cmdLive?.def.baselineHr ?? 72,
     spo2: cmdLive?.wearable.spo2 ?? 98,
     missionDays: world.missionDay,
+  });
+  const cmdRow = rows.find((r) => r.astro.id === cmdId) ?? rows[0];
+  const cmdZ = cmdLive
+    ? personalZ(cmdLive.wearable.hrv, cmdLive.def.baselineHrv, defaultSigma(cmdLive.def.baselineHrv))
+    : null;
+  const cmdSans = cmdId ? sansHistory(cmdId) : [];
+  const cmdMood = cmdId ? latestMood(cmdId) : undefined;
+  const cmdCmo = evaluateCmoSupport({
+    hrStatus: cmdRow?.interp?.metrics.find((m) => m.id === 'restingHR')?.status,
+    hrvStatus: cmdRow?.interp?.metrics.find((m) => m.id === 'hrv')?.status,
+    spo2Status: cmdRow?.interp?.metrics.find((m) => m.id === 'spo2')?.status,
+    sleepMin: cmdRow?.today?.avgSleepMinutes,
+    sScale,
+    sansFlag: cmdSans.length ? flagSans(cmdSans[cmdSans.length - 1], cmdSans[cmdSans.length - 2]).flag : undefined,
+    moodFlag: cmdMood ? scoreCheckin(cmdMood).flag : undefined,
+    delaySec: delay.oneWaySec,
+    baselineZBand: cmdZ?.band,
   });
   const matrixRows = useMemo(() => {
     const defs = astronauts.map((a) => CREW.find((c) => c.id === a.id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
@@ -112,7 +134,15 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
             {t('ui.crewAboard', { n })}
           </h1>
           <p className="text-sm text-stone-400 mt-1">
-            {t('ui.leoDay', { n: calendarDayNumber(world.missionDay) })} · {t('cmd.hint')}
+            {t(
+              kind === 'lunar-south-pole' || kind === 'lunar-habitat'
+                ? 'ui.moonDay'
+                : kind === 'mars-transit'
+                  ? 'ui.marsSol'
+                  : 'ui.leoDay',
+              { n: calendarDayNumber(world.missionDay) }
+            )}{' '}
+            · {t('cmd.hint')}
           </p>
         </div>
         <div className={`flex items-center gap-2 ${inspectId ? 'lg:invisible lg:pointer-events-none' : ''}`}>
@@ -238,7 +268,28 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
           auFromEarth={live?.ship.location.auFromEarth}
           delay={delay}
         />
-        <EgressCard scores={egressScores} surface={surface} />
+        <EgressCard scores={egressScores} kind={kind} />
+        <CmoRecs recs={cmdCmo.recs} passed={cmdCmo.passed} reviewedAt={cmdCmo.reviewedAt} />
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        {world.ships.map((ship) => {
+          const lead = ship.crew[0];
+          if (!lead) return null;
+          const scores = simulatedEgressScores({
+            hr: lead.wearable.hr,
+            baselineHr: lead.def.baselineHr,
+            spo2: lead.wearable.spo2,
+            missionDays: world.missionDay,
+          });
+          return (
+            <EgressCard
+              key={ship.def.id}
+              scores={scores}
+              kind={ship.def.kind}
+              title={`${t(ship.def.nameKey)} · ${t(egressModeForKind(ship.def.kind) === 'return' ? 'hrp.egressReturnTitle' : 'hrp.egressTitle')}`}
+            />
+          );
+        })}
       </div>
       {astronauts[0]?.assignedStation && <CrewCommsInbox shipId={astronauts[0].assignedStation} />}
 

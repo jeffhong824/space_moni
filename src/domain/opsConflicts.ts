@@ -7,7 +7,7 @@ export function isEvaOrHighExertion(task: StationTask): boolean {
   return (
     task.module === 'mod.exterior' ||
     task.module === 'Station Exterior' ||
-    /eva|艙外|t2|ared|treadmill|peak load|高強度|高負荷|mod\.exterior/.test(blob)
+    /eva|t2|ared|treadmill|peak load|mod\.exterior/.test(blob)
   );
 }
 

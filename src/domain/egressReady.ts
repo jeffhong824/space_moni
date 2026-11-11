@@ -44,14 +44,31 @@ export function simulatedEgressScores(opts: {
   return { orthostatic: ortho, balance, grip, vision };
 }
 
-export function egressVerdict(scores: EgressScores): { overall: GoNoGo; tasks: EgressTask[]; reasons: string[] } {
+export type EgressMode = 'landing' | 'return';
+
+export function egressVerdict(
+  scores: EgressScores,
+  mode: EgressMode = 'landing'
+): { overall: GoNoGo; tasks: EgressTask[]; reasons: string[]; mode: EgressMode } {
   const reasons: string[] = [];
   const band = (n: number): GoNoGo => (n >= 70 ? 'go' : n >= 50 ? 'conditional' : 'no-go');
   const tasks: EgressTask[] = [
     { id: 'stand', label: 'Unassisted stand / walk to airlock', verdict: band(Math.min(scores.orthostatic, scores.balance)) },
     { id: 'hatch', label: 'Hatch / suit donning (grip + vision)', verdict: band(Math.min(scores.grip, scores.vision)) },
-    { id: 'eva', label: 'Early surface EVA', verdict: band(Math.min(scores.orthostatic, scores.balance, scores.grip, scores.vision)) },
   ];
+  if (mode === 'landing') {
+    tasks.push({
+      id: 'eva',
+      label: 'Early surface EVA',
+      verdict: band(Math.min(scores.orthostatic, scores.balance, scores.grip, scores.vision)),
+    });
+  } else {
+    tasks.push({
+      id: 'earth',
+      label: 'Return-to-Earth egress',
+      verdict: band(Math.min(scores.orthostatic, scores.balance, scores.grip)),
+    });
+  }
   if (scores.orthostatic < 50) reasons.push('orthostatic analog below 50');
   if (scores.balance < 50) reasons.push('balance analog below 50');
   if (scores.vision < 50) reasons.push('vision analog below 50');
@@ -60,5 +77,10 @@ export function egressVerdict(scores: EgressScores): { overall: GoNoGo; tasks: E
     : tasks.some((t) => t.verdict === 'conditional')
       ? 'conditional'
       : 'go';
-  return { overall: worst, tasks, reasons };
+  return { overall: worst, tasks, reasons, mode };
+}
+
+export function egressModeForKind(kind: string): EgressMode {
+  if (kind === 'lunar-south-pole' || kind === 'lunar-habitat' || kind === 'mars-transit') return 'landing';
+  return 'return';
 }
