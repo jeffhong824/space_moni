@@ -820,31 +820,40 @@ const GLOSSARY_KEYS = [
 export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useI18n();
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('nav.glossaryTitle')}
-      data-escape-close="glossary"
-      className="absolute right-0 mt-2 z-50 w-80 max-w-[min(20rem,calc(100vw-1.5rem))] max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
-    >
-      <div className="flex items-start justify-between gap-2 px-1">
-        <p className="font-semibold text-sm">{t('nav.glossaryTitle')}</p>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('common.close')}
-          title={t('common.close')}
-          className="w-8 h-8 rounded-full bg-stone-50 flex items-center justify-center text-stone-500 shrink-0"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+    <>
+      <button
+        type="button"
+        className="sm:hidden fixed inset-0 z-40 sm-scrim"
+        aria-label={t('common.close')}
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('nav.glossaryTitle')}
+        data-escape-close="glossary"
+        data-glossary-panel
+        className="fixed z-50 left-3 right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] max-h-[min(70vh,32rem)] w-auto max-w-[calc(100vw-24px)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2 sm:absolute sm:inset-auto sm:left-auto sm:right-0 sm:bottom-auto sm:mt-2 sm:w-80"
+      >
+        <div className="flex items-start justify-between gap-2 px-1">
+          <p className="font-semibold text-sm">{t('nav.glossaryTitle')}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close')}
+            title={t('common.close')}
+            className="w-8 h-8 rounded-full bg-stone-50 flex items-center justify-center text-stone-500 shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        {GLOSSARY_KEYS.map((k) => (
+          <p key={k} className="px-1 text-stone-600">
+            {t(`glossary.${k}`)}
+          </p>
+        ))}
       </div>
-      {GLOSSARY_KEYS.map((k) => (
-        <p key={k} className="px-1 text-stone-600">
-          {t(`glossary.${k}`)}
-        </p>
-      ))}
-    </div>
+    </>
   );
 };
 

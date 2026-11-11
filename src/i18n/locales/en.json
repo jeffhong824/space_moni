@@ -1215,6 +1215,7 @@
     "allInRange": "All within range",
     "verdictOff": "{parts} — {action}",
     "part": "{label} {value} {unit} {flag}",
+    "partStatus": "{label} · {value}",
     "flagElevated": "elevated",
     "flagLow": "low",
     "restHydrate": "rest 15 min and hydrate",

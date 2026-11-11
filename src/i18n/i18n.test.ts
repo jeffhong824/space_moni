@@ -53,5 +53,8 @@ describe('i18n locale tables', () => {
     expect(translate('es', 'panel.m.ortho')).toMatch(/hipotensión ortostática/i);
     expect(translate('es', 'panel.m.fluidIn')).toBe('Ingesta hídrica');
     expect(translate('es', 'panel.m.fluidOut')).toBe('Pérdidas hídricas');
+    expect(translate('zh-Hant-TW', 'today.partStatus', { label: '姿勢性低血壓風險', value: '疑似' })).toBe(
+      '姿勢性低血壓風險 · 疑似'
+    );
   });
 });

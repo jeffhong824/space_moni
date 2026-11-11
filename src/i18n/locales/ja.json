@@ -1215,6 +1215,7 @@
     "allInRange": "すべて範囲内",
     "verdictOff": "{parts} — {action}",
     "part": "{label} {value} {unit} {flag}",
+    "partStatus": "{label} · {value}",
     "flagElevated": "高め",
     "flagLow": "低め",
     "restHydrate": "15分休息して水分補給",

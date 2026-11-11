@@ -158,5 +158,8 @@ describe('GlossaryPanel chrome', () => {
     expect(html).toContain('data-escape-close="glossary"');
     expect(html).toContain(`aria-label="${translate('en', 'common.close')}"`);
     expect(html).toContain(translate('en', 'nav.glossaryTitle'));
+    expect(html).toContain('data-glossary-panel');
+    expect(html).toContain('max-w-[calc(100vw-24px)]');
+    expect(html).toContain('sm:absolute');
   });
 });

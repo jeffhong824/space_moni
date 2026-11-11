@@ -130,15 +130,14 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           parts: flagged
             .slice(0, 3)
             .map((v) =>
-              t('today.part', {
-                label: t(v.labelKey),
-                value: displayMetric(v, t),
-                unit: v.unit,
-                flag:
-                  v.id === 'ortho' || v.id === 'ecg' || v.id === 'speShelter'
-                    ? ''
-                    : t((v.delta ?? 0) < 0 ? 'today.flagLow' : 'today.flagElevated'),
-              })
+              v.id === 'ortho' || v.id === 'ecg' || v.id === 'speShelter'
+                ? t('today.partStatus', { label: t(v.labelKey), value: displayMetric(v, t) })
+                : t('today.part', {
+                    label: t(v.labelKey),
+                    value: displayMetric(v, t),
+                    unit: v.unit,
+                    flag: t((v.delta ?? 0) < 0 ? 'today.flagLow' : 'today.flagElevated'),
+                  })
             )
             .join(' · '),
           action: panel?.prompts[0] ? t(panel.prompts[0].key) : t('today.restHydrate'),

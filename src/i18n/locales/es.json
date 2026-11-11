@@ -1215,6 +1215,7 @@
     "allInRange": "Todo dentro de rango",
     "verdictOff": "{parts} — {action}",
     "part": "{label} {value} {unit} {flag}",
+    "partStatus": "{label} · {value}",
     "flagElevated": "elevado",
     "flagLow": "bajo",
     "restHydrate": "descansa 15 min e hidrátate",

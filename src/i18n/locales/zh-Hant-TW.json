@@ -1215,6 +1215,7 @@
     "allInRange": "各項均在範圍內",
     "verdictOff": "{parts} — {action}",
     "part": "{label} {value} {unit} {flag}",
+    "partStatus": "{label} · {value}",
     "flagElevated": "偏高",
     "flagLow": "偏低",
     "restHydrate": "休息 15 分鐘並補水",
