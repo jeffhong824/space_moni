@@ -791,6 +791,15 @@ const GLOSSARY_KEYS = [
   'msv',
   'hrv',
   'spo2',
+  'sans',
+  'pvt',
+  'ppco2',
+  'ppo2',
+  'bmd',
+  'bhp',
+  'orthostatic',
+  'logmar',
+  'careerDose',
 ] as const;
 
 export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {

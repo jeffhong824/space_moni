@@ -2,6 +2,7 @@ import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, Station
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis, type TwoLevelAnalysis } from '../domain/healthPacking';
 import type { SelfCheckEntry } from '../domain/healthThresholds';
+import type { CrewPanel } from '../domain/crewSystems';
 import { DEFAULT_LANG } from '../i18n/index';
 
 export async function callAiDoctor(input: {
@@ -14,6 +15,7 @@ export async function callAiDoctor(input: {
   tasks?: StationTask[];
   history?: Array<{ sender: string; text: string }>;
   lang?: string;
+  crewPanel?: CrewPanel | null;
 }): Promise<TwoLevelAnalysis> {
   const lang = input.lang || DEFAULT_LANG;
   const packed = packHealthPayload(
@@ -22,7 +24,8 @@ export async function callAiDoctor(input: {
     input.envMetrics,
     input.spaceEnvironment ?? null,
     input.selfCheck ?? null,
-    lang
+    lang,
+    input.crewPanel
   );
 
   try {

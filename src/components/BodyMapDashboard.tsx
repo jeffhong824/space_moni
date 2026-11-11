@@ -34,7 +34,9 @@ import {
   type Rank,
   type TrendRange,
 } from '../world/bodyHealth';
-import { daySchedule, exerciseLog } from '../world/worldState';
+import { daySchedule, exerciseLog, worldStateAt } from '../world/worldState';
+import { attachSeries, crewPanelAt } from '../domain/crewSystems';
+import { SystemsAccordion } from './SystemsPanel';
 
 const STATUS = ['Normal', 'Attention', 'Critical'] as const;
 
@@ -67,6 +69,13 @@ export const BodyMapDashboard: React.FC<{
   const schedule = useMemo(() => daySchedule(crew, tNow), [crew, tNow]);
   const exLog = useMemo(() => exerciseLog(crew, tNow), [crew, tNow]);
   const ship = SHIPS.find((s) => s.id === crew.shipId);
+  const panel = useMemo(() => {
+    if (compact || figureOnly || hero) return null;
+    const world = worldStateAt(tNow, wx);
+    const liveShip = world.ships.find((s) => s.def.id === crew.shipId) ?? null;
+    const raw = crewPanelAt(crew, tNow, wx, liveShip);
+    return attachSeries(raw, crew, tNow, wx, liveShip, true);
+  }, [compact, figureOnly, hero, crew, tNow, wx]);
   const w = health.snap.wearable;
   const visibleRegions = side === 'front' ? FRONT_REGIONS : BACK_REGIONS;
   const pulseRegion =
@@ -352,6 +361,11 @@ export const BodyMapDashboard: React.FC<{
       )}
 
       {tabbed ? inspectorTabs : <div className="grid grid-cols-1 gap-2">{figureBlock}</div>}
+      {tabbed && panel ? (
+        <div className="mt-4">
+          <SystemsAccordion panel={panel} />
+        </div>
+      ) : null}
 
       <Sheet
         open={sheetOpen && (hero || figureOnly || compact)}

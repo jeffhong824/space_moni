@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Activity, HeartPulse, Moon, Sun } from 'lucide-react';
+import { Activity, Moon, Sun } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import {
   type SelfCheckEntry,
@@ -8,22 +8,19 @@ import {
 } from '../domain/healthThresholds';
 import { sScaleElevated } from '../domain/spaceWeather';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import { attachSeries, crewPanelAt, panelAction } from '../domain/crewSystems';
 import {
-  buildVitalTiles,
-  flaggedTiles,
   hrNormalBand,
   minutesInTaipei,
   minutesUntil,
   nextScheduleIndex,
-  overallFromTiles,
   parseSlotStartMin,
   spo2NormalBand,
-  todayAction,
   type ScheduleItemModel,
-  type VitalTileModel,
 } from '../domain/todayStatus';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
+import { AbnormalStrip, SystemsAccordion, displayMetric } from './SystemsPanel';
 import { CrewCommsInbox } from './CrewCommsInbox';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
@@ -92,30 +89,16 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
   const hr = w?.hr ?? todayRecord.restingHR;
   const spo2 = w?.spo2 ?? todayRecord.spo2;
-  const hrv = w?.hrv ?? todayRecord.hrv;
-  const dose = live?.ship.radiationMsvDay ?? w?.doseMsv ?? 0;
   const hrSeries = todayRecord.hourlyTimeline.map((p) => p.hr);
   const spo2Series = todayRecord.hourlyTimeline.map((p) => p.spo2);
-  const hrvSeries = todayRecord.hourlyTimeline.map((p) => p.hrv ?? hrv);
-  const doseSeries = hrSeries.map(() => Number(dose));
-
-  const tiles = buildVitalTiles({
-    hr,
-    hrv,
-    spo2,
-    dose,
-    baselineHr: crew?.baselineHr ?? 70,
-    baselineHrv: crew?.baselineHrv ?? 30,
-    baselineSpo2: crew?.baselineSpo2 ?? 97,
-    baselineDose: live?.ship.def.baselineMsvDay ?? 0.42,
-    hrSeries,
-    hrvSeries,
-    spo2Series,
-    doseSeries,
-  });
-  const overall = overallFromTiles(tiles);
-  const action = todayAction(tiles);
-  const flagged = flaggedTiles(tiles);
+  const panel = useMemo(() => {
+    if (!crew) return null;
+    const raw = crewPanelAt(crew, world.t, spaceEnvironment, live?.ship ?? null, selfCheck);
+    return attachSeries(raw, crew, world.t, spaceEnvironment, live?.ship ?? null);
+  }, [crew, world.t, spaceEnvironment, live?.ship, selfCheck]);
+  const overall = panel?.overall ?? 'Normal';
+  const action = panel ? panelAction(panel) : 'logSelfCheck';
+  const flagged = panel?.flagged ?? [];
   const clock = taipeiClockHms(world.t).slice(0, 5);
   const findings = (health?.domains ?? []).filter((d) => d.rank > 0).sort((a, b) => b.rank - a.rank);
 
@@ -145,16 +128,20 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
       ? t('today.allInRange')
       : t('today.verdictOff', {
           parts: flagged
+            .slice(0, 3)
             .map((v) =>
               t('today.part', {
                 label: t(v.labelKey),
-                value: v.value,
+                value: displayMetric(v, t),
                 unit: v.unit,
-                flag: t(v.flag === 'low' ? 'today.flagLow' : 'today.flagElevated'),
+                flag:
+                  v.id === 'ortho' || v.id === 'ecg' || v.id === 'speShelter'
+                    ? ''
+                    : t((v.delta ?? 0) < 0 ? 'today.flagLow' : 'today.flagElevated'),
               })
             )
             .join(' · '),
-          action: t('today.restHydrate'),
+          action: panel?.prompts[0] ? t(panel.prompts[0].key) : t('today.restHydrate'),
         });
 
   const primary = () => {
@@ -169,7 +156,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   return (
     <div data-page="today" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad">
       <div className="mx-auto max-w-[88rem] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:items-start lg:gap-4">
-        <section data-today-hero className={`lg:col-span-12 rounded-[24px] ${heroBg} px-4 py-3 shadow-[var(--sm-shadow-soft)]`}>
+        <section data-today-hero className={`order-1 lg:col-span-12 rounded-[24px] ${heroBg} px-4 py-3 shadow-[var(--sm-shadow-soft)]`}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase">
@@ -193,19 +180,15 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         </section>
 
         {shelter && (
-          <div className="lg:col-span-12 px-4 py-2.5 rounded-[20px] bg-rose-50 text-rose-950">
+          <div className="order-2 lg:col-span-12 px-4 py-2.5 rounded-[20px] bg-rose-50 text-rose-950">
             <p className="text-sm font-semibold">{t('astro.shelterTitle', { scale: sScale })}</p>
             <p className="text-xs">{t('astro.shelterBody')}{speDemo ? t('astro.shelterSpe') : ''}</p>
           </div>
         )}
 
-        <section data-today-vitals className="lg:col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {tiles.map((tile) => (
-            <VitalTile key={tile.id} tile={tile} t={t} />
-          ))}
-        </section>
+        {panel && <AbnormalStrip panel={panel} />}
 
-        <section data-today-schedule className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+        <section data-today-schedule className="order-3 lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
           {nextItem && (
             <button
               type="button"
@@ -246,7 +229,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           </ul>
         </section>
 
-        <section data-today-body className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+        <section data-today-body className="order-4 lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
           <div className="flex items-center justify-between gap-2 mb-2">
             <p className="text-[12px] font-semibold">{t('today.attention')}</p>
             <button type="button" onClick={() => setBodyOpen((v) => !v)} className="text-[11px] font-semibold text-[var(--sm-cobalt)]">
@@ -282,8 +265,14 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
         <TrendCard hr={hrSeries} spo2={spo2Series} currentHr={hr} currentSpo2={spo2} t={t} />
 
+        {panel && (
+          <div className="order-6 lg:col-span-12">
+            <SystemsAccordion panel={panel} />
+          </div>
+        )}
+
         {hqMessages.length > 0 ? (
-          <div data-today-hq className="lg:col-span-8">
+          <div data-today-hq className="order-7 lg:col-span-8">
             <p className="text-[12px] font-semibold mb-2">{t('today.hqMessages', { n: hqMessages.length })}</p>
             {astronaut.assignedStation && <CrewCommsInbox shipId={astronaut.assignedStation} />}
           </div>
@@ -333,51 +322,6 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   );
 };
 
-function VitalTile({ tile, t }: { tile: VitalTileModel; t: (k: string, v?: Record<string, string | number>) => string }) {
-  const warn = tile.status !== 'Normal';
-  return (
-    <article
-      data-vital={tile.id}
-      className={`rounded-[20px] px-3 py-2.5 shadow-[var(--sm-shadow-soft)] ${warn ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-white'}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold text-stone-500">{t(tile.labelKey)}</p>
-        <MiniSpark points={tile.series} color={warn ? '#c45c2a' : '#2b3bff'} />
-      </div>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums leading-none">
-        {tile.value}
-        <span className="ml-1 text-[11px] font-medium text-stone-400">{tile.unit}</span>
-      </p>
-      <p className="mt-1.5 text-[10px] text-stone-500">{t('today.range', { band: tile.range })}</p>
-      <p className={`text-[10px] tabular-nums ${tile.delta > 0 ? 'text-amber-800' : tile.delta < 0 ? 'text-sky-800' : 'text-stone-400'}`}>
-        {tile.delta > 0 ? '+' : ''}
-        {tile.delta} {t('today.vsBaseline')}
-      </p>
-    </article>
-  );
-}
-
-function MiniSpark({ points, color }: { points: number[]; color: string }) {
-  const w = 56;
-  const h = 22;
-  if (points.length < 2) return <HeartPulse className="w-3.5 h-3.5 text-stone-300" />;
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const span = max - min || 1;
-  const d = points
-    .map((v, i) => {
-      const x = (i / (points.length - 1)) * w;
-      const y = h - 2 - ((v - min) / span) * (h - 4);
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(' ');
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-14 h-[22px] shrink-0" aria-hidden>
-      <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function TrendCard({
   hr,
   spo2,
@@ -392,7 +336,7 @@ function TrendCard({
   t: (k: string, v?: Record<string, string | number>) => string;
 }) {
   return (
-    <section data-today-trends className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+    <section data-today-trends className="order-5 lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
       <p className="text-[12px] font-semibold mb-2">{t('today.trends')}</p>
       <AxisChart label={t('wear.hr')} unit="bpm" points={hr} current={currentHr} band={hrNormalBand()} color="#f08a80" t={t} />
       <div className="mt-3">

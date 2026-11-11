@@ -28,6 +28,7 @@ import { useI18n } from './i18n/I18nProvider';
 import { GUEST_ACCOUNT } from './world/accounts';
 import { CREW, crewByLogin } from './world/catalog';
 import { calendarDayNumber, findCrewLive, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
+import { crewPanelAt } from './domain/crewSystems';
 import { allProfiles, crewToProfile, enrichUser, profilesForShip } from './world/toProfiles';
 import { BodyMapDashboard } from './components/BodyMapDashboard';
 import {
@@ -522,6 +523,13 @@ export default function App() {
             return live
               ? { hr: live.crew.wearable.hr, hrv: live.crew.wearable.hrv, spo2: live.crew.wearable.spo2 }
               : undefined;
+          })()}
+          crewPanel={(() => {
+            const crew = CREW.find((c) => c.id === selectedAstronaut.id);
+            const live = findCrewLive(world, selectedAstronaut.id);
+            return crew
+              ? crewPanelAt(crew, world.t, displayWx, live?.ship ?? null, selfChecks[selectedAstronaut.id] ?? null)
+              : null;
           })()}
         />
       )}

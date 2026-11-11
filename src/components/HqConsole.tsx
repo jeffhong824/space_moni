@@ -15,9 +15,11 @@ import {
 } from '../world/comms';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
-import type { CrewDef } from '../world/catalog';
+import { CREW, type CrewDef } from '../world/catalog';
 import { AvatarBubble, DelayCaption, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
+import { buildRiskMatrix } from '../domain/crewSystems';
+import { RiskMatrix } from './RiskMatrix';
 
 interface HqConsoleProps {
   world: WorldState;
@@ -53,6 +55,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   }, []);
 
   const messages = useMemo(() => loadMessages().filter((m) => m.shipId === ship?.def.id), [ship?.def.id, tick]);
+  const matrixRows = useMemo(() => buildRiskMatrix(CREW, now, wx, world.ships), [now, wx, world.ships]);
 
   const send = () => {
     if (!ship || !draft.trim()) return;
@@ -91,6 +94,15 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
             <p className="mt-0.5">{alerts.map((row) => t(row.def.nameKey)).join(' · ')}</p>
           </div>
         )}
+
+        <RiskMatrix
+          rows={matrixRows}
+          selectedId={ship.crew[0]?.def.id}
+          onSelectCrew={(id) => {
+            const next = world.ships.find((s) => s.crew.some((c) => c.def.id === id));
+            if (next) setShipId(next.def.id);
+          }}
+        />
 
         <div className="grid gap-3 lg:grid-cols-12 lg:items-start lg:gap-4">
           <aside data-hq-fleet className="order-1 lg:order-2 lg:col-span-3 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">

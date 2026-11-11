@@ -15,6 +15,9 @@ import { useI18n } from '../i18n/I18nProvider';
 import { statusLabel } from '../i18n/index';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
+import { worldStateAt } from '../world/worldState';
+import { buildRiskMatrix, crewPanelAt } from '../domain/crewSystems';
+import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 
@@ -64,6 +67,7 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
     selectedAstro && recordsByAstronaut[selectedAstro.id]
       ? recordsByAstronaut[selectedAstro.id].find((r) => r.isToday) || recordsByAstronaut[selectedAstro.id][0]
       : null;
+  const world = useMemo(() => worldStateAt(tNow, spaceEnvironment), [tNow, spaceEnvironment]);
 
   const analysis = useMemo(() => {
     if (!selectedAstro || !selectedRecord) return null;
@@ -73,10 +77,15 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
       envMetrics,
       spaceEnvironment,
       selfChecks[selectedAstro.id] ?? null,
-      lang
+      lang,
+      (() => {
+        const def = CREW.find((c) => c.id === selectedAstro.id);
+        const ship = world.ships.find((s) => s.crew.some((c) => c.def.id === selectedAstro.id)) ?? null;
+        return def ? crewPanelAt(def, tNow, spaceEnvironment, ship, selfChecks[selectedAstro.id] ?? null) : null;
+      })()
     );
     return buildOfflineTwoLevelAnalysis(t('surg.title'), packed, lang);
-  }, [selectedAstro, selectedRecord, envMetrics, spaceEnvironment, selfChecks, lang, t]);
+  }, [selectedAstro, selectedRecord, envMetrics, spaceEnvironment, selfChecks, lang, t, world, tNow]);
 
   const advance = (c: ClinicalCase) => {
     const idx = CASE_STATE_ORDER.indexOf(c.state);
@@ -97,6 +106,11 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
     setNoteDraft('');
   };
 
+  const matrixRows = useMemo(() => {
+    const defs = astronauts.map((a) => CREW.find((c) => c.id === a.id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
+    return buildRiskMatrix(defs, tNow, spaceEnvironment, world.ships);
+  }, [astronauts, tNow, spaceEnvironment, world.ships]);
+
   const visible = cases.filter((c) => {
     if (filter === 'open') return c.state === 'open';
     if (filter === 'reviewing') return c.state === 'reviewing' || c.state === 'acted';
@@ -107,6 +121,18 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
     <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
       <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
       <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
+
+      <div className="mt-4">
+        <RiskMatrix
+          rows={matrixRows}
+          onSelectCrew={(id) => {
+            const astro = astronauts.find((a) => a.id === id);
+            if (astro) onSelectAstronaut(astro);
+            const hit = cases.find((c) => c.astronautId === id);
+            if (hit) setOpenId(hit.id);
+          }}
+        />
+      </div>
 
       <div className="mt-4">
         <Segmented

@@ -93,7 +93,7 @@ export interface MetricAnalysis {
 }
 
 export interface SystemAnalysis {
-  system: 'Cardiovascular' | 'Respiratory' | 'Sleep' | 'Exercise' | 'Mental' | 'Musculoskeletal' | 'Nutrition';
+  system: string;
   status: 'Normal' | 'Attention' | 'Critical';
   summary: string;
   concerns: string[];

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import { interpretRecord, type SelfCheckEntry } from '../domain/healthThresholds';
@@ -11,6 +11,8 @@ import { ShipStatusCard } from './ShipStatusCard';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
 import { calendarDayNumber, findCrewLive, type WorldState } from '../world/worldState';
+import { buildRiskMatrix } from '../domain/crewSystems';
+import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
 
@@ -70,6 +72,10 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   const conflicts = weatherTaskConflicts(tasks, sScale);
   const live = findCrewLive(world, commanderId || astronauts[0]?.id);
   const n = rows.length;
+  const matrixRows = useMemo(() => {
+    const defs = astronauts.map((a) => CREW.find((c) => c.id === a.id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
+    return buildRiskMatrix(defs, world.t, spaceEnvironment, world.ships);
+  }, [astronauts, world.t, world.ships, spaceEnvironment]);
 
   const openCrew = (id: string) => {
     const astro = astronauts.find((a) => a.id === id);
@@ -106,6 +112,10 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
             {t('cmd.openConsole')}
           </button>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <RiskMatrix rows={matrixRows} onSelectCrew={openCrew} selectedId={inspectId} />
       </div>
 
       {sScaleElevated(sScale) && conflicts.length > 0 && (

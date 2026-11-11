@@ -59,13 +59,17 @@ describe('viewport cream fill', () => {
   it('keeps /today and /hq dense without flex-grow stretching', () => {
     const today = readFileSync(new URL('../components/AstronautHome.tsx', import.meta.url), 'utf8');
     const hq = readFileSync(new URL('../components/HqConsole.tsx', import.meta.url), 'utf8');
+    const systems = readFileSync(new URL('../components/SystemsPanel.tsx', import.meta.url), 'utf8');
+    const matrix = readFileSync(new URL('../components/RiskMatrix.tsx', import.meta.url), 'utf8');
     expect(today).toMatch(/data-today-hero/);
-    expect(today).toMatch(/data-today-vitals/);
+    expect(today).toMatch(/AbnormalStrip/);
+    expect(systems).toMatch(/data-today-vitals/);
     expect(today).toMatch(/data-today-next/);
     expect(today).toMatch(/data-today-trends/);
+    expect(today).toMatch(/SystemsAccordion/);
+    expect(systems).toMatch(/data-today-systems/);
     expect(today).toMatch(/today\.allInRange/);
     expect(today).toMatch(/today\.verdictOff/);
-    expect(today).toMatch(/grid-cols-2 lg:grid-cols-4/);
     expect(today).toMatch(/AxisChart/);
     expect(today).toMatch(/lg:grid-cols-12/);
     expect(today).toMatch(/lg:items-start/);
@@ -78,6 +82,9 @@ describe('viewport cream fill', () => {
     expect(hq).toMatch(/data-hq-orbit/);
     expect(hq).toMatch(/data-hq-fleet/);
     expect(hq).toMatch(/data-hq-crew/);
+    expect(hq).toMatch(/RiskMatrix/);
+    expect(matrix).toMatch(/data-risk-matrix/);
+    expect(matrix).toMatch(/data-risk-prompts/);
     expect(hq).toMatch(/ui\.fleetStatus/);
     expect(hq).toMatch(/ui\.stationAlerts/);
     expect(hq).toMatch(/max-h-\[20rem\]/);

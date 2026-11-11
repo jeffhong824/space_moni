@@ -113,6 +113,8 @@ Data honesty:
 Demo clinical bands (must be used consistently):
 ${thresholdTableForPrompt()}
 
+Packed health JSON includes HRP-grouped simulated systems (cardiovascular, cabin/respiratory, radiation, musculoskeletal, SANS analog, sleep, nutrition, behavioral health, medical log). Treat every crew metric as labeled SIMULATION unless source is LIVE NOAA. Do not invent NASA crew data or paper citations. Reason over off-nominal metrics and the listed decision prompts.
+
 Packed health JSON:
 ${JSON.stringify(packed)}
 

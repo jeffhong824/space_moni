@@ -42,6 +42,7 @@ interface AiCallModalProps {
   spaceEnvironment?: SpaceEnvironmentPayload | null;
   selfCheck?: SelfCheckEntry | null;
   liveVitals?: { hr: number; hrv: number; spo2: number };
+  crewPanel?: import('../domain/crewSystems').CrewPanel | null;
 }
 
 export const AiCallModal: React.FC<AiCallModalProps> = ({
@@ -56,9 +57,10 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
   spaceEnvironment = null,
   selfCheck = null,
   liveVitals,
+  crewPanel = null,
 }) => {
   const { t, lang } = useI18n();
-  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang);
+  const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang, crewPanel);
   const liveHr = liveVitals?.hr ?? todayRecord.restingHR;
   const liveHrv = liveVitals?.hrv ?? todayRecord.hrv;
   const buildGreeting = (): AiMessage => ({
@@ -276,6 +278,7 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
         tasks,
         history: messages.slice(-4).map((m) => ({ sender: m.sender, text: m.text })),
         lang,
+        crewPanel,
       });
 
       const auraMessage: AiMessage = {

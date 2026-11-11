@@ -18,6 +18,7 @@ import {
   type SelfCheckEntry,
 } from './healthThresholds.ts';
 import { DEFAULT_LANG, statusLabel, translate } from '../i18n/index.ts';
+import type { CrewPanel } from './crewSystems.ts';
 
 export interface PackedMetric {
   metric: string;
@@ -33,7 +34,7 @@ export interface PackedMetric {
 }
 
 export interface PackedSystem {
-  system: 'Cardiovascular' | 'Respiratory' | 'Sleep' | 'Exercise' | 'Mental' | 'Musculoskeletal' | 'Nutrition';
+  system: string;
   status: MetricStatus;
   summary: string;
   concerns: string[];
@@ -160,7 +161,8 @@ export function packHealthPayload(
   envMetrics?: EnvironmentalMetrics | null,
   spaceEnvironment?: SpaceEnvironmentPayload | null,
   selfCheck?: SelfCheckEntry | null,
-  lang: string = DEFAULT_LANG
+  lang: string = DEFAULT_LANG,
+  crewPanel?: CrewPanel | null
 ): PackedHealthPayload {
   const hr = isFiniteVital(record.restingHR) ? statusRestingHR(record.restingHR) : 'Normal';
   const hrv = isFiniteVital(record.hrv) ? statusHrv(record.hrv) : 'Normal';
@@ -334,8 +336,35 @@ export function packHealthPayload(
     },
   ];
 
+  if (crewPanel) {
+    for (const m of crewPanel.groups.flatMap((g) => g.metrics)) {
+      if (metrics.some((x) => x.id === m.id)) continue;
+      metrics.push({
+        metric: tr(lang, m.labelKey),
+        id: m.id,
+        value: m.unit ? `${m.display} ${m.unit}` : m.display,
+        numericValue: m.numericValue ?? 0,
+        unit: m.unit,
+        status: m.status,
+        threshold: tr(lang, 'band.normal', { v: m.range }),
+        analysis: `${tr(lang, m.labelKey)} ${m.display} ${m.unit} (${m.status}) · ${tr(lang, 'badge.simTelemetry')}`,
+        recommendations: crewPanel.prompts.filter((p) => p.severity !== 'Normal').map((p) => tr(lang, p.key)),
+        source: m.source === 'noaa' ? tr(lang, 'panel.noaaLive') : tr(lang, 'badge.simTelemetry'),
+      });
+    }
+    for (const g of crewPanel.groups) {
+      systems.push({
+        system: tr(lang, `panel.sys.${g.id}`),
+        status: g.status,
+        summary: tr(lang, g.hrpKey),
+        concerns: g.metrics.filter((m) => m.status !== 'Normal').map((m) => `${tr(lang, m.labelKey)} ${m.display}`),
+        recommendations: g.prompts.map((p) => tr(lang, p.key)),
+      });
+    }
+  }
+
   const interpreted = interpretRecord(record, selfCheck);
-  const overallStatus = interpreted.overall;
+  const overallStatus = crewPanel?.overall ?? interpreted.overall;
   const overallSummary =
     overallStatus === 'Critical'
       ? tr(lang, 'analysis.overallCritical')

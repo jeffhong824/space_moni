@@ -5,6 +5,9 @@ import { translate } from '../i18n/index.ts';
 import type { ApiRequest, ApiResponse } from '../server/http.ts';
 import { handleAiDoctor } from '../server/aiDoctorHandler.ts';
 import { buildOfflineTwoLevelAnalysis, packHealthPayload } from './healthPacking.ts';
+import { CREW } from '../world/catalog.ts';
+import { WORLD_EPOCH_MS, worldStateAt } from '../world/worldState.ts';
+import { crewPanelAt } from './crewSystems.ts';
 
 const profile: AstronautProfile = {
   id: 'unknown',
@@ -130,5 +133,21 @@ describe('offline AURA reply without vitals', () => {
     expect(out.replyText).toContain('72 bpm');
     expect(out.replyText).toContain('98%');
     expect(out.replyText).not.toContain(translate('en', 'ai.notProvided'));
+  });
+
+  it('packs HRP-grouped simulated metrics for AURA when a crew panel is supplied', () => {
+    const alice = CREW.find((c) => c.id === 'astro-alice')!;
+    const t = WORLD_EPOCH_MS + 2 * 86400000;
+    const world = worldStateAt(t, null);
+    const ship = world.ships.find((s) => s.def.id === alice.shipId) ?? null;
+    const panel = crewPanelAt(alice, t, null, ship);
+    const packed = packHealthPayload(profile, providedTelemetry(), null, null, null, 'en', panel);
+    expect(packed.metrics.some((m) => m.id === 'bpSys')).toBe(true);
+    expect(packed.metrics.some((m) => m.id === 'ppco2')).toBe(true);
+    expect(packed.metrics.some((m) => m.id === 'pvt')).toBe(true);
+    expect(packed.metrics.some((m) => m.id === 'ared')).toBe(true);
+    expect(packed.systems.some((s) => s.system.includes('Neuro-ocular') || s.system.includes('SANS'))).toBe(true);
+    expect(packed.metrics.every((m) => Number.isFinite(m.numericValue))).toBe(true);
+    expect(packed.metrics.find((m) => m.id === 'ppco2')?.source).toBe(translate('en', 'badge.simTelemetry'));
   });
 });
