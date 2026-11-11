@@ -46,13 +46,13 @@ export function feedImpact(
     (s) => (s.id.includes('donki') || s.agency === 'NASA') && s.status !== 'ok' && s.status !== 'empty'
   );
   if (noaaLive && donkiDown) {
-    return t('wx.impactPartial', { live: t('wx.noaaData'), down: t('wx.donkiFlares') });
+    return t('wx.impactPartial', { live: t('wx.noaaData'), down: t('wx.donkiCatalog') });
   }
   const live = [...new Set(data.sources.filter((s) => s.status === 'ok' || s.status === 'empty').map((s) => s.agency))]
     .join(', ') || t('wx.noaaData');
   const down =
     [...new Set(data.sources.filter((s) => s.status !== 'ok' && s.status !== 'empty').map((s) => s.name))].join(', ') ||
-    t('wx.donkiFlares');
+    t('wx.donkiCatalog');
   return t('wx.impactPartial', { live, down });
 }
 
@@ -77,9 +77,10 @@ export const SpaceEnvironmentPanel: React.FC<{
     !donkiAnyTimeout;
   const donkiNoEvents =
     !!data &&
-    data.events.solarFlares.length === 0 &&
     data.events.geomagneticStorms.length === 0 &&
-    data.events.coronalMassEjections.length === 0;
+    data.events.coronalMassEjections.length === 0 &&
+    (data.events.solarEnergeticParticles ?? []).length === 0 &&
+    (data.events.donkiNotifications ?? []).length === 0;
 
   return (
     <section
@@ -182,6 +183,7 @@ export const SpaceEnvironmentPanel: React.FC<{
                 unit={obs?.goesXray ? obs.goesXray.fluxUnit : ''}
                 time={obs?.goesXray?.observedAt}
                 sub={obs?.goesXray ? `${obs.goesXray.satellite} · ${obs.goesXray.energyBand}` : undefined}
+                title={t('wx.goesFlareSource')}
               />
               <MetricTile
                 icon={<Wind className="w-3.5 h-3.5 text-sky-600" aria-hidden />}
@@ -203,6 +205,7 @@ export const SpaceEnvironmentPanel: React.FC<{
             <p className="text-[11px] text-slate-600 leading-relaxed">
               {t('wx.basis', { g: data.scales.gScale, r: data.scales.rScale, s: data.scales.sScale })}
             </p>
+            <p className="text-[10px] text-slate-500 leading-snug">{t('wx.goesFlareSource')}</p>
 
             {data.notices.map((note) => (
               <p
@@ -263,11 +266,41 @@ export const SpaceEnvironmentPanel: React.FC<{
                 )
               ) : (
                 <ul className="space-y-1.5 max-h-28 overflow-y-auto">
-                  {data.events.solarFlares.slice(0, 5).map((flare) => (
-                    <li key={flare.flrID} className="rounded-lg bg-amber-50 border border-amber-100 px-2 py-1.5 text-[11px]">
-                      <div className="flex justify-between font-mono">
-                        <span className="font-bold text-amber-950">{flare.classType}</span>
-                        <span className="text-amber-800">{fmtTime(flare.peakTime)}</span>
+                  {data.events.geomagneticStorms.slice(0, 4).map((storm) => (
+                    <li key={storm.gstID} className="rounded-lg bg-indigo-50 border border-indigo-100 px-2 py-1.5 text-[11px]">
+                      <div className="flex justify-between gap-2 font-mono">
+                        <span className="font-bold text-indigo-950 truncate">
+                          {t('wx.donkiGst')} · {storm.kpIndex != null ? `Kp ${storm.kpIndex}` : storm.gstID}
+                        </span>
+                        <span className="text-indigo-800 shrink-0">{fmtTime(storm.startTime)}</span>
+                      </div>
+                    </li>
+                  ))}
+                  {data.events.coronalMassEjections.slice(0, 4).map((cme) => (
+                    <li key={cme.activityID} className="rounded-lg bg-sky-50 border border-sky-100 px-2 py-1.5 text-[11px]">
+                      <div className="flex justify-between gap-2 font-mono">
+                        <span className="font-bold text-sky-950 truncate">{t('wx.donkiCme')} · {cme.activityID}</span>
+                        <span className="text-sky-800 shrink-0">{fmtTime(cme.startTime)}</span>
+                      </div>
+                    </li>
+                  ))}
+                  {(data.events.solarEnergeticParticles ?? []).slice(0, 4).map((sep) => (
+                    <li key={sep.sepID} className="rounded-lg bg-rose-50 border border-rose-100 px-2 py-1.5 text-[11px]">
+                      <div className="flex justify-between gap-2 font-mono">
+                        <span className="font-bold text-rose-950 truncate">
+                          {t('wx.donkiSep')} · {sep.instruments || sep.sepID}
+                        </span>
+                        <span className="text-rose-800 shrink-0">{fmtTime(sep.eventTime)}</span>
+                      </div>
+                    </li>
+                  ))}
+                  {(data.events.donkiNotifications ?? []).slice(0, 4).map((note) => (
+                    <li key={note.messageID} className="rounded-lg bg-slate-50 border border-slate-200 px-2 py-1.5 text-[11px]">
+                      <div className="flex justify-between gap-2 font-mono">
+                        <span className="font-bold text-slate-900 truncate">
+                          {t('wx.donkiNotes')} · {note.messageType || note.messageID}
+                        </span>
+                        <span className="text-slate-600 shrink-0">{fmtTime(note.messageIssueTime)}</span>
                       </div>
                     </li>
                   ))}

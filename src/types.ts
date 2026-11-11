@@ -121,7 +121,7 @@ export interface AiMessage {
     metrics: MetricAnalysis[];
     systems: SystemAnalysis[];
   };
-  analysisMode?: 'live_gemini' | 'offline_fallback';
+  analysisMode?: 'live_gemini' | 'live_openai' | 'offline_fallback';
   dataQuality?: {
     telemetry: string;
     cabin: string;

@@ -126,7 +126,7 @@
     "cevis": "CEVIS — 防振サイクルエルゴメーター（ステーションバイク）。",
     "t2": "T2 — COLBERT 有酸素トレッドミル。",
     "eclss": "ECLSS — 環境制御と生命維持（空気・水・熱）。",
-    "donki": "DONKI — NASA 宇宙天気通知・知識・情報データベース。",
+    "donki": "DONKI — NASA 宇宙天気通知・知識・情報データベース（GST、CME、SEP、通知）。フレアクラスは NOAA GOES 由来で、DONKI FLR ではありません。",
     "msv": "mSv — ミリシーベルト。乗員値はシミュレーションです。",
     "hrv": "HRV — 心拍変動（ms）。低下はストレスや疲労の目安。",
     "spo2": "SpO₂ — 末梢酸素飽和度（%）。",
@@ -306,11 +306,11 @@
   },
   "wx": {
     "title": "公式宇宙環境",
-    "sub": "NOAA SWPC/GOES ライブ · NASA DONKI カタログ",
+    "sub": "NOAA SWPC/GOES ライブ（フレアクラスは GOES X線）· NASA DONKI GST / CME / SEP / 通知",
     "refresh": "宇宙環境を更新",
     "loading": "NOAA SWPC と NASA DONKI を取得中…",
     "fail": "宇宙環境フィード失敗",
-    "demoKey": "非運用キー: NASA DONKI は公開 DEMO_KEY。ライブ観測にキーは不要。",
+    "demoKey": "非運用キー: api.nasa.gov への呼び出しは公開 DEMO_KEY（レート制限あり）。NASA_API_KEY を設定してください。NOAA SWPC/GOES にキーは不要です。",
     "feed": "フィード {state}",
     "feedOk": "完全",
     "feedPartial": "部分",
@@ -351,12 +351,19 @@
     "impactDown": "宇宙環境フィードは利用できません。再試行してください。",
     "basis": "NOAA スケール: 地磁気 {g}、電波 {r}、太陽放射線 {s}。GOES / SWPC 観測に基づき、補完値ではありません。",
     "noaaData": "NOAA データ",
-    "donkiFlares": "DONKI フレア一覧",
+    "donkiFlares": "DONKI カタログ",
+    "donkiCatalog": "DONKI カタログ",
+    "donkiGst": "GST",
+    "donkiCme": "CME",
+    "donkiSep": "SEP",
+    "donkiNotes": "通知",
+    "goesFlareSource": "フレアクラスは NOAA GOES X線フラックス（0.1–0.8 nm）から導出。NASA DONKI FLR は照会しません（上流 404）。",
     "observedAt": "観測 {time}"
   },
   "ai": {
     "offlineBanner": "AI モデルはオフライン — 端末上の閾値ルールを使用",
     "liveMode": "モード: Gemini ライブ",
+    "liveOpenAi": "モード: OpenAI ライブ",
     "greeting": "AURA ライブ、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
     "greetingOffline": "AURA はオフラインで、端末上の閾値ルールを使用しています、{name}。ミッション {day} 日目。{summary} 安静時心拍 {hr} bpm、HRV {hrv} ms。生理は模擬、宇宙天気は公式フィードです。調子はいかがですか？",
     "healthStatus": "健康状態: {status}",
@@ -427,16 +434,16 @@
         "note": "公開URLを確認。R尺度: M1=R1、M5=R2、X1=R3、X10=R4、X20=R5。C級はR0。"
       },
       "xray": {
-        "used": "長波X線フラックスとGOESクラス",
-        "note": "公開URLを確認。空とタイムアウトはそのまま。内挿しない。"
+        "used": "長波X線フラックスとGOESクラス（フレアクラスはこのフラックスから導出）",
+        "note": "公開URLを確認。空とタイムアウトはそのまま。内挿しない。NASA DONKI FLR 記録ではない。"
       },
       "proton": {
         "used": "≥10 MeV積分陽子フラックス → S尺度",
         "note": "公開URLを確認。デモSPEは別ラベル。公式値として上書きしない。"
       },
       "donki": {
-        "used": "フレア／地磁気嵐／CMEカタログ",
-        "note": "公開URLを確認。タイムアウトと空窓は別表示。タイムアウト≠事象なし。"
+        "used": "GST／CME／SEP／通知カタログ（FLRは照会しない）",
+        "note": "公開URLを確認。タイムアウトと空窓は別表示。タイムアウト≠事象なし。フレアクラスは NOAA GOES X線。"
       },
       "osdr": {
         "used": "宇宙飛行士の健康と生命科学の公開データ入口",

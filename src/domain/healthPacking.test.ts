@@ -81,15 +81,23 @@ function mockRes() {
 }
 
 describe('offline AURA reply without vitals', () => {
-  const prevKey = process.env.GEMINI_API_KEY;
+  const prev = {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    AI_PROVIDER: process.env.AI_PROVIDER,
+  };
 
   afterEach(() => {
-    if (prevKey === undefined) delete process.env.GEMINI_API_KEY;
-    else process.env.GEMINI_API_KEY = prevKey;
+    for (const k of ['GEMINI_API_KEY', 'OPENAI_API_KEY', 'AI_PROVIDER'] as const) {
+      if (prev[k] === undefined) delete process.env[k];
+      else process.env[k] = prev[k];
+    }
   });
 
   it('POST /api/ai-doctor status check with no vitals never prints NaN', async () => {
     delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.AI_PROVIDER = 'offline';
     const { res, captured } = mockRes();
     const req: ApiRequest = {
       method: 'POST',
@@ -98,7 +106,12 @@ describe('offline AURA reply without vitals', () => {
     };
     await handleAiDoctor(req, res);
     expect(captured.status).toBe(200);
-    const body = captured.body as { replyText: string; detailedAnalysis: { metrics: Array<{ value: string; numericValue: number }> } };
+    const body = captured.body as {
+      replyText: string;
+      analysisMode: string;
+      detailedAnalysis: { metrics: Array<{ value: string; numericValue: number }> };
+    };
+    expect(body.analysisMode).toBe('offline_fallback');
     expect(body.replyText).not.toMatch(/NaN/i);
     expect(body.replyText).toContain(translate('en', 'ai.notProvided'));
     expect(body.replyText).not.toMatch(/Resting HR NaN/i);
@@ -149,5 +162,77 @@ describe('offline AURA reply without vitals', () => {
     expect(packed.systems.some((s) => s.system.includes('Neuro-ocular') || s.system.includes('SANS'))).toBe(true);
     expect(packed.metrics.every((m) => Number.isFinite(m.numericValue))).toBe(true);
     expect(packed.metrics.find((m) => m.id === 'ppco2')?.source).toBe(translate('en', 'badge.simTelemetry'));
+  });
+});
+
+describe('AURA provider routing', () => {
+  const prev = {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    OPENAI_MODEL: process.env.OPENAI_MODEL,
+  };
+
+  afterEach(() => {
+    for (const k of Object.keys(prev) as Array<keyof typeof prev>) {
+      if (prev[k] === undefined) delete process.env[k];
+      else process.env[k] = prev[k];
+    }
+  });
+
+  it('falls back offline when AI_PROVIDER=openai but no key is set', async () => {
+    process.env.AI_PROVIDER = 'openai';
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    const { res, captured } = mockRes();
+    await handleAiDoctor({ method: 'POST', body: { lang: 'en', message: 'status check' }, headers: {} }, res);
+    expect(captured.status).toBe(200);
+    const body = captured.body as { analysisMode: string };
+    expect(body.analysisMode).toBe('offline_fallback');
+  });
+
+  it('calls OpenAI chat completions server-side and never echoes the key', async () => {
+    process.env.AI_PROVIDER = 'openai';
+    process.env.OPENAI_API_KEY = 'sk-secret-do-not-leak';
+    process.env.OPENAI_MODEL = 'gpt-4o-mini';
+    delete process.env.GEMINI_API_KEY;
+    const origFetch = globalThis.fetch;
+    let seenUrl = '';
+    let seenAuth = '';
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      seenUrl = String(input);
+      const headers = init?.headers as Record<string, string>;
+      seenAuth = headers?.Authorization ?? '';
+      return new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  replyText: 'OpenAI live reply for crew.',
+                  healthAssessment: { status: 'Nominal', summary: 'Nominal in this demo.' },
+                  suggestedActions: [],
+                  detailedAnalysis: { metrics: [], systems: [] },
+                }),
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }) as typeof fetch;
+    try {
+      const { res, captured } = mockRes();
+      await handleAiDoctor({ method: 'POST', body: { lang: 'en', message: 'status check' }, headers: {} }, res);
+      expect(captured.status).toBe(200);
+      expect(seenUrl).toContain('https://api.openai.com/v1/chat/completions');
+      expect(seenAuth).toBe('Bearer sk-secret-do-not-leak');
+      const body = captured.body as { analysisMode: string; replyText: string };
+      expect(body.analysisMode).toBe('live_openai');
+      expect(body.replyText).toContain('OpenAI live reply');
+      expect(JSON.stringify(body)).not.toContain('sk-secret-do-not-leak');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
   });
 });

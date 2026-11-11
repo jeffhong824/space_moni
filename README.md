@@ -1,6 +1,6 @@
 # SpaceMoni — 軌道生物遙測與太空站作業控制台
 
-**SpaceMoni (coco-demo)** is an orbital bio-telemetry and space station operations monitoring console designed for astronaut crews, orbital commanders, and ground-based NASA flight surgeons. It combines continuous physiological tracking, multi-system hardware telemetry pipelines, daily experiment schedules, and mission task management with an integrated **AURA AI Flight Surgeon** powered by Google Gemini.
+**SpaceMoni (coco-demo)** is an orbital bio-telemetry and space station operations monitoring console designed for astronaut crews, orbital commanders, and ground-based NASA flight surgeons. It combines continuous physiological tracking, multi-system hardware telemetry pipelines, daily experiment schedules, and mission task management with an integrated **AURA AI Flight Surgeon** (Gemini or OpenAI via env, with offline rules fallback).
 
 **2026 NASA Space Apps Challenge - Taipei Local Event**  
 **Team: OGTech AI**  
@@ -33,9 +33,10 @@ NASA 任務作業實際使用的官方美國空間天氣來源。本環境中 NA
 文件：<https://www.swpc.noaa.gov/> 、NOAA Scales <https://www.swpc.noaa.gov/noaa-scales-explanation>
 
 **事件目錄（可選 NASA 金鑰）— NASA DONKI**
-- `https://api.nasa.gov/DONKI/FLR|GST|CME`
-- 環境變數 `NASA_API_KEY`；未設定則使用公開 `DEMO_KEY`，UI 顯示**非營運金鑰**提示
-- 逾時、HTTP 錯誤或 7 日空窗會明白標示；**不會填補閃焰／CME**
+- `https://api.nasa.gov/DONKI/GST|CME|SEP|notifications`（CME 帶 `endDate`）
+- **不查詢** `DONKI/FLR`（上游 404）。閃焰等級由已擷取的 NOAA GOES X 射線通量推導，UI 標示來源為 GOES，不是 DONKI FLR
+- 環境變數 `NASA_API_KEY` 用於**所有** `api.nasa.gov` 呼叫；未設定或 `DEMO_KEY` 則使用公開 `DEMO_KEY`（有速率限制），UI 顯示非營運金鑰橫幅
+- 逾時、HTTP 錯誤或 7 日空窗會明白標示；**不會填補 GST／CME／SEP**。Retry／上次成功時間維持不變
 
 伺服器端點：`GET /api/nasa/space-environment`（60 秒記憶體快取；`?refresh=1` 強制重抓）
 
@@ -67,7 +68,7 @@ The AURA AI Flight Surgeon now provides comprehensive two-level health analysis:
 
 **Traditional Chinese (zh-Hant-TW)**: All user-facing text and AI responses are now in Traditional Chinese for the Taipei local event.
 
-**Offline Fallback**: When `GEMINI_API_KEY` is unset or Gemini fails, the same packed two-level structure is produced by `src/domain/healthPacking.ts`.
+**Offline Fallback**: When `AI_PROVIDER=offline`, or the selected provider has no usable key, or the live call fails, the same packed two-level structure is produced by `src/domain/healthPacking.ts` and the UI shows an offline banner.
 
 **Documented demo thresholds** (`src/domain/healthThresholds.ts`): 靜息心率 50–90 bpm 正常、>100 危急；HRV ≥25 ms 正常、<20 危急；SpO₂ ≥96% 正常、<94 危急；睡眠 ≥420 min 正常。這是示範臨床政策，不是 NASA 認證協議。生理來源一律標示為模擬機組遙測。
 
@@ -102,7 +103,7 @@ Clicking any conditioning metric reveals the operational pipeline and past 5-day
 
 ### 7. AURA AI Flight Surgeon ("與 AI 通話")
 - **Voice-to-Text Conversational Transcript**: Simulates a secure orbital voice comm session with the station's AI medical officer.
-- **Gemini-Powered Intelligence**: Uses `@google/genai` to analyze mission logs, suggest countermeasure adaptations, and answer operational health queries.
+- **LLM-Powered Intelligence**: Server-side Gemini (`@google/genai`) or OpenAI Chat Completions, selected by `AI_PROVIDER`. Keys never leave the server. Offline threshold rules if no key.
 - **Interactive Action Tools**: AI responses can recommend schedule changes, prescribe electrolyte supplements, or log maintenance items directly.
 
 ### 8. Filterable Station Objectives Panel
@@ -120,8 +121,8 @@ Clicking any conditioning metric reveals the operational pipeline and past 5-day
 ### Stack (Unchanged)
 - **Frontend**: React 19, TypeScript, Tailwind CSS v4, Lucide React icons, Motion
 - **Backend / Server**: Node.js, Express, TSX, Vite middlewares
-- **AI Integration**: Google Gemini API (`@google/genai`) via server-side `/api/ai-doctor` endpoint (model: `gemini-3.8-flash`)
-- **Space environment**: NOAA SWPC / GOES live observations + NASA DONKI catalog (optional `NASA_API_KEY`)
+- **AI Integration**: Server-side `/api/ai-doctor` — Gemini (`@google/genai`) or OpenAI Chat Completions (`AI_PROVIDER=gemini|openai|offline`). Keys never reach the browser. Default models: `gemini-3.8-flash` / `gpt-4o-mini`
+- **Space environment**: NOAA SWPC / GOES live observations (flare class from GOES X-ray) + NASA DONKI GST/CME/SEP/notifications (`NASA_API_KEY`, else rate-limited `DEMO_KEY`)
 - **Layout / UX**: Clinical space-lab light identity, Noto Sans TC, focus rings, empty/loading/error states, Traditional Chinese UI
 
 ### ⭐ New Architecture (coco-demo MVP)
@@ -155,31 +156,36 @@ vercel.json                # Vite static output + /api functions
 ### Prerequisites
 - Node.js (v18+)
 - npm (v9+)
-- (Optional) `GEMINI_API_KEY` in environment variables for live Gemini AI generation
-  - If not set, an intelligent offline AURA flight-surgeon fallback is automatically used
-  - The offline fallback provides the same two-level analysis structure (overall + detailed metrics/systems)
+- (Optional) LLM keys for live AURA. If unset, an intelligent offline AURA flight-surgeon fallback is used (same two-level structure + on-screen banner)
 
 ### Environment Variables
 
-Create a `.env` file in the project root (see `.env.example`):
+Create a `.env` file in the project root (placeholders in `.env.example` — no real values):
 
 ```bash
-# Optional: Google Gemini API Key for live AI analysis
-# Get your key from https://aistudio.google.com/apikey
-GEMINI_API_KEY=your_actual_gemini_api_key_here
+# gemini | openai | offline  (unset = auto: Gemini key → OpenAI key → offline)
+AI_PROVIDER=
 
-# Optional: NASA DONKI catalog key (live NOAA feeds do not need this)
-NASA_API_KEY=DEMO_KEY
+# https://aistudio.google.com/apikey   default model: gemini-3.8-flash
+GEMINI_API_KEY=
+GEMINI_MODEL=
 
-# Optional: Application URL (used for deployment metadata)
+# OpenAI Chat Completions (server-side only)   default model: gpt-4o-mini
+OPENAI_API_KEY=
+OPENAI_MODEL=
+
+# All api.nasa.gov calls. Unset/DEMO_KEY = public DEMO_KEY (rate-limited banner).
+# NOAA SWPC/GOES do not use this key.
+NASA_API_KEY=
+
 APP_URL=http://localhost:3000
 ```
 
 **Important**:
-- Do NOT commit real API keys
-- AURA works without `GEMINI_API_KEY` (offline two-level engine)
+- Do NOT commit real API keys. Never prefix these with `VITE_` (that would ship them to the browser).
+- AURA works without any LLM key (offline two-level engine + banner)
 - NOAA SWPC / GOES work with no key
-- `NASA_API_KEY=DEMO_KEY` is non-production and is disclosed in the UI
+- `NASA_API_KEY=DEMO_KEY` (or unset) is non-production, rate-limited, and is disclosed in the UI
 
 ### Installation
 
@@ -224,12 +230,14 @@ Vercel serves the Vite `dist/` SPA and the two serverless functions in `api/`. I
 - Install command: `npm install --legacy-peer-deps`
 - Node.js: 18.x or 20.x
 
-**Environment variables** (all optional; leave empty for the public demo)
-- `GEMINI_API_KEY` — live AURA; if unset, offline two-level fallback is used
-- `NASA_API_KEY` — NASA DONKI catalog; if unset, public `DEMO_KEY` + on-screen notice
+**Environment variables** — set in the Vercel project (Settings → Environment Variables), not in the repo. Same names as local `.env`. All optional; leave empty for the public demo.
+- `AI_PROVIDER` — `gemini` | `openai` | `offline` (unset = auto)
+- `GEMINI_API_KEY` / `GEMINI_MODEL` — live Gemini AURA
+- `OPENAI_API_KEY` / `OPENAI_MODEL` — live OpenAI Chat Completions (server-side only)
+- `NASA_API_KEY` — all `api.nasa.gov` calls; if unset, public `DEMO_KEY` (rate-limited) + on-screen banner
 - `APP_URL` — optional public URL metadata
 
-Do not paste real keys into the repo. NOAA SWPC / GOES and offline AURA work with empty values.
+Do not paste real keys into the repo. Do not use the `VITE_` prefix. NOAA SWPC / GOES and offline AURA work with empty values. If no LLM key is set, AURA uses offline rules and shows a banner.
 
 **Smoke-test after deploy** (`https://<deployment>.vercel.app`):
 
@@ -237,14 +245,14 @@ Do not paste real keys into the repo. NOAA SWPC / GOES and offline AURA work wit
 # Space environment (NOAA live observations; DONKI may time out — that is expected)
 curl -sS "https://<deployment>.vercel.app/api/nasa/space-environment" | jq '{overallStatus, nasaKeyMode, notices, kp: .observations.kp}'
 
-# AURA health analysis (offline fallback unless GEMINI_API_KEY is set)
+# AURA health analysis (offline fallback unless AI_PROVIDER + key are set)
 curl -sS -X POST "https://<deployment>.vercel.app/api/ai-doctor" \
   -H "Content-Type: application/json" \
   -d '{"message":"請做健康檢核","astronaut":{"id":"astro-alice","name":"Alice Smith","gender":"Female","age":46,"role":"Botanist","missionStartDate":"2026/01/21","missionDuration":"10m","missionDaysElapsed":305},"telemetry":{"date":"2026/11/22","restingHR":103,"hrv":14,"vo2Max":20,"spo2":95,"avgSleepMinutes":305,"avgExerciseMinutes":175,"mentalStatus":"Normal","musculoskeletalStatus":"Normal","nutritionStatus":"Normal"}}' \
   | jq '{analysisMode, healthAssessment, metricCount: (.detailedAnalysis.metrics|length)}'
 ```
 
-Expect HTTP 200. Space-environment should include NOAA Kp / GOES fields and must not invent DONKI flares. AI-doctor should return overall + per-metric analysis in zh-Hant-TW. Repeating the POST quickly may return HTTP 429 (30 requests / 15 minutes / IP, best-effort per instance).
+Expect HTTP 200. Space-environment should include NOAA Kp / GOES fields; flare class is GOES-derived and must not be labeled as DONKI FLR. AI-doctor should return overall + per-metric analysis (`analysisMode` is `live_gemini`, `live_openai`, or `offline_fallback`). Repeating the POST quickly may return HTTP 429 (30 requests / 15 minutes / IP, best-effort per instance).
 
 Custom domain `space-moni.ogtech.ai` can be attached later in the Vercel project; this repo does not create DNS.
 
@@ -262,8 +270,9 @@ npm run lint
 ### 1. Official space environment
 - Left sidebar, 「官方空間環境」
 - Expect Kp, GOES class, solar wind km/s, proton pfu, timestamps, source latency
-- DONKI may be empty or timed out — that is shown, not fabricated
-- DEMO_KEY notice appears until a real `NASA_API_KEY` is set
+- DONKI GST/CME/SEP/notifications may be empty or timed out — that is shown, not fabricated
+- Flare class is from NOAA GOES X-ray (not DONKI FLR)
+- DEMO_KEY rate-limit banner appears until a real `NASA_API_KEY` is set
 
 ### 2. Detailed AI Health Analysis
 - **How to access**: Click "與 AI 通話" (Call with AI) button in the top navigation or daily records panel
@@ -276,7 +285,7 @@ npm run lint
   - Per-metric analysis: Heart rate, HRV, SpO2, sleep duration
   - Per-system analysis: Cardiovascular, respiratory, sleep, exercise, mental, musculoskeletal, nutrition
 - **Execute actions**: Click suggested action buttons to add tasks or log anomalies
-- **Offline mode**: Works fully without GEMINI_API_KEY (uses pre-computed medical logic)
+- **Offline mode**: Works fully without an LLM key (uses pre-computed medical logic + banner)
 
 ### 3. Traditional Chinese UI
 - All user-facing text is now in zh-Hant-TW

@@ -126,7 +126,7 @@
     "cevis": "CEVIS — 隔振腳踏車測功器（站上單車）。",
     "t2": "T2 — COLBERT 有氧跑步機。",
     "eclss": "ECLSS — 環境控制與生命維持系統（艙氣、水、熱控）。",
-    "donki": "DONKI — NASA 太空天氣通報／知識／資訊資料庫（閃焰、CME、風暴）。",
+    "donki": "DONKI — NASA 太空天氣通報／知識／資訊資料庫（GST、CME、SEP、通報）。閃焰等級來自 NOAA GOES，不是 DONKI FLR。",
     "msv": "mSv — 毫西弗，劑量單位。此處組員值為模擬。",
     "hrv": "HRV — 心率變異（毫秒）。偏低可能代表壓力或疲勞。",
     "spo2": "SpO₂ — 周邊血氧飽和度（%）。",
@@ -306,11 +306,11 @@
   },
   "wx": {
     "title": "官方空間環境",
-    "sub": "NOAA SWPC／GOES 即時觀測 · NASA DONKI 事件目錄",
+    "sub": "NOAA SWPC／GOES 即時觀測（閃焰等級來自 GOES X 射線）· NASA DONKI GST／CME／SEP／通報",
     "refresh": "重新整理空間環境資料",
     "loading": "正在向 NOAA SWPC 與 NASA DONKI 擷取…",
     "fail": "空間環境饋送失敗",
-    "demoKey": "非營運金鑰：NASA DONKI 使用公開 DEMO_KEY。即時觀測不依賴此金鑰。",
+    "demoKey": "非營運金鑰：所有 api.nasa.gov 呼叫使用公開 DEMO_KEY（有速率限制）。請設定 NASA_API_KEY。NOAA SWPC／GOES 不需此金鑰。",
     "feed": "饋送 {state}",
     "feedOk": "完整",
     "feedPartial": "部分",
@@ -351,12 +351,19 @@
     "impactDown": "空間環境饋送無法使用。請重試。",
     "basis": "依 NOAA 尺度：地磁 {g}、無線電 {r}、太陽輻射 {s}。以 GOES / SWPC 觀測為準，非推估填補。",
     "noaaData": "NOAA 資料",
-    "donkiFlares": "DONKI 閃焰清單",
+    "donkiFlares": "DONKI 目錄",
+    "donkiCatalog": "DONKI 目錄",
+    "donkiGst": "GST",
+    "donkiCme": "CME",
+    "donkiSep": "SEP",
+    "donkiNotes": "通報",
+    "goesFlareSource": "閃焰等級由 NOAA GOES X 射線通量（0.1–0.8 nm）推導。未查詢 NASA DONKI FLR（上游 404）。",
     "observedAt": "觀測 {time}"
   },
   "ai": {
     "offlineBanner": "AI 模型離線 — 改用裝置上門檻規則",
     "liveMode": "模式：Gemini 即時",
+    "liveOpenAi": "模式：OpenAI 即時",
     "greeting": "AURA 即時連線，{name}。任務第 {day} 日。{summary} 靜息心率 {hr} bpm、HRV {hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？",
     "greetingOffline": "AURA 離線，改用裝置上門檻規則，{name}。任務第 {day} 日。{summary} 靜息心率 {hr} bpm、HRV {hrv} ms。生理資料為示範遙測，空間天氣則使用官方饋送。您現在感覺如何？",
     "healthStatus": "健康狀態：{status}",
@@ -427,16 +434,16 @@
         "note": "已核對公開 URL。R 尺度：M1=R1、M5=R2、X1=R3、X10=R4、X20=R5；C 級為 R0。"
       },
       "xray": {
-        "used": "即時長波 X 射線通量與 GOES class",
-        "note": "已核對公開 URL。空值與逾時維持空值／逾時，不內插。"
+        "used": "即時長波 X 射線通量與 GOES class（閃焰等級由此通量推導）",
+        "note": "已核對公開 URL。空值與逾時維持空值／逾時，不內插。不是 NASA DONKI FLR 紀錄。"
       },
       "proton": {
         "used": "≥10 MeV 積分質子通量 → S 尺度",
         "note": "已核對公開 URL。示範 SPE 情境會另外標示，不覆寫為官方數字。"
       },
       "donki": {
-        "used": "閃焰／地磁暴／CME 事件目錄",
-        "note": "已核對公開 URL。逾時與空窗分開標示：逾時≠確認無事件。"
+        "used": "GST／CME／SEP／通報目錄（不查詢 FLR）",
+        "note": "已核對公開 URL。逾時與空窗分開標示：逾時≠確認無事件。閃焰等級來自 NOAA GOES X 射線。"
       },
       "osdr": {
         "used": "太空人健康與生命科學公開資料入口",

@@ -377,7 +377,11 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                   AURA
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white text-stone-500">
-                  {offline ? t('ui.offlineMode') : t('ai.liveMode')}
+                  {offline
+                    ? t('ui.offlineMode')
+                    : lastAi?.analysisMode === 'live_openai'
+                      ? t('ai.liveOpenAi')
+                      : t('ai.liveMode')}
                 </span>
               </div>
               {offline && (

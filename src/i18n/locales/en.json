@@ -126,7 +126,7 @@
     "cevis": "CEVIS — Cycle Ergometer with Vibration Isolation (station bike).",
     "t2": "T2 — COLBERT treadmill for aerobic countermeasure.",
     "eclss": "ECLSS — Environmental Control and Life Support System (cabin air, water, thermal).",
-    "donki": "DONKI — NASA Space Weather Database Of Notifications, Knowledge, Information (flares, CME, storms).",
+    "donki": "DONKI — NASA Space Weather Database Of Notifications, Knowledge, Information (GST, CME, SEP, notifications). Flare class is from NOAA GOES, not DONKI FLR.",
     "msv": "mSv — millisievert, a dose unit. Crew values here are simulated.",
     "hrv": "HRV — Heart-rate variability (ms). Lower can mean stress or fatigue.",
     "spo2": "SpO₂ — Peripheral oxygen saturation (%).",
@@ -306,11 +306,11 @@
   },
   "wx": {
     "title": "Official space environment",
-    "sub": "NOAA SWPC/GOES live · NASA DONKI catalog",
+    "sub": "NOAA SWPC/GOES live (flare class from GOES X-ray) · NASA DONKI GST / CME / SEP / notifications",
     "refresh": "Refresh space environment",
     "loading": "Fetching NOAA SWPC and NASA DONKI…",
     "fail": "Space-environment feed failed",
-    "demoKey": "Non-operational key: NASA DONKI uses public DEMO_KEY. Live observations do not need this key.",
+    "demoKey": "Non-operational key: all api.nasa.gov calls use public DEMO_KEY (rate-limited). Set NASA_API_KEY for a registered key. NOAA SWPC/GOES do not need this key.",
     "feed": "Feed {state}",
     "feedOk": "complete",
     "feedPartial": "partial",
@@ -351,12 +351,19 @@
     "impactDown": "Space-environment feeds are unavailable. Retry to refresh.",
     "basis": "NOAA scales: geomagnetic {g}, radio {r}, solar radiation {s}. Based on GOES / SWPC observations, not filled-in values.",
     "noaaData": "NOAA data",
-    "donkiFlares": "DONKI flare list",
+    "donkiFlares": "DONKI catalog",
+    "donkiCatalog": "DONKI catalog",
+    "donkiGst": "GST",
+    "donkiCme": "CME",
+    "donkiSep": "SEP",
+    "donkiNotes": "Notice",
+    "goesFlareSource": "Flare class is derived from NOAA GOES X-ray flux (0.1–0.8 nm). NASA DONKI FLR is not queried (upstream 404).",
     "observedAt": "Observed {time}"
   },
   "ai": {
     "offlineBanner": "AI model offline — using on-device threshold rules",
     "liveMode": "Mode: live Gemini",
+    "liveOpenAi": "Mode: live OpenAI",
     "greeting": "AURA live, {name}. Mission day {day}. {summary} Resting HR {hr} bpm, HRV {hrv} ms. Physiology is simulated; space weather uses the official feed. How do you feel?",
     "greetingOffline": "AURA is offline and using on-device threshold rules, {name}. Mission day {day}. {summary} Resting HR {hr} bpm, HRV {hrv} ms. Physiology is simulated; space weather uses the official feed. How do you feel?",
     "healthStatus": "Health status: {status}",
@@ -427,16 +434,16 @@
         "note": "Verified public URL. R-scale: M1=R1, M5=R2, X1=R3, X10=R4, X20=R5; C-class is R0."
       },
       "xray": {
-        "used": "Live long-wave X-ray flux and GOES class",
-        "note": "Verified public URL. Empty and timeout stay empty/timeout; nothing is interpolated."
+        "used": "Live long-wave X-ray flux and GOES class (flare class derived from this flux)",
+        "note": "Verified public URL. Empty and timeout stay empty/timeout; nothing is interpolated. Not a NASA DONKI FLR record."
       },
       "proton": {
         "used": "≥10 MeV integral proton flux → S-scale",
         "note": "Verified public URL. The demo SPE scenario is labeled separately and never overwrite as official."
       },
       "donki": {
-        "used": "Flare / geomagnetic storm / CME event catalog",
-        "note": "Verified public URL. Timeout and empty window are labeled separately: timeout ≠ confirmed no events."
+        "used": "GST / CME / SEP / notifications catalog (FLR is not queried)",
+        "note": "Verified public URL. Timeout and empty window are labeled separately: timeout ≠ confirmed no events. Flare class comes from NOAA GOES X-ray."
       },
       "osdr": {
         "used": "Public astronaut health and life-science data portal",

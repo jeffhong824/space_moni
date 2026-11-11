@@ -126,7 +126,7 @@
     "cevis": "CEVIS — Cicloergómetro con aislamiento de vibración (bici de estación).",
     "t2": "T2 — Cinta COLBERT para contramedida aeróbica.",
     "eclss": "ECLSS — Control ambiental y soporte vital (aire, agua, térmico).",
-    "donki": "DONKI — Base NASA de notificaciones y clima espacial (llamaradas, CME, tormentas).",
+    "donki": "DONKI — Base NASA de notificaciones y clima espacial (GST, CME, SEP, avisos). La clase de llamarada es de NOAA GOES, no DONKI FLR.",
     "msv": "mSv — milisievert, unidad de dosis. Los valores de tripulación son simulados.",
     "hrv": "HRV — Variabilidad de la frecuencia cardíaca (ms). Baja puede indicar estrés o fatiga.",
     "spo2": "SpO₂ — Saturación periférica de oxígeno (%).",
@@ -306,11 +306,11 @@
   },
   "wx": {
     "title": "Entorno espacial oficial",
-    "sub": "NOAA SWPC/GOES en vivo · catálogo DONKI",
+    "sub": "NOAA SWPC/GOES en vivo (clase de llamarada desde rayos X GOES) · DONKI GST / CME / SEP / avisos",
     "refresh": "Actualizar entorno espacial",
     "loading": "Obteniendo NOAA SWPC y NASA DONKI…",
     "fail": "Falló la fuente de entorno espacial",
-    "demoKey": "Clave no operativa: DONKI usa DEMO_KEY pública.",
+    "demoKey": "Clave no operativa: todas las llamadas a api.nasa.gov usan DEMO_KEY pública (con límite de ritmo). Defina NASA_API_KEY. NOAA SWPC/GOES no la necesitan.",
     "feed": "Fuente {state}",
     "feedOk": "completa",
     "feedPartial": "parcial",
@@ -351,12 +351,19 @@
     "impactDown": "Los feeds del entorno espacial no están disponibles. Reintente.",
     "basis": "Escalas NOAA: geomagnética {g}, radio {r}, radiación solar {s}. Basado en GOES / SWPC, no interpolado.",
     "noaaData": "datos NOAA",
-    "donkiFlares": "lista de llamaradas DONKI",
+    "donkiFlares": "catálogo DONKI",
+    "donkiCatalog": "catálogo DONKI",
+    "donkiGst": "GST",
+    "donkiCme": "CME",
+    "donkiSep": "SEP",
+    "donkiNotes": "Aviso",
+    "goesFlareSource": "La clase de llamarada se deriva del flujo de rayos X GOES de NOAA (0.1–0.8 nm). No se consulta DONKI FLR (404 en origen).",
     "observedAt": "Observado {time}"
   },
   "ai": {
     "offlineBanner": "Modelo de IA desconectado — usando reglas de umbral en el dispositivo",
     "liveMode": "Modo: Gemini en vivo",
+    "liveOpenAi": "Modo: OpenAI en vivo",
     "greeting": "AURA en vivo, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
     "greetingOffline": "AURA está desconectada y usa reglas de umbral en el dispositivo, {name}. Día {day}. {summary} FC {hr} lpm, HRV {hrv} ms. La fisiología es simulada. ¿Cómo se siente?",
     "healthStatus": "Estado de salud: {status}",
@@ -427,16 +434,16 @@
         "note": "URL pública verificada. Escala R: M1=R1, M5=R2, X1=R3, X10=R4, X20=R5; clase C = R0."
       },
       "xray": {
-        "used": "Flujo de rayos X de onda larga y clase GOES",
-        "note": "URL verificada. Vacío y timeout se dejan así; no se interpola."
+        "used": "Flujo de rayos X de onda larga y clase GOES (clase de llamarada derivada de este flujo)",
+        "note": "URL verificada. Vacío y timeout se dejan así; no se interpola. No es un registro DONKI FLR."
       },
       "proton": {
         "used": "Flujo integral de protones ≥10 MeV → escala S",
         "note": "URL verificada. El SPE de demo se etiqueta aparte y no se hace pasar por oficial."
       },
       "donki": {
-        "used": "Catálogo de fulguraciones / tormentas / CME",
-        "note": "URL verificada. Timeout y ventana vacía se etiquetan aparte: timeout ≠ sin eventos."
+        "used": "Catálogo GST / CME / SEP / avisos (no se consulta FLR)",
+        "note": "URL verificada. Timeout y ventana vacía se etiquetan aparte: timeout ≠ sin eventos. La clase de llamarada viene de rayos X GOES de NOAA."
       },
       "osdr": {
         "used": "Portal público de salud y ciencias de la vida",

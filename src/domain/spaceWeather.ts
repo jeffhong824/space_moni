@@ -62,6 +62,8 @@ export interface DonkiFlare {
   peakTime: string | null;
   classType: string;
   sourceLocation: string | null;
+  /** GOES-derived class is not a DONKI FLR record. */
+  catalog?: 'noaa-goes-xray' | 'nasa-donki-flr';
 }
 
 export interface DonkiStorm {
@@ -74,6 +76,19 @@ export interface DonkiCme {
   activityID: string;
   startTime: string | null;
   note: string | null;
+}
+
+export interface DonkiSep {
+  sepID: string;
+  eventTime: string | null;
+  instruments: string | null;
+}
+
+export interface DonkiNotification {
+  messageID: string;
+  messageType: string | null;
+  messageIssueTime: string | null;
+  messageURL: string | null;
 }
 
 export interface SwpcAlert {
@@ -107,6 +122,8 @@ export interface SpaceEnvironmentPayload {
     solarFlares: DonkiFlare[];
     geomagneticStorms: DonkiStorm[];
     coronalMassEjections: DonkiCme[];
+    solarEnergeticParticles?: DonkiSep[];
+    donkiNotifications?: DonkiNotification[];
     swpcAlerts: SwpcAlert[];
   };
   notices: string[];
@@ -139,6 +156,23 @@ export function fluxToGoesClass(flux: number): string {
     }
   }
   return 'A0.0';
+}
+
+/** Accurate source label: class comes from NOAA GOES, not NASA DONKI FLR. */
+export const GOES_FLARE_SOURCE_LABEL =
+  'NOAA GOES X-ray flux (0.1–0.8 nm); not NASA DONKI FLR';
+
+/** Derive a flare-class row from live GOES X-ray. Does not invent a DONKI FLR event. */
+export function flareFromGoesXray(obs: GoesXrayObservation | null): DonkiFlare | null {
+  if (!obs || !Number.isFinite(obs.flux)) return null;
+  return {
+    flrID: `goes-xray-${obs.observedAt}`,
+    beginTime: obs.observedAt,
+    peakTime: obs.observedAt,
+    classType: obs.goesClass || fluxToGoesClass(obs.flux),
+    sourceLocation: GOES_FLARE_SOURCE_LABEL,
+    catalog: 'noaa-goes-xray',
+  };
 }
 
 export function parseGoesClass(goesClass: string | null | undefined): { letter: string; magnitude: number } | null {

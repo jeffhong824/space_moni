@@ -26,7 +26,7 @@ interface DetailedHealthAnalysisProps {
     cabin: string;
     spaceEnvironment: string;
   };
-  analysisMode?: 'live_gemini' | 'offline_fallback';
+  analysisMode?: 'live_gemini' | 'live_openai' | 'offline_fallback';
 }
 
 
@@ -91,6 +91,9 @@ export const DetailedHealthAnalysis: React.FC<DetailedHealthAnalysisProps> = ({
         )}
         {analysisMode === 'live_gemini' && (
           <p className="text-[10px] font-mono mt-2 opacity-80">{t('ai.liveMode')}</p>
+        )}
+        {analysisMode === 'live_openai' && (
+          <p className="text-[10px] font-mono mt-2 opacity-80">{t('ai.liveOpenAi')}</p>
         )}
       </div>
 

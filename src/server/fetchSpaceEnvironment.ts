@@ -1,18 +1,20 @@
 import {
   combineRadiationRisk,
+  flareFromGoesXray,
   fluxToGoesClass,
   goesClassToRScale,
   kpToGScale,
   protonToSScale,
   type DataSourceReport,
   type DonkiCme,
-  type DonkiFlare,
+  type DonkiNotification,
+  type DonkiSep,
   type DonkiStorm,
-  type NasaKeyMode,
   type SourceStatus,
   type SpaceEnvironmentPayload,
   type SwpcAlert,
 } from '../domain/spaceWeather.ts';
+import { buildDonkiUrls, resolveNasaApiKey } from './envKeys.ts';
 
 const CACHE_TTL_MS = 60_000;
 let cache: { expiresAt: number; payload: SpaceEnvironmentPayload } | null = null;
@@ -25,12 +27,13 @@ interface FetchResult<T> {
   noteZh: string;
 }
 
-function nasaKeyMode(): { key: string; mode: NasaKeyMode } {
-  const raw = (process.env.NASA_API_KEY || '').trim();
-  if (!raw || raw === 'DEMO_KEY' || raw === 'MY_NASA_API_KEY') {
-    return { key: 'DEMO_KEY', mode: 'demo_key' };
+function firstInstrument(row: { instruments?: unknown }): string | null {
+  const inst = row.instruments;
+  if (Array.isArray(inst) && inst[0] && typeof inst[0] === 'object') {
+    const name = (inst[0] as { displayName?: string }).displayName;
+    return name ?? null;
   }
-  return { key: raw, mode: 'nasa_api_key' };
+  return typeof inst === 'string' ? inst : null;
 }
 
 async function fetchJson<T>(url: string, timeoutMs: number): Promise<FetchResult<T>> {
@@ -95,26 +98,25 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
   const fetchedAt = new Date().toISOString();
   const windowEnd = fetchedAt.slice(0, 10);
   const windowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const { key, mode } = nasaKeyMode();
+  const { key, mode } = resolveNasaApiKey();
+  const donki = buildDonkiUrls(windowStart, windowEnd, key);
 
   const kpUrl = 'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json';
   const xrayUrl = 'https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json';
   const windUrl = 'https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json';
   const protonUrl = 'https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json';
   const alertUrl = 'https://services.swpc.noaa.gov/products/alerts.json';
-  const donkiFlr = `https://api.nasa.gov/DONKI/FLR?startDate=${windowStart}&endDate=${windowEnd}&api_key=${key}`;
-  const donkiGst = `https://api.nasa.gov/DONKI/GST?startDate=${windowStart}&endDate=${windowEnd}&api_key=${key}`;
-  const donkiCme = `https://api.nasa.gov/DONKI/CME?startDate=${windowStart}&endDate=${windowEnd}&api_key=${key}`;
 
-  const [kpRes, xrayRes, windRes, protonRes, alertRes, flrRes, gstRes, cmeRes] = await Promise.all([
+  const [kpRes, xrayRes, windRes, protonRes, alertRes, gstRes, cmeRes, sepRes, notifRes] = await Promise.all([
     fetchJson<Array<{ time_tag: string; kp_index?: number; estimated_kp?: number }>>(kpUrl, 8000),
     fetchJson<Array<{ time_tag: string; satellite?: number; flux?: number; energy?: string }>>(xrayUrl, 8000),
     fetchJson<Array<{ proton_speed?: number; time_tag?: string }>>(windUrl, 8000),
     fetchJson<Array<{ time_tag: string; satellite?: number; flux?: number; energy?: string }>>(protonUrl, 8000),
     fetchJson<Array<{ product_id?: string; issue_datetime?: string; message?: string }>>(alertUrl, 8000),
-    fetchJson<any[]>(donkiFlr, 6000),
-    fetchJson<any[]>(donkiGst, 6000),
-    fetchJson<any[]>(donkiCme, 6000),
+    fetchJson<any[]>(donki.gst, 6000),
+    fetchJson<any[]>(donki.cme, 6000),
+    fetchJson<any[]>(donki.sep, 6000),
+    fetchJson<any[]>(donki.notifications, 6000),
   ]);
 
   const kpLast = lastOf(kpRes.data);
@@ -191,18 +193,6 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
       noteZh: alertRes.noteZh,
     },
     {
-      id: 'nasa-donki-flr',
-      name: 'NASA DONKI Solar Flares',
-      agency: 'NASA',
-      endpoint: 'https://api.nasa.gov/DONKI/FLR',
-      docsUrl: 'https://ccmc.gsfc.nasa.gov/donki/',
-      status: flrRes.status,
-      observedAt: flrRes.data?.[0]?.peakTime ?? flrRes.data?.[0]?.beginTime ?? null,
-      fetchedAt,
-      latencyMs: flrRes.latencyMs,
-      noteZh: flrRes.noteZh,
-    },
-    {
       id: 'nasa-donki-gst',
       name: 'NASA DONKI Geomagnetic Storms',
       agency: 'NASA',
@@ -226,15 +216,31 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
       latencyMs: cmeRes.latencyMs,
       noteZh: cmeRes.noteZh,
     },
+    {
+      id: 'nasa-donki-sep',
+      name: 'NASA DONKI Solar Energetic Particles',
+      agency: 'NASA',
+      endpoint: 'https://api.nasa.gov/DONKI/SEP',
+      docsUrl: 'https://ccmc.gsfc.nasa.gov/donki/',
+      status: sepRes.status,
+      observedAt: sepRes.data?.[0]?.eventTime ?? sepRes.data?.[0]?.sepID ?? null,
+      fetchedAt,
+      latencyMs: sepRes.latencyMs,
+      noteZh: sepRes.noteZh,
+    },
+    {
+      id: 'nasa-donki-notifications',
+      name: 'NASA DONKI Notifications',
+      agency: 'NASA',
+      endpoint: 'https://api.nasa.gov/DONKI/notifications',
+      docsUrl: 'https://ccmc.gsfc.nasa.gov/donki/',
+      status: notifRes.status,
+      observedAt: notifRes.data?.[0]?.messageIssueTime ?? null,
+      fetchedAt,
+      latencyMs: notifRes.latencyMs,
+      noteZh: notifRes.noteZh,
+    },
   ];
-
-  const solarFlares: DonkiFlare[] = (flrRes.data || []).slice(0, 8).map((row) => ({
-    flrID: String(row.flrID || ''),
-    beginTime: row.beginTime ?? null,
-    peakTime: row.peakTime ?? null,
-    classType: String(row.classType || 'N/A'),
-    sourceLocation: row.sourceLocation ?? null,
-  }));
 
   const geomagneticStorms: DonkiStorm[] = (gstRes.data || []).slice(0, 5).map((row) => ({
     gstID: String(row.gstID || ''),
@@ -248,6 +254,19 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
     note: row.note ?? null,
   }));
 
+  const solarEnergeticParticles: DonkiSep[] = (sepRes.data || []).slice(0, 5).map((row) => ({
+    sepID: String(row.sepID || ''),
+    eventTime: row.eventTime ?? null,
+    instruments: firstInstrument(row),
+  }));
+
+  const donkiNotifications: DonkiNotification[] = (notifRes.data || []).slice(0, 6).map((row) => ({
+    messageID: String(row.messageID || row.messageId || ''),
+    messageType: row.messageType ?? null,
+    messageIssueTime: row.messageIssueTime ?? null,
+    messageURL: row.messageURL ?? row.messageUrl ?? null,
+  }));
+
   const swpcAlerts: SwpcAlert[] = (alertRes.data || []).slice(0, 4).map((row) => ({
     productId: String(row.product_id || ''),
     issueDatetime: String(row.issue_datetime || ''),
@@ -255,26 +274,56 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
   }));
 
   const liveOk = [kpRes, xrayRes, windRes, protonRes].filter((r) => r.status === 'ok' || r.status === 'empty').length;
+  const donkiFail = [gstRes, cmeRes, sepRes, notifRes].some((r) => r.status === 'timeout' || r.status === 'error');
+  const donkiEmpty =
+    [gstRes, cmeRes, sepRes, notifRes].every((r) => r.status === 'empty' || r.status === 'ok') &&
+    geomagneticStorms.length === 0 &&
+    coronalMassEjections.length === 0 &&
+    solarEnergeticParticles.length === 0 &&
+    donkiNotifications.length === 0;
   const overallStatus: SpaceEnvironmentPayload['overallStatus'] =
-    liveOk === 0 ? 'unavailable' : liveOk < 4 || flrRes.status === 'timeout' || flrRes.status === 'error' ? 'partial' : 'ok';
+    liveOk === 0 ? 'unavailable' : liveOk < 4 || donkiFail ? 'partial' : 'ok';
 
   const notices: string[] = [];
   if (mode === 'demo_key') {
-    notices.push('NASA DONKI 目前使用公開 DEMO_KEY（非營運金鑰，有速率限制）。設定 NASA_API_KEY 後可改用申請金鑰。');
+    notices.push(
+      'api.nasa.gov is using public DEMO_KEY (rate-limited). Set NASA_API_KEY for a registered key. NOAA SWPC/GOES do not use this key.'
+    );
   }
-  if (flrRes.status === 'timeout' || gstRes.status === 'timeout' || cmeRes.status === 'timeout') {
-    notices.push('NASA DONKI 事件目錄目前逾時或無法連線。即時觀測改以 NOAA SWPC／GOES 為準，未填補任何閃焰或 CME 事件。');
+  if (donkiFail) {
+    notices.push(
+      'NASA DONKI GST/CME/SEP/notifications timed out or failed. Live observations use NOAA SWPC/GOES. Events were not filled in. Flare class is from GOES X-ray, not DONKI FLR.'
+    );
   }
-  if (flrRes.status === 'empty' && gstRes.status === 'empty' && cmeRes.status === 'empty') {
-    notices.push(`NASA DONKI 在 ${windowStart}～${windowEnd} 視窗內沒有閃焰／地磁暴／CME 事件（真實空窗，非模擬）。`);
+  if (donkiEmpty && !donkiFail) {
+    notices.push(
+      `NASA DONKI window ${windowStart}–${windowEnd} has no GST/CME/SEP/notification records (real empty window, not simulated).`
+    );
   }
   if (kpValue != null && kpValue < 5 && goesClass && goesClass.startsWith('C')) {
-    notices.push('目前為中低度太陽活動：C 級 X 射線通量不一定對應 DONKI 已歸檔閃焰事件。');
+    notices.push(
+      'Moderate-to-low solar activity: C-class X-ray flux is from NOAA GOES, not a NASA DONKI FLR record.'
+    );
   }
 
   const g = kpValue != null ? kpToGScale(kpValue) : { code: 'G?', labelZh: '無 Kp 觀測' };
   const r = goesClass ? goesClassToRScale(goesClass) : { code: 'R?', labelZh: '無 X 射線觀測' };
   const s = pfu != null ? protonToSScale(pfu) : { code: 'S?', labelZh: '無質子通量觀測' };
+
+  const goesXray =
+    xrayLast?.flux != null
+      ? {
+          flux: xrayLast.flux,
+          fluxUnit: 'W/m²' as const,
+          energyBand: xrayLast.energy || '0.1-0.8nm',
+          satellite: xrayLast.satellite != null ? `GOES-${xrayLast.satellite}` : 'GOES',
+          goesClass: goesClass || fluxToGoesClass(xrayLast.flux),
+          observedAt: xrayLast.time_tag,
+          sourceId: 'noaa-goes-xray',
+        }
+      : null;
+  const goesFlare = flareFromGoesXray(goesXray);
+  const solarFlares = goesFlare ? [goesFlare] : [];
 
   const payload: SpaceEnvironmentPayload = {
     fetchedAt,
@@ -295,18 +344,7 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
               sourceId: 'noaa-swpc-kp',
             }
           : null,
-      goesXray:
-        xrayLast?.flux != null
-          ? {
-              flux: xrayLast.flux,
-              fluxUnit: 'W/m²',
-              energyBand: xrayLast.energy || '0.1-0.8nm',
-              satellite: xrayLast.satellite != null ? `GOES-${xrayLast.satellite}` : 'GOES',
-              goesClass: goesClass || fluxToGoesClass(xrayLast.flux),
-              observedAt: xrayLast.time_tag,
-              sourceId: 'noaa-goes-xray',
-            }
-          : null,
+      goesXray,
       solarWind:
         windLast?.proton_speed != null
           ? {
@@ -339,6 +377,8 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
       solarFlares,
       geomagneticStorms,
       coronalMassEjections,
+      solarEnergeticParticles,
+      donkiNotifications,
       swpcAlerts,
     },
     notices,

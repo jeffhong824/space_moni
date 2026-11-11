@@ -2,14 +2,13 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis, thresholdTableForPrompt } from '../domain/healthPacking.ts';
 import { DEFAULT_LANG, isLangId, translate } from '../i18n/index.ts';
 import type { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics } from '../types.ts';
+import { resolveAiProvider } from './envKeys.ts';
 import { applyRateLimitHeaders, consumeRateLimit } from './rateLimit.ts';
 import { clientIp, type ApiRequest, type ApiResponse } from './http.ts';
 
-function getGeminiClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || !apiKey.trim()) {
-    return null;
-  }
+const LIVE_TIMEOUT_MS = 8000;
+
+function getGeminiClient(apiKey: string) {
   return new GoogleGenAI({
     apiKey,
     httpOptions: {
@@ -18,6 +17,44 @@ function getGeminiClient() {
       },
     },
   });
+}
+
+async function runOpenAiChat(opts: {
+  apiKey: string;
+  model: string;
+  systemInstruction: string;
+  prompt: string;
+}): Promise<Record<string, unknown>> {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${opts.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: opts.model,
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `${opts.systemInstruction}
+
+Respond with a single JSON object (no markdown) with keys:
+replyText (string), healthAssessment ({status, summary}), suggestedActions (array of {id, label, type, payload?}), detailedAnalysis ({metrics, systems}).`,
+        },
+        { role: 'user', content: opts.prompt },
+      ],
+    }),
+    signal: AbortSignal.timeout(LIVE_TIMEOUT_MS),
+  });
+  if (!res.ok) {
+    throw new Error(`OpenAI HTTP ${res.status}`);
+  }
+  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  const text = json.choices?.[0]?.message?.content;
+  if (!text) throw new Error('OpenAI empty content');
+  return JSON.parse(text) as Record<string, unknown>;
 }
 
 function asPacked(reqBody: Record<string, unknown>) {
@@ -92,9 +129,9 @@ export async function handleAiDoctor(req: ApiRequest, res: ApiResponse) {
   const currentTasks = Array.isArray(body.currentTasks) ? body.currentTasks.slice(0, 8) : [];
 
   try {
-    const ai = getGeminiClient();
+    const resolved = resolveAiProvider();
 
-    if (!ai) {
+    if (resolved.provider === 'offline') {
       return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed, lang));
     }
 
@@ -130,12 +167,35 @@ Response:
     const prompt = `Crew message: "${message}"
 Recent dialogue: ${JSON.stringify(history)}`;
 
+    if (resolved.provider === 'openai' && resolved.openaiKey) {
+      const parsed = await runOpenAiChat({
+        apiKey: resolved.openaiKey,
+        model: resolved.openaiModel,
+        systemInstruction,
+        prompt,
+      });
+      const offline = buildOfflineTwoLevelAnalysis(message, packed, lang);
+      return res.status(200).json({
+        ...offline,
+        ...parsed,
+        detailedAnalysis: parsed.detailedAnalysis || offline.detailedAnalysis,
+        healthAssessment: parsed.healthAssessment || offline.healthAssessment,
+        analysisMode: 'live_openai',
+        dataQuality: offline.dataQuality,
+      });
+    }
+
+    if (!resolved.geminiKey) {
+      return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed, lang));
+    }
+
+    const ai = getGeminiClient(resolved.geminiKey);
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('AI generation timed out after 8s')), 8000)
+      setTimeout(() => reject(new Error('AI generation timed out after 8s')), LIVE_TIMEOUT_MS)
     );
 
     const generatePromise = ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: resolved.geminiModel,
       contents: prompt,
       config: {
         systemInstruction,
@@ -238,7 +298,7 @@ Recent dialogue: ${JSON.stringify(history)}`;
       dataQuality: offline.dataQuality,
     });
   } catch (error: unknown) {
-    console.error('Gemini AI doctor error:', error);
+    console.error('AURA live provider error; using offline fallback:', error instanceof Error ? error.message : error);
     return res.status(200).json(buildOfflineTwoLevelAnalysis(message, packed, lang));
   }
 }
