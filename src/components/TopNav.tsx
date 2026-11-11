@@ -52,9 +52,11 @@ export const TopNav: React.FC<TopNavProps> = ({
   return (
     <>
       <header className="relative shrink-0 px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-3 select-none">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <PageWordmark title={wordmark} onHome={onGoHome} />
-          <SimChip />
+          <span className="hidden sm:inline-flex">
+            <SimChip />
+          </span>
           {clockLabel && (
             <span
               title={t('glossary.met')}
@@ -72,7 +74,7 @@ export const TopNav: React.FC<TopNavProps> = ({
             <button
               type="button"
               onClick={onLogout}
-              className="h-10 px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold"
+              className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-[11px] sm:text-xs font-semibold shrink-0"
             >
               {t('nav.signIn')}
             </button>

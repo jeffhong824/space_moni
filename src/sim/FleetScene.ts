@@ -6,7 +6,18 @@ import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
 import { crewHitBox } from './crewHit.ts';
 import { FLEET_LABEL_GAP, FLEET_LABEL_H, fleetLabelHeight, unionHitBox } from './fleetHit.ts';
-import { EARTH, MAP_H, MAP_W, MARS, MOON, mapCamera, pinXY } from './focusStation.ts';
+import {
+  EARTH,
+  MAP_H,
+  MAP_W,
+  MARS,
+  MOON,
+  isPortraitView,
+  mapCamera,
+  pinXYForView,
+  youBadgeOffset,
+  type MapRect,
+} from './focusStation.ts';
 import { INTERIOR_PAD_BOTTOM, INTERIOR_PAD_X, INTERIOR_PAD_Y, interiorCamera } from './interiorCamera.ts';
 import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
@@ -149,9 +160,11 @@ class MapScene extends Phaser.Scene {
     const world: WorldState | undefined = this.registry.get('world');
     if (!world) return;
     const overview = Boolean(this.registry.get('fleetOverview'));
+    const portraitOverview = overview && isPortraitView(this.scale.width, this.scale.height);
     const pinId = (this.registry.get('focusPinId') as string | null) || null;
-    const pin = !overview && pinId ? pinXY(pinId, world) : null;
-    const cam = mapCamera(overview || !pin, pin, this.scale.width, this.scale.height);
+    const pin = !overview && pinId ? pinXYForView(pinId, world, false) : null;
+    const overviewPins = this.pins.map((p) => pinXYForView(p.id, world, portraitOverview));
+    const cam = mapCamera(overview || !pin, pin, this.scale.width, this.scale.height, overview ? overviewPins : undefined);
     this.cameras.main.setZoom(cam.zoom);
     this.cameras.main.centerOn(cam.cx, cam.cy);
   }
@@ -277,10 +290,12 @@ class MapScene extends Phaser.Scene {
     const t: SimTranslate = this.registry.get('t');
     if (!world) return;
     const overview = Boolean(this.registry.get('fleetOverview'));
+    const portraitOverview = overview && isPortraitView(this.scale.width, this.scale.height);
     const focusPinId = (this.registry.get('focusPinId') as string | null) || null;
     const focusCrewId = (this.registry.get('focusCrewId') as string | null) || null;
+    const labelRects: MapRect[] = [];
     for (const pin of this.pins) {
-      const pos = pin.kind === 'hq' ? EARTH : pinXY(pin.id, world);
+      const pos = pinXYForView(pin.id, world, portraitOverview);
       pin.sprite.setPosition(pos.x, pos.y);
       const ship = world.ships.find((s) => s.def.id === pin.id);
       const color = pin.kind === 'hq' ? 0x38bdf8 : statusColor(ship ? shipCrewStatus(ship) : 'Normal');
@@ -306,6 +321,7 @@ class MapScene extends Phaser.Scene {
       pin.title.setPosition(pos.x, labelY + 3);
       pin.sub.setPosition(pos.x, labelY + 19);
       pin.hint.setPosition(pos.x, labelY + FLEET_LABEL_H - 1);
+      labelRects.push({ x: pos.x - tw / 2, y: labelY, w: tw, h: labelH });
 
       const box = unionHitBox(pin.sprite.width, pin.sprite.height, pin.baseScale, tw, labelH, FLEET_LABEL_GAP);
       pin.hit.setPosition(pos.x + box.x, pos.y + box.y);
@@ -332,14 +348,19 @@ class MapScene extends Phaser.Scene {
     }
     const youPin = !overview && focusPinId ? this.pins.find((p) => p.id === focusPinId) : undefined;
     if (youPin && this.youDot) {
-      const pos = youPin.kind === 'hq' ? EARTH : pinXY(youPin.id, world);
+      const pos = pinXYForView(youPin.id, world, false);
       const youCrew = focusCrewId
         ? world.ships.flatMap((s) => s.crew).find((c) => c.def.id === focusCrewId)
         : undefined;
       const label = youCrew ? `${youCrew.def.name} · ${t('sim.you')}` : t('sim.you');
-      this.youDot.setPosition(pos.x + 26, pos.y - 30).setVisible(true);
-      this.youTag.setText(label).setPosition(pos.x + 26, pos.y - 38).setVisible(true);
-      this.youHit.setPosition(pos.x + 26, pos.y - 30).setVisible(true).setInteractive();
+      this.youTag.setText(label);
+      const badgeW = Math.max(72, Math.ceil(this.youTag.width) + 14);
+      const badgeH = 22;
+      const others = labelRects.filter((_, i) => this.pins[i]?.id !== youPin.id);
+      const off = youBadgeOffset(pos, { w: badgeW, h: badgeH }, others);
+      this.youDot.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true);
+      this.youTag.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true);
+      this.youHit.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true).setInteractive();
     } else if (this.youDot) {
       this.youDot.setVisible(false);
       this.youTag.setVisible(false);

@@ -274,8 +274,8 @@ export const BodyMapDashboard: React.FC<{
   );
 
   const figureBlock = (
-    <div>
-      <div className="flex justify-center mb-2">
+    <div className={hero ? 'flex flex-col h-full min-h-0' : ''}>
+      <div className="flex justify-center mb-2 shrink-0">
         <Segmented
           value={side}
           onChange={setSide}
@@ -335,7 +335,7 @@ export const BodyMapDashboard: React.FC<{
   );
 
   return (
-    <section className={hero ? 'lg:flex lg:flex-col min-h-0' : ''}>
+    <section className={hero ? 'flex flex-col h-full min-h-0' : ''}>
       {!figureOnly && !hero && !tabbed && (
         <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -348,7 +348,7 @@ export const BodyMapDashboard: React.FC<{
         </header>
       )}
 
-      {tabbed ? inspectorTabs : <div className="grid grid-cols-1 gap-4">{figureBlock}</div>}
+      {tabbed ? inspectorTabs : <div className={`grid grid-cols-1 gap-4 ${hero ? 'flex-1 min-h-0 h-full' : ''}`}>{figureBlock}</div>}
 
       <Sheet
         open={sheetOpen && (hero || figureOnly || compact)}

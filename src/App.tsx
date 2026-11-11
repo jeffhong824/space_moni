@@ -201,7 +201,9 @@ export default function App() {
           : enriched.role === 'Guest'
             ? t('role.guest')
             : t('role.astronaut');
-    showToast(t('nav.loggedIn', { name: enriched.name, role: roleLabel }));
+    if (enriched.role !== 'Guest') {
+      showToast(t('nav.loggedIn', { name: enriched.name, role: roleLabel }));
+    }
     replaceView(defaultView(enriched.role));
   };
 
@@ -548,7 +550,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
+        <div className="fixed bottom-[9.75rem] lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

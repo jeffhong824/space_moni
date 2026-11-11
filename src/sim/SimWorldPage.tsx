@@ -211,7 +211,7 @@ export const SimWorldPage: React.FC<{
           <p className="pointer-events-none absolute top-3 left-3 z-10 max-w-[min(100%-2.5rem,28rem)] rounded-full bg-black/60 px-3 py-1 text-[10px] font-medium text-white/90">
             {t('sim.notNasa')}
           </p>
-          <div className="absolute top-3 right-3 z-20 flex flex-wrap justify-end gap-2">
+          <div className="hidden lg:flex absolute top-3 right-3 z-20 flex-wrap justify-end gap-2">
             {focus.mode === 'station' && !fleetOverview && (
               <button
                 type="button"
@@ -222,13 +222,6 @@ export const SimWorldPage: React.FC<{
               </button>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setSheetOpen(true)}
-            className="lg:hidden absolute bottom-[5.75rem] left-1/2 z-20 -translate-x-1/2 h-10 px-5 rounded-full bg-white text-xs font-semibold text-stone-800 shadow-[var(--sm-shadow)]"
-          >
-            {t('sim.crewSheet')}
-          </button>
           {loading && (
             <p className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">{t('sim.loadingEngine')}</p>
           )}
@@ -243,6 +236,25 @@ export const SimWorldPage: React.FC<{
           {roster}
         </aside>
       </div>
+      <div data-sim-toolbar className="lg:hidden shrink-0 flex items-center justify-center gap-2 px-3 py-2 bg-white border-t border-stone-200">
+        {focus.mode === 'station' && (
+          <button
+            type="button"
+            onClick={showFleet}
+            className="h-10 px-4 rounded-full bg-stone-100 text-xs font-semibold text-stone-800"
+          >
+            {t('sim.viewFleet')}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="h-10 px-5 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold"
+        >
+          {t('sim.crewSheet')}
+        </button>
+      </div>
+      <div className="lg:hidden shrink-0 h-[4.5rem]" aria-hidden />
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} from="bottom" title={t('sim.crewSheet')}>
         <div className="space-y-3 text-stone-800">

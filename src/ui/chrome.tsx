@@ -80,6 +80,10 @@ export function avatarTone(id: string): string {
   return BUBBLE[h % BUBBLE.length];
 }
 
+export function avatarFontSize(size: number): number {
+  return Math.max(11, size * 0.38);
+}
+
 export function AvatarBubble({
   name,
   seed,
@@ -100,7 +104,7 @@ export function AvatarBubble({
         width: size,
         height: size,
         background: avatarTone(id || name),
-        fontSize: Math.max(10, size * 0.34),
+        fontSize: avatarFontSize(size),
       }}
       aria-hidden
     >
@@ -320,12 +324,12 @@ export const LanguageGlobe: React.FC<{ variant?: 'light' | 'dark' }> = ({ varian
         aria-label={t('lang.label')}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`h-10 px-3 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold ${
+        className={`h-9 w-9 sm:h-10 sm:w-auto sm:px-3 rounded-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold shrink-0 ${
           dark ? 'bg-white/15 text-white' : 'bg-white text-stone-700 shadow-[var(--sm-shadow-soft)]'
         }`}
       >
         <Globe2 className="w-4 h-4" />
-        <span>{LANG_SHORT[current.id] ?? current.id.slice(0, 2).toUpperCase()}</span>
+        <span className="hidden sm:inline">{LANG_SHORT[current.id] ?? current.id.slice(0, 2).toUpperCase()}</span>
       </button>
       {open && (
         <ul className="absolute right-0 mt-2 z-50 min-w-[10rem] p-1.5 rounded-3xl bg-white shadow-[var(--sm-shadow)]">
@@ -383,7 +387,7 @@ export const AvatarMenu: React.FC<{
           setOpen((v) => !v);
           setSwitchOpen(false);
         }}
-        className="w-10 h-10 rounded-full bg-white shadow-[var(--sm-shadow-soft)] flex items-center justify-center text-stone-800 font-semibold text-xs"
+        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-[var(--sm-shadow-soft)] flex items-center justify-center text-stone-800 font-semibold text-[11px] shrink-0"
       >
         {initials(user.name)}
       </button>
@@ -747,15 +751,15 @@ export const PageWordmark: React.FC<{ title?: string; onHome?: () => void }> = (
         onClick={onHome}
         title={t('nav.homeLink')}
         aria-label={t('nav.homeLink')}
-        className="flex items-center gap-2 min-w-0 text-left"
+        className="flex items-center gap-2 shrink-0 text-left"
       >
-        <h1 className="font-display text-[1.35rem] sm:text-xl text-stone-900 truncate">{label}</h1>
+        <h1 data-wordmark className="font-display text-[1.2rem] sm:text-xl text-stone-900 whitespace-nowrap">{label}</h1>
       </button>
     );
   }
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <h1 className="font-display text-[1.35rem] sm:text-xl text-stone-900 truncate">{label}</h1>
+    <div className="flex items-center gap-2 shrink-0">
+      <h1 data-wordmark className="font-display text-[1.2rem] sm:text-xl text-stone-900 whitespace-nowrap">{label}</h1>
     </div>
   );
 };
@@ -844,7 +848,7 @@ export const GlossaryButton: React.FC = () => {
         aria-expanded={open}
         aria-label={t('nav.glossary')}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 px-2.5 rounded-full bg-white/80 text-[11px] font-semibold text-stone-500 hover:text-stone-800"
+        className="hidden sm:inline-flex h-8 px-2.5 rounded-full bg-white/80 text-[11px] font-semibold text-stone-500 hover:text-stone-800"
       >
         {t('nav.glossary')}
       </button>

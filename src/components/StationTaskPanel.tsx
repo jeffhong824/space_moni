@@ -15,6 +15,7 @@ import {
 import { StationTask } from '../types';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey } from '../i18n/index';
+import { AvatarBubble } from '../ui/chrome';
 
 interface StationTaskPanelProps {
   tasks: StationTask[];
@@ -264,15 +265,11 @@ export const StationTaskPanel: React.FC<StationTaskPanelProps> = ({
                   {/* Crew avatars */}
                   <div className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-slate-400" />
-                    <div className="flex -space-x-1.5 overflow-hidden">
+                    <div className="flex -space-x-1.5">
                       {task.assignedCrew.map((c, i) => (
-                        <div
-                          key={i}
-                          className={`inline-block h-5 w-5 rounded-full ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center ${c.avatarBg}`}
-                          title={`${c.name} (${localizeKey(lang, c.role)})`}
-                        >
-                          {c.name.slice(0, 2).toUpperCase()}
-                        </div>
+                        <span key={i} title={`${c.name} (${localizeKey(lang, c.role)})`}>
+                          <AvatarBubble name={c.name} seed={c.name} id={c.name} size={28} className="ring-2 ring-white" />
+                        </span>
                       ))}
                     </div>
                     <span className="text-[11px] text-slate-600 truncate max-w-[90px]">

@@ -112,7 +112,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <AvatarBubble name={astro.name} seed={astro.avatarSeed} id={astro.id} size={32} />
+                      <AvatarBubble name={astro.name} seed={astro.avatarSeed} id={astro.id} size={40} />
                       <div>
                         <div className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
                           <span>{astro.name}</span>

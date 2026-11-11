@@ -46,12 +46,90 @@ export function pinXY(id: string, world: WorldState): { x: number; y: number } {
   return bezier(a, EARTH.x, EARTH.y, MARS.x, MARS.y, -70);
 }
 
+/** Portrait overview: stack stations so the fleet fills a tall canvas. */
+export const PORTRAIT_FLEET_XY: Record<string, { x: number; y: number }> = {
+  'earth-hq': { x: 540, y: 48 },
+  'ship-harmony': { x: 430, y: 170 },
+  'ship-gateway': { x: 650, y: 255 },
+  'ship-ares': { x: 430, y: 400 },
+  'ship-mare': { x: 650, y: 548 },
+};
+
+export function isPortraitView(viewW: number, viewH: number): boolean {
+  return viewH > viewW * 1.05;
+}
+
+export function pinXYForView(id: string, world: WorldState, portraitOverview: boolean): { x: number; y: number } {
+  if (portraitOverview && PORTRAIT_FLEET_XY[id]) return PORTRAIT_FLEET_XY[id];
+  return pinXY(id, world);
+}
+
+export interface MapRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export function rectsOverlap(a: MapRect, b: MapRect, pad = 0): boolean {
+  return a.x < b.x + b.w + pad && a.x + a.w + pad > b.x && a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
+}
+
+/** Pick a You-badge offset that does not sit on another station's label. */
+export function youBadgeOffset(
+  origin: { x: number; y: number },
+  badge: { w: number; h: number },
+  obstacles: MapRect[],
+  candidates: Array<{ dx: number; dy: number }> = [
+    { dx: 0, dy: -52 },
+    { dx: -56, dy: -48 },
+    { dx: 56, dy: -48 },
+    { dx: -72, dy: 10 },
+    { dx: 72, dy: 10 },
+    { dx: 0, dy: 62 },
+    { dx: -88, dy: -72 },
+  ]
+): { dx: number; dy: number } {
+  for (const c of candidates) {
+    const r: MapRect = {
+      x: origin.x + c.dx - badge.w / 2,
+      y: origin.y + c.dy - badge.h,
+      w: badge.w,
+      h: badge.h,
+    };
+    if (!obstacles.some((o) => rectsOverlap(r, o, 10))) return c;
+  }
+  return candidates[0];
+}
+
+export function overviewCamera(
+  viewW: number,
+  viewH: number,
+  pins: Array<{ x: number; y: number }>
+): { zoom: number; cx: number; cy: number } {
+  const pad = 64;
+  const xs = pins.map((p) => p.x);
+  const ys = pins.map((p) => p.y);
+  const minX = Math.min(...xs) - pad;
+  const maxX = Math.max(...xs) + pad;
+  const minY = Math.min(...ys) - pad;
+  const maxY = Math.max(...ys) + pad;
+  const bw = Math.max(1, maxX - minX);
+  const bh = Math.max(1, maxY - minY);
+  const zoom = Math.min(viewW / bw, viewH / bh);
+  return { zoom: Math.max(0.35, zoom), cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+}
+
 export function mapCamera(
   overview: boolean,
   pin: { x: number; y: number } | null,
   viewW: number,
-  viewH: number
+  viewH: number,
+  overviewPins?: Array<{ x: number; y: number }>
 ): { zoom: number; cx: number; cy: number } {
+  if ((overview || !pin) && overviewPins && overviewPins.length > 0) {
+    return overviewCamera(viewW, viewH, overviewPins);
+  }
   const fit = Math.min(viewW / MAP_W, viewH / MAP_H);
   if (overview || !pin) {
     return { zoom: Math.max(0.42, fit), cx: MAP_W / 2, cy: MAP_H / 2 };

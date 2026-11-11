@@ -1,0 +1,99 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { avatarFontSize } from './chrome.tsx';
+import { MAX_BLANK_RATIO, SM_BG, blankPixelRatio, bottomEmptyBandRatio } from './viewportFill.ts';
+
+function rgba(n: number, r: number, g: number, b: number): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(n * 4);
+  for (let i = 0; i < n; i++) {
+    out[i * 4] = r;
+    out[i * 4 + 1] = g;
+    out[i * 4 + 2] = b;
+    out[i * 4 + 3] = 255;
+  }
+  return out;
+}
+
+function image(w: number, h: number, fill: (x: number, y: number) => [number, number, number]): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const [r, g, b] = fill(x, y);
+      const o = (y * w + x) * 4;
+      out[o] = r;
+      out[o + 1] = g;
+      out[o + 2] = b;
+      out[o + 3] = 255;
+    }
+  }
+  return out;
+}
+
+describe('viewport cream fill', () => {
+  it('measures leftover porcelain background', () => {
+    const cream = rgba(100, SM_BG.r, SM_BG.g, SM_BG.b);
+    expect(blankPixelRatio(cream)).toBe(1);
+    const mixed = rgba(100, SM_BG.r, SM_BG.g, SM_BG.b);
+    for (let i = 0; i < 20; i++) {
+      mixed[i * 4] = 43;
+      mixed[i * 4 + 1] = 59;
+      mixed[i * 4 + 2] = 255;
+    }
+    expect(blankPixelRatio(mixed)).toBeCloseTo(0.8, 5);
+    expect(MAX_BLANK_RATIO).toBe(0.1);
+  });
+
+  it('measures the empty cream band under the last content row', () => {
+    const w = 20;
+    const h = 100;
+    const filled = image(w, h, () => [43, 59, 255]);
+    expect(bottomEmptyBandRatio(filled, w, h)).toBe(0);
+    const band = image(w, h, (_x, y) => (y >= 80 ? [SM_BG.r, SM_BG.g, SM_BG.b] : [43, 59, 255]));
+    expect(bottomEmptyBandRatio(band, w, h)).toBeCloseTo(0.2, 5);
+    const whiteCards = image(w, h, (_x, y) => (y >= 95 ? [SM_BG.r, SM_BG.g, SM_BG.b] : [255, 255, 255]));
+    expect(bottomEmptyBandRatio(whiteCards, w, h)).toBeLessThanOrEqual(0.1);
+    const allCream = image(w, h, () => [SM_BG.r, SM_BG.g, SM_BG.b]);
+    expect(bottomEmptyBandRatio(allCream, w, h)).toBe(1);
+  });
+
+  it('keeps /today and /hq shells on a full-height fill grid', () => {
+    const today = readFileSync(new URL('../components/AstronautHome.tsx', import.meta.url), 'utf8');
+    const hq = readFileSync(new URL('../components/HqConsole.tsx', import.meta.url), 'utf8');
+    expect(today).toMatch(/lg:overflow-hidden/);
+    expect(today).toMatch(/h-full/);
+    expect(today).toMatch(/TrendSpark/);
+    expect(today).toMatch(/ui\.trendHr/);
+    expect(today).toMatch(/lg:col-start-2 lg:row-start-1 lg:row-span-2/);
+    expect(today).toMatch(/rounded-\[32px\] bg-white\/90/);
+    expect(hq).not.toMatch(/max-h-\[min\(62vh/);
+    expect(hq).toMatch(/lg:overflow-hidden/);
+    expect(hq).toMatch(/h-full/);
+    expect(hq).toMatch(/ui\.fleetStatus/);
+    expect(hq).toMatch(/ui\.stationAlerts/);
+  });
+
+  it('uses at least 11px initials on /day avatars', () => {
+    expect(avatarFontSize(24)).toBe(11);
+    expect(avatarFontSize(28)).toBeGreaterThanOrEqual(11);
+    expect(avatarFontSize(32)).toBeGreaterThanOrEqual(11);
+    expect(avatarFontSize(40)).toBeGreaterThanOrEqual(11);
+    const tasks = readFileSync(new URL('../components/StationTaskPanel.tsx', import.meta.url), 'utf8');
+    expect(tasks).toMatch(/AvatarBubble/);
+    expect(tasks).toMatch(/size=\{28\}/);
+    expect(tasks).not.toMatch(/text-\[9px\] font-bold text-white/);
+  });
+
+  it('keeps the SpaceMoni wordmark fully visible on compact headers', () => {
+    const chrome = readFileSync(new URL('./chrome.tsx', import.meta.url), 'utf8');
+    const start = chrome.indexOf('export const PageWordmark');
+    const end = chrome.indexOf('const DOCK_ICON');
+    const block = chrome.slice(start, end);
+    expect(block).toMatch(/whitespace-nowrap/);
+    expect(block).toMatch(/data-wordmark/);
+    expect(block).not.toMatch(/truncate/);
+    const script = readFileSync(new URL('../../scripts/assert-viewport-fill.mjs', import.meta.url), 'utf8');
+    expect(script).toMatch(/1280/);
+    expect(script).toMatch(/1920/);
+    expect(script).toMatch(/bottomEmptyBandRatio/);
+  });
+});

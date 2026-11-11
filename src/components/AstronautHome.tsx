@@ -125,7 +125,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.hr')}
         unit="bpm"
         tone={hr > BAND_NUMBERS.restingHR.attentionHigh ? 'warn' : 'ok'}
-        size={108}
+        size={120}
       />
       <RingGauge
         value={spo2}
@@ -133,7 +133,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.spo2')}
         unit="%"
         tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
-        size={108}
+        size={120}
       />
       <RingGauge
         value={hrv}
@@ -141,15 +141,18 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.hrv')}
         unit="ms"
         tone={hrv < BAND_NUMBERS.hrv.attentionBelow ? 'warn' : 'lilac'}
-        size={108}
+        size={120}
       />
-      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={108} />
+      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={120} />
     </>
   );
 
+  const hrSeries = todayRecord.hourlyTimeline.map((p) => p.hr);
+  const spo2Series = todayRecord.hourlyTimeline.map((p) => p.spo2);
+
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad">
-      <div className="min-h-full grid lg:grid-cols-[minmax(0,1fr)_minmax(240px,1fr)_auto] lg:grid-rows-[auto_1fr] gap-4 lg:gap-6 items-stretch">
+    <div data-page="today" className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden px-4 sm:px-8 pt-2 sm-page-pad lg:pb-3 flex flex-col">
+      <div className="flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,1fr)_minmax(15rem,22rem)] lg:grid-rows-[auto_minmax(0,1fr)] gap-4 lg:gap-6 items-stretch h-full">
         <div className="min-w-0 flex flex-col">
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-stone-900">
             {t(greetingKey(world.t), { name: firstName(astronaut.name) })}
@@ -295,7 +298,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
         <div className="grid grid-cols-2 gap-3 content-start lg:hidden order-2">{gauges}</div>
 
-        <div className="flex justify-center items-stretch order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 min-h-[22rem] sm:min-h-[28rem] lg:min-h-0">
+        <div className="flex justify-center items-stretch order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 min-h-[22rem] sm:min-h-[28rem] lg:min-h-0 h-full rounded-[32px] bg-white/90 shadow-[var(--sm-shadow-soft)] px-2 py-3">
           {crew && (
             <BodyMapDashboard
               crew={crew}
@@ -308,10 +311,16 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           )}
         </div>
 
-        <div className="hidden lg:flex flex-col gap-4 pt-1 lg:col-start-3 lg:row-start-1 lg:row-span-2">{gauges}</div>
+        <div className="hidden lg:flex flex-col justify-evenly gap-2 rounded-[32px] bg-white/90 shadow-[var(--sm-shadow-soft)] px-4 py-4 lg:col-start-3 lg:row-start-1 lg:row-span-2 h-full min-h-0">
+          {gauges}
+        </div>
 
-        <div className="min-w-0 order-4 lg:order-none lg:col-start-1">
-          <div className="sm-snap flex gap-3 overflow-x-auto pb-1">
+        <div className="min-w-0 order-4 lg:order-none lg:col-start-1 flex flex-col gap-3 min-h-0 h-full">
+          <div className="rounded-[28px] bg-white/90 p-4 shadow-[var(--sm-shadow-soft)] grid sm:grid-cols-2 gap-3 flex-1 min-h-[9rem]">
+            <TrendSpark label={t('ui.trendHr')} points={hrSeries} color="#f08a80" />
+            <TrendSpark label={t('ui.trendSpo2')} points={spo2Series} color="#2b3bff" />
+          </div>
+          <div className="sm-snap flex lg:grid lg:grid-cols-3 gap-3 overflow-x-auto lg:overflow-visible pb-1 shrink-0">
             {timeline.map((item, i) => (
               <button
                 key={`${item.t}-${i}`}
@@ -321,7 +330,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
                   else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
                   else onOpenConsole();
                 }}
-                className="sm-wrap-btn w-[min(100%,14rem)] sm:w-[16rem] min-h-[7rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] h-auto overflow-hidden"
+                className="sm-wrap-btn w-[min(100%,14rem)] sm:w-[16rem] lg:w-auto min-h-[7rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] overflow-hidden"
                 style={{ whiteSpace: 'normal' }}
               >
                 <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
@@ -334,7 +343,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             <button
               type="button"
               onClick={onOpenConsole}
-              className="min-w-[3rem] shrink-0 rounded-full bg-white/80 flex items-center justify-center text-stone-400"
+              className="min-w-[3rem] shrink-0 rounded-full bg-white/80 flex lg:hidden items-center justify-center text-stone-400"
               aria-label={t('common.next')}
             >
               →
@@ -342,7 +351,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           </div>
 
           {astronaut.assignedStation && (
-            <div className="mt-4">
+            <div className="shrink-0">
               <CrewCommsInbox shipId={astronaut.assignedStation} />
             </div>
           )}
@@ -400,6 +409,29 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
     </div>
   );
 };
+
+function TrendSpark({ label, points, color }: { label: string; points: number[]; color: string }) {
+  const w = 240;
+  const h = 56;
+  const min = Math.min(...points, 0);
+  const max = Math.max(...points, 1);
+  const span = max - min || 1;
+  const d = points
+    .map((v, i) => {
+      const x = points.length < 2 ? 0 : (i / (points.length - 1)) * w;
+      const y = h - 6 - ((v - min) / span) * (h - 12);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(' ');
+  return (
+    <div data-spark={label} className="h-full min-h-0 flex flex-col">
+      <p className="text-[11px] font-semibold text-stone-500 mb-1 shrink-0">{label}</p>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-16 lg:h-full lg:min-h-[7rem]" role="img" aria-label={label}>
+        <path d={d} fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
 
 function CountermeasureRow({
   title,

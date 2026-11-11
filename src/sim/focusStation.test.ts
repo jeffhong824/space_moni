@@ -3,11 +3,15 @@ import { GUEST_ACCOUNT, NASA_ACCOUNT } from '../world/accounts.ts';
 import { CREW, CREW_SIZE_BY_SHIP } from '../world/catalog.ts';
 import { worldStateAt } from '../world/worldState.ts';
 import {
+  PORTRAIT_FLEET_XY,
   catalogRoster,
   guestSeesPrivateVitals,
   mapCamera,
+  overviewCamera,
+  rectsOverlap,
   simFocusForUser,
   worldRoster,
+  youBadgeOffset,
 } from './focusStation.ts';
 
 describe('signed-in roles focus the assigned station', () => {
@@ -51,6 +55,31 @@ describe('signed-in roles focus the assigned station', () => {
     expect(station.cy).toBe(195);
     expect(fleet.cx).toBe(1080 / 2);
     expect(fleet.cy).toBe(640 / 2);
+  });
+
+  it('offsets the You badge so it does not sit on Mare’s label', () => {
+    const ares = { x: 575, y: 330 };
+    const mareLabel = { x: 590, y: 300, w: 170, h: 40 };
+    const colliding = { x: ares.x + 26 - 55, y: ares.y - 30 - 22, w: 110, h: 22 };
+    expect(rectsOverlap(colliding, mareLabel, 10)).toBe(true);
+    const off = youBadgeOffset(ares, { w: 110, h: 22 }, [mareLabel]);
+    const placed = { x: ares.x + off.dx - 55, y: ares.y + off.dy - 22, w: 110, h: 22 };
+    expect(rectsOverlap(placed, mareLabel, 10)).toBe(false);
+  });
+
+  it('portrait overview camera fills the tall canvas with the fleet bbox', () => {
+    const pins = Object.values(PORTRAIT_FLEET_XY);
+    const cam = overviewCamera(390, 780, pins);
+    const visH = 780 / cam.zoom;
+    const visW = 390 / cam.zoom;
+    const ys = pins.map((p) => p.y);
+    const xs = pins.map((p) => p.x);
+    const bh = Math.max(...ys) - Math.min(...ys);
+    const bw = Math.max(...xs) - Math.min(...xs);
+    expect(bh / visH).toBeGreaterThan(0.68);
+    expect(bw / visW).toBeGreaterThan(0.5);
+    const landscape = mapCamera(true, null, 390, 780);
+    expect(cam.zoom).toBeGreaterThan(landscape.zoom);
   });
 });
 
