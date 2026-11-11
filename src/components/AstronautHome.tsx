@@ -154,7 +154,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
     overall === 'Critical' ? 'bg-rose-50' : overall === 'Attention' ? 'bg-amber-50' : 'bg-emerald-50/80';
 
   return (
-    <div data-page="today" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad">
+    <div data-page="today" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad sm-orb-gutter">
       <div className="mx-auto max-w-[88rem] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:items-start lg:gap-4">
         <section data-today-hero className={`order-1 lg:col-span-12 rounded-[24px] ${heroBg} px-4 py-3 shadow-[var(--sm-shadow-soft)]`}>
           <div className="flex items-start justify-between gap-3">

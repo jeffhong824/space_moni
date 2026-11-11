@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AuthUser } from '../types';
 import { useI18n } from '../i18n/I18nProvider';
 import {
@@ -48,6 +48,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onGoHome,
 }) => {
   const { t } = useI18n();
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   return (
     <>
@@ -79,7 +80,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               {t('nav.signIn')}
             </button>
           )}
-          <GlossaryButton />
+          <GlossaryButton open={glossaryOpen} onOpenChange={setGlossaryOpen} />
           <LanguageGlobe />
           {currentUser && (
             <AvatarMenu
@@ -90,6 +91,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               onToggleSpeDemo={currentUser.role === 'Guest' ? undefined : onToggleSpeDemo}
               isRightPanelCollapsed={isRightPanelCollapsed}
               onToggleRightPanel={currentUser.role === 'Guest' ? undefined : onToggleRightPanel}
+              onOpenGlossary={() => setGlossaryOpen(true)}
             />
           )}
         </div>

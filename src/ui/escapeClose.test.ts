@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { translate } from '../i18n/index';
-import { GlossaryPanel } from './chrome';
+import { GlossaryButton, GlossaryPanel } from './chrome';
 import { bindEscapeClose, bindOutsidePointerClose, isEscapeKey } from './escapeClose';
 
 function fakeListenable() {
@@ -142,6 +142,13 @@ describe('AURA sheet chrome', () => {
 });
 
 describe('GlossaryPanel chrome', () => {
+  it('exposes a mobile Terms icon as well as the desktop pill', () => {
+    const html = renderToStaticMarkup(createElement(I18nProvider, null, createElement(GlossaryButton)));
+    expect(html).toContain('data-glossary-mobile');
+    expect(html).toContain('data-glossary-desktop');
+    expect(html).toContain(translate('en', 'nav.glossary'));
+  });
+
   it('renders a labeled Close button on the dialog', () => {
     const html = renderToStaticMarkup(
       createElement(I18nProvider, null, createElement(GlossaryPanel, { onClose: () => undefined }))

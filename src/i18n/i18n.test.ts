@@ -42,4 +42,16 @@ describe('i18n locale tables', () => {
       expect(blob, lang.id).not.toMatch(/electrolyts/i);
     }
   });
+
+  it('uses natural professional phrasing for orthostatic and fluid metrics in zh/ja/es', () => {
+    expect(translate('zh-Hant-TW', 'panel.m.ortho')).toBe('姿勢性低血壓風險');
+    expect(translate('zh-Hant-TW', 'panel.ortho.flag')).toBe('疑似');
+    expect(translate('zh-Hant-TW', 'panel.m.ortho')).not.toMatch(/旗標/);
+    expect(translate('zh-Hant-TW', 'panel.ortho.flag')).not.toMatch(/標記/);
+    expect(translate('ja', 'panel.m.ortho')).toBe('起立性低血圧リスク');
+    expect(translate('ja', 'panel.ortho.flag')).toBe('疑い');
+    expect(translate('es', 'panel.m.ortho')).toMatch(/hipotensión ortostática/i);
+    expect(translate('es', 'panel.m.fluidIn')).toBe('Ingesta hídrica');
+    expect(translate('es', 'panel.m.fluidOut')).toBe('Pérdidas hídricas');
+  });
 });

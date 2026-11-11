@@ -76,7 +76,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   const alerts = world.ships.filter((row) => shipCrewStatus(row) !== 'Normal');
 
   return (
-    <div data-page="hq" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
+    <div data-page="hq" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
       <div className="mx-auto max-w-[88rem] flex flex-col gap-3 lg:gap-4">
         <header>
           <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.missionControl')}</p>

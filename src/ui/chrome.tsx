@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BookOpen, ClipboardList, Globe2, HeartPulse, LayoutGrid, LogOut, Orbit, UserRound, Users, X } from 'lucide-react';
+import { BookOpen, BookText, ClipboardList, Globe2, HeartPulse, LayoutGrid, LogOut, Orbit, UserRound, Users, X } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { LANGUAGES } from '../i18n/registry';
 import { allDemoAccounts } from '../world/accounts';
@@ -363,7 +363,8 @@ export const AvatarMenu: React.FC<{
   onToggleSpeDemo?: () => void;
   isRightPanelCollapsed?: boolean;
   onToggleRightPanel?: () => void;
-}> = ({ user, onLogout, onSwitchUser, speDemo, onToggleSpeDemo, isRightPanelCollapsed, onToggleRightPanel }) => {
+  onOpenGlossary?: () => void;
+}> = ({ user, onLogout, onSwitchUser, speDemo, onToggleSpeDemo, isRightPanelCollapsed, onToggleRightPanel, onOpenGlossary }) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
@@ -453,6 +454,20 @@ export const AvatarMenu: React.FC<{
               className="w-full text-left px-3 py-2 rounded-2xl text-sm text-stone-700 hover:bg-stone-50"
             >
               {isRightPanelCollapsed ? t('nav.showTasks') : t('nav.hideTasks')}
+            </button>
+          )}
+          {onOpenGlossary && (
+            <button
+              type="button"
+              data-avatar-glossary
+              onClick={() => {
+                setOpen(false);
+                onOpenGlossary();
+              }}
+              className="w-full text-left px-3 py-2 rounded-2xl text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
+            >
+              <BookText className="w-3.5 h-3.5" />
+              {t('nav.glossary')}
             </button>
           )}
           <button
@@ -553,7 +568,7 @@ export const AskAuraOrb: React.FC<{ onClick: () => void; label?: string }> = ({ 
       type="button"
       onClick={onClick}
       aria-label={label ?? t('ui.askAura')}
-      className="sm-ask-aura fixed z-30 right-4 bottom-[6.5rem] lg:right-5 lg:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
+      className="sm-ask-aura fixed z-30 right-3 bottom-[7.25rem] lg:right-5 lg:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
     >
       <span className="hidden sm:inline font-display text-lg italic">{label ?? t('ui.askAura')}</span>
       <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 via-violet-200 to-fuchsia-200 shadow-inner" />
@@ -810,7 +825,7 @@ export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
       aria-modal="true"
       aria-label={t('nav.glossaryTitle')}
       data-escape-close="glossary"
-      className="absolute right-0 mt-2 z-50 w-80 max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
+      className="absolute right-0 mt-2 z-50 w-80 max-w-[min(20rem,calc(100vw-1.5rem))] max-h-[min(70vh,28rem)] overflow-y-auto p-3 rounded-[24px] bg-white shadow-[var(--sm-shadow)] text-[12px] leading-snug space-y-2"
     >
       <div className="flex items-start justify-between gap-2 px-1">
         <p className="font-semibold text-sm">{t('nav.glossaryTitle')}</p>
@@ -833,11 +848,23 @@ export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   );
 };
 
-export const GlossaryButton: React.FC = () => {
+export const GlossaryButton: React.FC<{
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}> = ({ open: openProp, onOpenChange }) => {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
+  const [uncontrolled, setUncontrolled] = useState(false);
+  const open = openProp ?? uncontrolled;
+  const setOpen = useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (openProp === undefined) setUncontrolled(next);
+    },
+    [onOpenChange, openProp]
+  );
   const rootRef = useRef<HTMLDivElement>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => setOpen(false), [setOpen]);
+  const toggle = useCallback(() => setOpen(!open), [open, setOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -850,13 +877,25 @@ export const GlossaryButton: React.FC = () => {
   }, [open, close]);
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className="relative" ref={rootRef} data-glossary-root>
       <button
         type="button"
+        data-glossary-mobile
         title={t('nav.glossaryTitle')}
         aria-expanded={open}
         aria-label={t('nav.glossary')}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
+        className="inline-flex sm:hidden w-9 h-9 rounded-full bg-white/80 items-center justify-center text-stone-600 hover:text-stone-800"
+      >
+        <BookText className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        data-glossary-desktop
+        title={t('nav.glossaryTitle')}
+        aria-expanded={open}
+        aria-label={t('nav.glossary')}
+        onClick={toggle}
         className="hidden sm:inline-flex h-8 px-2.5 rounded-full bg-white/80 text-[11px] font-semibold text-stone-500 hover:text-stone-800"
       >
         {t('nav.glossary')}

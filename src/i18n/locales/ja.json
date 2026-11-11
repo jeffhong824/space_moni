@@ -136,9 +136,9 @@
     "ppo2": "ppO₂ — 酸素分圧（mmHg）。ECLSSデモ値。",
     "bmd": "BMD — 骨密度。除荷による減少推定はラベル付きシミュレーションでありDXAではない。",
     "bhp": "BHP — NASA HRP 行動健康・パフォーマンスリスク区分（汎用グループ）。",
-    "orthostatic": "起立フラグ — 模擬起立試験アナログ（除荷後の心拍上昇）。",
+    "orthostatic": "起立性低血圧リスク — 除荷後の心拍数上昇を用いる模擬起立試験アナログ。実測の起立試験ではない。",
     "logmar": "logMAR — 最小分離視角の対数。視力変化のアナログ。",
-    "careerDose": "キャリア線量アナログ — 600 mSv の NASA STD-3001 風上限とのデモ比較。実クルー線量ではない。"
+    "careerDose": "生涯線量アナログ — 600 mSv の NASA STD-3001 風上限とのデモ比較。実クルー線量ではない。"
   },
   "badge": {
     "simTelemetry": "乗員テレメトリは模擬（デモ）",
@@ -1238,7 +1238,7 @@
   },
   "panel": {
     "simNote": "シミュレーション — 実在のNASAクルーデータではない。NOAA/GOES行はデータがあるときライブと表示。",
-    "abnormalFirst": "逸脱を先に",
+    "abnormalFirst": "逸脱を優先表示",
     "systems": "システム",
     "hrpCite": "NASA HRPリスク区分でグループ化（汎用。臨床プロトコルではない）",
     "offCount": "{n}件逸脱",
@@ -1256,8 +1256,8 @@
       "sans": "神経眼／SANS",
       "sleep": "睡眠と概日",
       "nutrition": "栄養と代謝",
-      "behavior": "行動健康",
-      "medical": "医療ログ"
+      "behavior": "行動健康（BHP）",
+      "medical": "診療記録"
     },
     "hrp": {
       "cardio": "HRP循環器リスク区分",
@@ -1276,7 +1276,7 @@
       "bpSys": "収縮期血圧",
       "bpDia": "拡張期血圧",
       "ecg": "心電図リズム",
-      "ortho": "起立フラグ",
+      "ortho": "起立性低血圧リスク",
       "rr": "呼吸数",
       "spo2": "SpO₂",
       "ppco2": "キャビンppCO₂",
@@ -1285,7 +1285,7 @@
       "humidity": "湿度",
       "doseDay": "日線量",
       "doseCum": "ミッション累積",
-      "careerPct": "キャリア上限",
+      "careerPct": "生涯線量比",
       "speShelter": "SPEシェルター",
       "goes": "GOES X線",
       "kp": "Kp指数",
@@ -1300,7 +1300,7 @@
       "sleepQ": "睡眠の質",
       "fatigue": "疲労スコア",
       "workload": "作業負荷",
-      "pvt": "PVT反応",
+      "pvt": "PVT反応時間",
       "kcal": "エネルギー摂取",
       "fluidIn": "水分摂取",
       "fluidOut": "水分排出",
@@ -1317,11 +1317,11 @@
       "pvc": "稀なPVCアナログ"
     },
     "ortho": {
-      "stable": "安定",
-      "flag": "フラグ"
+      "stable": "所見なし",
+      "flag": "疑い"
     },
     "shelter": {
-      "clear": "不要",
+      "clear": "退避不要",
       "enter": "シェルターへ"
     },
     "prompt": {

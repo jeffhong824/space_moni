@@ -136,9 +136,9 @@
     "ppo2": "ppO₂ — 氧氣分壓（mmHg）。ECLSS 演示讀值。",
     "bmd": "BMD — 骨礦物密度。卸載流失估計為標示模擬，非 DXA。",
     "bhp": "BHP — NASA HRP 行為健康與表現風險類別（通用分組）。",
-    "orthostatic": "直立旗標 — 模擬站立試驗類比（卸載後心率跳升）。",
+    "orthostatic": "姿勢性低血壓風險 — 模擬起立試驗類比（微重力卸載後心率跳升）。非真實起立試驗。",
     "logmar": "logMAR — 最小分辨視角對數；視力變化類比。",
-    "careerDose": "職業劑量類比 — 與 600 mSv NASA STD-3001 風格上限比較的演示。非真實組員劑量。"
+    "careerDose": "生涯劑量類比 — 與 600 mSv NASA STD-3001 風格上限比較的演示。非真實組員劑量。"
   },
   "badge": {
     "simTelemetry": "模擬機組遙測（示範資料）",
@@ -1238,7 +1238,7 @@
   },
   "panel": {
     "simNote": "模擬 — 非真實 NASA 組員資料。NOAA／GOES 列在有資料時標示為即時。",
-    "abnormalFirst": "異常優先",
+    "abnormalFirst": "先看異常",
     "systems": "系統",
     "hrpCite": "依 NASA HRP 風險類別分組（通用；非臨床協定）",
     "offCount": "{n} 項異常",
@@ -1250,13 +1250,13 @@
     "sortBaseline": "組員",
     "sys": {
       "cardio": "心血管",
-      "resp": "呼吸與艙環",
+      "resp": "呼吸與艙環境",
       "radiation": "輻射",
-      "msk": "骨骼肌肉",
+      "msk": "骨骼與肌肉",
       "sans": "神經眼／SANS",
-      "sleep": "睡眠與晝夜",
+      "sleep": "睡眠與生理時鐘",
       "nutrition": "營養與代謝",
-      "behavior": "行為健康",
+      "behavior": "行為健康（BHP）",
       "medical": "醫療紀錄"
     },
     "hrp": {
@@ -1275,8 +1275,8 @@
       "hrv": "HRV",
       "bpSys": "收縮壓",
       "bpDia": "舒張壓",
-      "ecg": "心電節律",
-      "ortho": "直立旗標",
+      "ecg": "心電圖節律",
+      "ortho": "姿勢性低血壓風險",
       "rr": "呼吸率",
       "spo2": "SpO₂",
       "ppco2": "艙內 ppCO₂",
@@ -1284,12 +1284,12 @@
       "cabinTemp": "艙溫",
       "humidity": "濕度",
       "doseDay": "日劑量",
-      "doseCum": "任務累積",
-      "careerPct": "職業上限",
-      "speShelter": "SPE 掩蔽",
+      "doseCum": "任務累積劑量",
+      "careerPct": "生涯劑量占比",
+      "speShelter": "SPE 避難狀態",
       "goes": "GOES X 射線",
       "kp": "Kp 指數",
-      "bone": "骨密度流失估",
+      "bone": "骨密度流失估計",
       "grip": "握力",
       "ared": "ARED 分鐘",
       "cevis": "CEVIS 分鐘",
@@ -1300,14 +1300,14 @@
       "sleepQ": "睡眠品質",
       "fatigue": "疲勞分數",
       "workload": "工作負荷",
-      "pvt": "PVT 反應",
+      "pvt": "PVT 反應時間",
       "kcal": "熱量攝取",
       "fluidIn": "液體攝入",
       "fluidOut": "液體排出",
       "mass": "體重變化",
       "mood": "情緒",
       "stress": "壓力",
-      "isolation": "隔離感",
+      "isolation": "孤立感",
       "meds": "藥物",
       "symptoms": "症狀"
     },
@@ -1317,18 +1317,18 @@
       "pvc": "偶發 PVC 類比"
     },
     "ortho": {
-      "stable": "穩定",
-      "flag": "標記"
+      "stable": "未見",
+      "flag": "疑似"
     },
     "shelter": {
-      "clear": "不必進掩蔽",
-      "enter": "進入掩蔽"
+      "clear": "無需避難",
+      "enter": "進入避難所"
     },
     "prompt": {
       "postponeEva": "考慮延後艙外活動",
       "scrubCo2": "加強二氧化碳洗滌",
       "protectSleep": "保護睡眠時段",
-      "ared": "將 ARED 阻抗負荷調向目標",
+      "ared": "把 ARED 阻抗訓練補到目標分鐘數",
       "sansReport": "記錄視覺症狀／SANS 檢查",
       "bhp": "安排 BHP 關懷會談",
       "hydrate": "增加攝水並記錄平衡",

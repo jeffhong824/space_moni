@@ -99,6 +99,14 @@ button:disabled {
   transition: opacity 0.18s ease, visibility 0.18s ease;
 }
 
+.sm-orb-gutter {
+  padding-right: 4.5rem;
+}
+@media (max-width: 1023px) {
+  .sm-page-pad.sm-orb-gutter {
+    padding-bottom: max(7.75rem, calc(env(safe-area-inset-bottom, 0px) + 6.75rem)) !important;
+  }
+}
 @media (min-width: 768px) {
   .sm-orb-gutter {
     padding-right: 8.5rem;

@@ -136,7 +136,7 @@
     "ppo2": "ppO₂ — Presión parcial de oxígeno (mmHg). Lectura ECLSS de demostración.",
     "bmd": "BMD — Densidad mineral ósea. La pérdida estimada por descarga es simulación etiquetada, no DXA.",
     "bhp": "BHP — Categoría de riesgo de salud conductual y rendimiento HRP de la NASA (agrupación genérica).",
-    "orthostatic": "Bandera ortostática — análogo simulado de prueba de pie (salto de FC tras descarga).",
+    "orthostatic": "Riesgo de hipotensión ortostática — análogo simulado de la prueba de bipedestación (aumento de FC tras la descarga). No es una prueba real.",
     "logmar": "logMAR — logaritmo del ángulo mínimo de resolución; análogo de cambio de agudeza visual.",
     "careerDose": "Análogo de dosis de carrera — comparación demo con un límite estilo NASA STD-3001 de 600 mSv. No es dosis real de tripulación."
   },
@@ -1238,7 +1238,7 @@
   },
   "panel": {
     "simNote": "SIMULACIÓN — no son datos reales de tripulación NASA. Las filas NOAA/GOES se marcan en vivo cuando existen.",
-    "abnormalFirst": "Fuera de rango primero",
+    "abnormalFirst": "Desviaciones primero",
     "systems": "Sistemas",
     "hrpCite": "Agrupado por categorías de riesgo HRP de la NASA (genérico; no es un protocolo clínico)",
     "offCount": "{n} fuera",
@@ -1276,7 +1276,7 @@
       "bpSys": "PA sistólica",
       "bpDia": "PA diastólica",
       "ecg": "Ritmo ECG",
-      "ortho": "Bandera ortostática",
+      "ortho": "Riesgo de hipotensión ortostática",
       "rr": "Frecuencia respiratoria",
       "spo2": "SpO₂",
       "ppco2": "ppCO₂ de cabina",
@@ -1284,12 +1284,12 @@
       "cabinTemp": "Temp. cabina",
       "humidity": "Humedad",
       "doseDay": "Dosis diaria",
-      "doseCum": "Acumulada de misión",
-      "careerPct": "Límite de carrera",
+      "doseCum": "Dosis acumulada de misión",
+      "careerPct": "Límite de dosis de carrera",
       "speShelter": "Refugio SPE",
       "goes": "Rayos X GOES",
       "kp": "Índice Kp",
-      "bone": "Pérdida DMO est.",
+      "bone": "Pérdida estimada de DMO",
       "grip": "Fuerza de prensión",
       "ared": "Minutos ARED",
       "cevis": "Minutos CEVIS",
@@ -1300,10 +1300,10 @@
       "sleepQ": "Calidad de sueño",
       "fatigue": "Puntuación de fatiga",
       "workload": "Carga de trabajo",
-      "pvt": "Reacción PVT",
+      "pvt": "Tiempo de reacción PVT",
       "kcal": "Ingesta energética",
-      "fluidIn": "Líquido in",
-      "fluidOut": "Líquido out",
+      "fluidIn": "Ingesta hídrica",
+      "fluidOut": "Pérdidas hídricas",
       "mass": "Δ masa corporal",
       "mood": "Ánimo",
       "stress": "Estrés",
@@ -1317,8 +1317,8 @@
       "pvc": "PVC rara (análogo)"
     },
     "ortho": {
-      "stable": "estable",
-      "flag": "marcado"
+      "stable": "sin signos",
+      "flag": "sospechado"
     },
     "shelter": {
       "clear": "no requerido",

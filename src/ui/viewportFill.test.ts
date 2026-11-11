@@ -73,6 +73,7 @@ describe('viewport cream fill', () => {
     expect(today).toMatch(/AxisChart/);
     expect(today).toMatch(/lg:grid-cols-12/);
     expect(today).toMatch(/lg:items-start/);
+    expect(today).toMatch(/sm-orb-gutter/);
     expect(today).not.toMatch(/lg:overflow-hidden/);
     expect(today).not.toMatch(/justify-evenly/);
     expect(today).not.toMatch(/TrendSpark/);
@@ -103,6 +104,9 @@ describe('viewport cream fill', () => {
 
   it('keeps the SpaceMoni wordmark fully visible on compact headers', () => {
     const chrome = readFileSync(new URL('./chrome.tsx', import.meta.url), 'utf8');
+    expect(chrome).toMatch(/data-glossary-mobile/);
+    expect(chrome).toMatch(/data-avatar-glossary/);
+    expect(chrome).toMatch(/bottom-\[7\.25rem\]/);
     const start = chrome.indexOf('export const PageWordmark');
     const end = chrome.indexOf('const DOCK_ICON');
     const block = chrome.slice(start, end);
