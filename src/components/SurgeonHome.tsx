@@ -104,7 +104,7 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad sm-orb-gutter">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
       <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
       <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
 

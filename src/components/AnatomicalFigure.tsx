@@ -190,12 +190,12 @@ export const AnatomicalFigure: React.FC<{
   return (
     <div
       className={`relative mx-auto select-none overflow-hidden bodymap-frost ${
-        hero ? 'h-56 sm:h-80 lg:h-[26rem]' : 'h-72'
+        hero ? 'h-[22rem] sm:h-[28rem] lg:h-[34rem]' : 'h-80 sm:h-96'
       }`}
       style={{
         aspectRatio: '9 / 16',
         width: 'auto',
-        maxWidth: hero ? 'min(100%, 16.5rem)' : 'min(100%, 13.5rem)',
+        maxWidth: hero ? 'min(100%, 22rem)' : 'min(100%, 16rem)',
       }}
     >
       <div className="absolute inset-0 bg-[#f6f5f1]" aria-hidden />

@@ -63,7 +63,9 @@
   "role": {
     "astronaut": "Astronaut",
     "commander": "Commander",
-    "nasa": "NASA flight surgeon"
+    "nasa": "NASA flight surgeon",
+    "guest": "Guest",
+    "visitor": "Visitor"
   },
   "nav": {
     "today": "Today",
@@ -94,6 +96,7 @@
     "hq": "Mission control",
     "sim": "Fleet sim",
     "logout": "Log out",
+    "signIn": "Sign in",
     "aiSurgeon": "AI flight surgeon",
     "showTasks": "Show objectives",
     "hideTasks": "Hide objectives",
@@ -231,6 +234,11 @@
     "subtitle": "Shared deterministic world from 2026-11-10 00:00 Taipei. Not live NASA video.",
     "backDash": "Back to console",
     "clickHint": "Click a ship, Earth (NASA HQ), or an astronaut. Hover highlights what you can enter.",
+    "you": "You",
+    "viewFleet": "View whole fleet",
+    "guestHint": "Visitor view — private health records are hidden. This is a labeled simulation.",
+    "crewSheet": "Crew roster",
+    "publicRoster": "Public roster",
     "mobileHint": "Mobile: 2D map only. Open a ship from the list.",
     "loadingEngine": "Loading simulation engine…",
     "engineFail": "The 2D engine could not start. Use the ship list below.",
@@ -1115,6 +1123,7 @@
     "welcomeAboard": "Welcome aboard.",
     "continue": "Continue",
     "exploreFleet": "Explore the fleet simulation",
+    "exploreHq": "Explore HQ simulation (no sign-in)",
     "flightSurgeon": "Flight surgeon",
     "goodMorning": "Good morning, {name}.",
     "goodAfternoon": "Good afternoon, {name}.",

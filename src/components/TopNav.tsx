@@ -68,6 +68,15 @@ export const TopNav: React.FC<TopNavProps> = ({
         {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}
 
         <div className="flex items-center gap-2 shrink-0">
+          {currentUser?.role === 'Guest' && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="h-10 px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold"
+            >
+              {t('nav.signIn')}
+            </button>
+          )}
           <GlossaryButton />
           <LanguageGlobe />
           {currentUser && (
@@ -76,21 +85,21 @@ export const TopNav: React.FC<TopNavProps> = ({
               onLogout={onLogout}
               onSwitchUser={onSwitchUser ?? (() => undefined)}
               speDemo={speDemo}
-              onToggleSpeDemo={onToggleSpeDemo}
+              onToggleSpeDemo={currentUser.role === 'Guest' ? undefined : onToggleSpeDemo}
               isRightPanelCollapsed={isRightPanelCollapsed}
-              onToggleRightPanel={onToggleRightPanel}
+              onToggleRightPanel={currentUser.role === 'Guest' ? undefined : onToggleRightPanel}
             />
           )}
         </div>
       </header>
-      {speDemo && (
+      {speDemo && currentUser?.role !== 'Guest' && (
         <PinnedAlert
           title={t('ui.spePin')}
           actionLabel={t('ui.review')}
           onAction={onOpenAiCall}
         />
       )}
-      {currentUser && view !== 'sim' && <AskAuraOrb onClick={onOpenAiCall} />}
+      {currentUser && currentUser.role !== 'Guest' && view !== 'sim' && <AskAuraOrb onClick={onOpenAiCall} />}
     </>
   );
 };

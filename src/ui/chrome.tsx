@@ -251,8 +251,10 @@ export const Sheet: React.FC<{
   title?: React.ReactNode;
   children: React.ReactNode;
   wide?: boolean;
-}> = ({ open, onClose, title, children, wide }) => {
+  from?: 'right' | 'bottom';
+}> = ({ open, onClose, title, children, wide, from = 'right' }) => {
   const { t } = useI18n();
+  const bottom = from === 'bottom';
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -265,7 +267,7 @@ export const Sheet: React.FC<{
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
+        <div className={`fixed inset-0 z-[80] flex ${bottom ? 'items-end justify-center' : 'justify-end'}`} role="presentation">
           <button
             type="button"
             aria-label={t('common.close')}
@@ -276,11 +278,15 @@ export const Sheet: React.FC<{
           <motion.aside
             role="dialog"
             aria-modal="true"
-            initial={{ x: 28, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 24, opacity: 0 }}
+            initial={bottom ? { y: 36, opacity: 0 } : { x: 28, opacity: 0 }}
+            animate={bottom ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+            exit={bottom ? { y: 28, opacity: 0 } : { x: 24, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-            className={`relative h-full ${wide ? 'w-full max-w-[38.75rem]' : 'w-full max-w-md'} sm-sheet-panel rounded-l-[32px] p-5 pb-36 overflow-y-auto sm-page-pad`}
+            className={`relative ${
+              bottom
+                ? 'w-full max-h-[min(78dvh,40rem)] rounded-t-[32px] pb-8'
+                : `h-full ${wide ? 'w-full max-w-[38.75rem]' : 'w-full max-w-md'} rounded-l-[32px] pb-36`
+            } sm-sheet-panel p-5 overflow-y-auto sm-page-pad`}
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="min-w-0">{title}</div>
@@ -359,7 +365,14 @@ export const AvatarMenu: React.FC<{
   const [switchOpen, setSwitchOpen] = useState(false);
   const [speAsk, setSpeAsk] = useState(false);
   const roleLabel =
-    user.role === 'NASA' ? t('role.nasa') : user.role === 'Commander' ? t('role.commander') : t('role.astronaut');
+    user.role === 'NASA'
+      ? t('role.nasa')
+      : user.role === 'Commander'
+        ? t('role.commander')
+        : user.role === 'Guest'
+          ? t('role.guest')
+          : t('role.astronaut');
+  const guest = user.role === 'Guest';
   return (
     <div className="relative">
       <button
@@ -380,7 +393,7 @@ export const AvatarMenu: React.FC<{
             <p className="text-sm font-semibold">{user.name}</p>
             <p className="text-[11px] text-stone-500">{roleLabel}</p>
             <p className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-violet-50 text-[10px] font-semibold text-violet-800">
-              {t('nav.demoSession')}
+              {guest ? t('common.simulation') : t('nav.demoSession')}
             </p>
           </div>
           <button
@@ -411,7 +424,7 @@ export const AvatarMenu: React.FC<{
               ))}
             </ul>
           )}
-          {onToggleSpeDemo && (
+          {onToggleSpeDemo && !guest && (
             <button
               type="button"
               title={t('nav.speTitle')}
@@ -444,7 +457,7 @@ export const AvatarMenu: React.FC<{
             className="w-full text-left px-3 py-2 rounded-2xl text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
           >
             <LogOut className="w-3.5 h-3.5" />
-            {t('nav.logout')}
+            {guest ? t('nav.signIn') : t('nav.logout')}
           </button>
         </div>
       )}
@@ -490,7 +503,7 @@ export const PillDock: React.FC<{
   return (
     <nav
       aria-label="Primary"
-      className="fixed z-40 left-3 right-3 bottom-2 md:left-1/2 md:right-auto md:translate-x-[-50%] md:bottom-auto md:top-3 flex items-stretch md:items-center justify-around md:justify-center gap-0.5 p-1.5 rounded-[28px] md:rounded-full bg-white/90 backdrop-blur-xl shadow-[var(--sm-shadow)] max-w-[calc(100%-1.5rem)] md:max-w-[min(42rem,calc(100vw-11rem))]"
+      className="fixed z-40 left-3 right-3 bottom-[max(0.5rem,env(safe-area-inset-bottom))] lg:left-1/2 lg:right-auto lg:translate-x-[-50%] lg:bottom-auto lg:top-3 flex items-stretch lg:items-center justify-around lg:justify-center gap-0.5 p-1.5 rounded-[28px] lg:rounded-full bg-white/90 backdrop-blur-xl shadow-[var(--sm-shadow)] max-w-[calc(100%-1.5rem)] lg:max-w-[min(42rem,calc(100vw-11rem))]"
     >
       {items.map((item) => {
         const label = t(item.labelKey);
@@ -505,20 +518,20 @@ export const PillDock: React.FC<{
             aria-label={label}
             aria-current={active ? 'page' : undefined}
             onClick={() => onChangeView(item.view)}
-            className={`relative min-w-0 flex-1 md:flex-none shrink-0 h-12 md:h-10 px-1.5 md:px-2.5 rounded-[22px] md:rounded-full flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 text-sm ${
+            className={`relative min-w-0 flex-1 lg:flex-none shrink-0 h-12 lg:h-10 px-1.5 lg:px-2.5 rounded-[22px] lg:rounded-full flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1.5 text-sm ${
               active ? 'text-white' : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             {active && (
               <motion.span
                 layoutId="dock-pill"
-                className="absolute inset-0 rounded-[22px] md:rounded-full bg-[var(--sm-cobalt)]"
+                className="absolute inset-0 rounded-[22px] lg:rounded-full bg-[var(--sm-cobalt)]"
                 transition={{ type: 'spring', stiffness: 420, damping: 34 }}
               />
             )}
-            <span className="relative z-10 flex flex-col md:flex-row items-center gap-0.5 md:gap-1 min-w-0">
+            <span className="relative z-10 flex flex-col lg:flex-row items-center gap-0.5 lg:gap-1 min-w-0">
               {DOCK_ICON[item.id]}
-              <span className="text-[9px] md:text-[11px] font-semibold leading-tight whitespace-nowrap">
+              <span className="text-[10px] lg:text-[11px] font-semibold leading-tight whitespace-nowrap">
                 {short}
               </span>
             </span>
@@ -536,7 +549,7 @@ export const AskAuraOrb: React.FC<{ onClick: () => void; label?: string }> = ({ 
       type="button"
       onClick={onClick}
       aria-label={label ?? t('ui.askAura')}
-      className="sm-ask-aura fixed z-30 right-4 bottom-[5.75rem] md:right-5 md:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
+      className="sm-ask-aura fixed z-30 right-4 bottom-[6.5rem] lg:right-5 lg:bottom-6 inline-flex items-center gap-3 pl-3 sm:pl-5 pr-2 py-2 rounded-full bg-white/90 shadow-[var(--sm-shadow)] text-stone-800"
     >
       <span className="hidden sm:inline font-display text-lg italic">{label ?? t('ui.askAura')}</span>
       <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 via-violet-200 to-fuchsia-200 shadow-inner" />

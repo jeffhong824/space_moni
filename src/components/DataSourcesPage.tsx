@@ -130,7 +130,7 @@ export const DataSourcesPage: React.FC<{
   const degraded = Boolean(error) || wx?.overallStatus === 'partial' || wx?.overallStatus === 'unavailable';
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 pb-48 sm-page-pad sm-orb-gutter">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
       {degraded && (
         <div className="mb-5 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 space-y-1.5 max-w-3xl">
           <p className="text-sm font-semibold text-amber-950">{feedImpact(wx, t)}</p>

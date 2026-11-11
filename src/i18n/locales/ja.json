@@ -63,7 +63,9 @@
   "role": {
     "astronaut": "宇宙飛行士",
     "commander": "指揮官",
-    "nasa": "NASA 飛行外科医"
+    "nasa": "NASA 飛行外科医",
+    "guest": "ゲスト",
+    "visitor": "訪問者"
   },
   "nav": {
     "today": "今日",
@@ -94,6 +96,7 @@
     "hq": "ミッションコントロール",
     "sim": "艦隊シミュ",
     "logout": "ログアウト",
+    "signIn": "サインイン",
     "aiSurgeon": "AI 飛行外科医",
     "showTasks": "目標を表示",
     "hideTasks": "目標を隠す",
@@ -231,6 +234,11 @@
     "subtitle": "共有決定論ワールド。起点 2026-11-10 00:00 台北。NASAライブ映像ではありません。",
     "backDash": "コンソールへ戻る",
     "clickHint": "船、地球（ミッション制御）、宇宙飛行士をクリック。ホバーで入れる対象が分かります。",
+    "you": "あなた",
+    "viewFleet": "艦隊全体を表示",
+    "guestHint": "訪問者ビュー — 非公開の健康詳細は表示しません。これはシミュレーションです。",
+    "crewSheet": "乗員名簿",
+    "publicRoster": "公開名簿",
     "mobileHint": "モバイルは2Dマップのみ。リストから船を開いてください。",
     "loadingEngine": "シミュレーションエンジンを読み込み中…",
     "engineFail": "2Dエンジンを起動できません。下のリストを使用。",
@@ -1115,6 +1123,7 @@
     "welcomeAboard": "ようこそ搭乗。",
     "continue": "続ける",
     "exploreFleet": "艦隊シミュレーションを見る",
+    "exploreHq": "HQシミュレーションを見る（サインイン不要）",
     "flightSurgeon": "飛行外科医",
     "goodMorning": "おはようございます、{name}。",
     "goodAfternoon": "こんにちは、{name}。",

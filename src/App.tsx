@@ -25,6 +25,7 @@ import { overlayDemoSpe, type SpaceEnvironmentPayload } from './domain/spaceWeat
 import type { SelfCheckEntry } from './domain/healthThresholds';
 import type { CaseMeta } from './domain/clinicalCases';
 import { useI18n } from './i18n/I18nProvider';
+import { GUEST_ACCOUNT } from './world/accounts';
 import { CREW, crewByLogin } from './world/catalog';
 import { calendarDayNumber, findCrewLive, historyRecords, taipeiClockHms, tasksForShip, worldStateAt } from './world/worldState';
 import { allProfiles, crewToProfile, enrichUser, profilesForShip } from './world/toProfiles';
@@ -59,7 +60,15 @@ export default function App() {
   const [now, setNow] = useState(() => Date.now());
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     const stored = readDemoSession();
-    return stored ? enrichUser(stored) : null;
+    if (stored) return enrichUser(stored);
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.replace(/\/+$/, '') || '/';
+      if (p === '/sim' || p === '/world') {
+        writeDemoSession(GUEST_ACCOUNT);
+        return GUEST_ACCOUNT;
+      }
+    }
+    return null;
   });
   const [cabinPatch, setCabinPatch] = useState<Partial<EnvironmentalMetrics>>({});
   const [co2Flash, setCo2Flash] = useState(false);
@@ -185,7 +194,13 @@ export default function App() {
     if (crew) setSelectedAstronaut(crewToProfile(crew, now));
     else if (enriched.role === 'NASA') setSelectedAstronaut(crewToProfile(CREW[1], now));
     const roleLabel =
-      enriched.role === 'NASA' ? t('role.nasa') : enriched.role === 'Commander' ? t('role.commander') : t('role.astronaut');
+      enriched.role === 'NASA'
+        ? t('role.nasa')
+        : enriched.role === 'Commander'
+          ? t('role.commander')
+          : enriched.role === 'Guest'
+            ? t('role.guest')
+            : t('role.astronaut');
     showToast(t('nav.loggedIn', { name: enriched.name, role: roleLabel }));
     replaceView(defaultView(enriched.role));
   };
@@ -294,22 +309,14 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [loadWx]);
 
-  if (!currentUser && path !== '/sim' && path !== '/world') {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
   if (!currentUser) {
-    return (
-      <Suspense fallback={<div className="p-8 text-sm text-slate-500">{t('sim.loadingEngine')}</div>}>
-        <SimWorldPage />
-      </Suspense>
-    );
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   const todayRecord = dailyRecords.find((r) => r.isToday) || dailyRecords[0];
 
   const roleHome =
-    currentUser.role === 'Commander' ? (
+    currentUser.role === 'Guest' ? null : currentUser.role === 'Commander' ? (
       <CommanderHome
         astronauts={astronauts}
         recordsByAstronaut={recordsByAstronaut}
@@ -368,7 +375,7 @@ export default function App() {
     );
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden">
+    <div className="h-dvh w-screen flex flex-col overflow-hidden">
       <a
         href="#main-records"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:px-3 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold focus:shadow"
@@ -409,15 +416,20 @@ export default function App() {
       {view === 'sim' && (
         <div className="flex-1 min-h-0">
           <Suspense fallback={<div className="p-8 text-sm text-slate-500">{t('sim.loadingEngine')}</div>}>
-            <SimWorldPage />
+            <SimWorldPage
+              key={currentUser.account}
+              user={currentUser}
+              embedded
+              onSignIn={currentUser.role === 'Guest' ? handleLogout : undefined}
+            />
           </Suspense>
         </div>
       )}
 
       {view === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
-      {(view === 'today' || view === 'crew' || view === 'cases') && roleHome}
+      {(view === 'today' || view === 'crew' || view === 'cases') && currentUser.role !== 'Guest' && roleHome}
       {view === 'body' && (
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
           {CREW.find((c) => c.id === selectedAstronaut.id) && (
             <BodyMapDashboard
               crew={CREW.find((c) => c.id === selectedAstronaut.id)!}

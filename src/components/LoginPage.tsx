@@ -5,6 +5,7 @@ import { LanguageGlobe, IconCircle } from '../ui/chrome';
 import { useI18n } from '../i18n/I18nProvider';
 import {
   DEMO_PASSWORD,
+  GUEST_ACCOUNT,
   NASA_ACCOUNT,
   accountByLogin,
   allDemoAccounts,
@@ -40,10 +41,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       accountByLogin(cleanAccount);
 
     if (matched) {
-      onLogin({
-        ...matched,
-        role,
-      });
+      onLogin(matched);
       return;
     }
 
@@ -185,13 +183,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => {
-                window.history.pushState({}, '', '/sim');
-                window.dispatchEvent(new PopStateEvent('popstate'));
-              }}
+              onClick={() => onLogin(GUEST_ACCOUNT)}
               className="text-[13px] text-stone-500 hover:text-stone-800"
             >
-              {t('ui.exploreFleet')} →
+              {t('ui.exploreHq')} →
             </button>
             <p className="mt-5 text-[11px] text-stone-400">{t('login.quickRoles')}</p>
             <div className="mt-2 grid grid-cols-1 gap-2">

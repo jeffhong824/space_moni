@@ -78,7 +78,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-4xl sm:text-5xl">

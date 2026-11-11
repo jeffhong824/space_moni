@@ -69,6 +69,17 @@ describe('path ↔ view', () => {
     expect(coerceView('/sim', 'NASA')).toBe('sim');
   });
 
+  it('guest HQ simulation entry reaches /sim without a crew login', () => {
+    expect(defaultView('Guest')).toBe('sim');
+    expect(coerceView('/sim', 'Guest')).toBe('sim');
+    expect(coerceView('/world', 'Guest')).toBe('sim');
+    expect(coerceView('/', 'Guest')).toBe('sim');
+    expect(coerceView('/today', 'Guest')).toBe('sim');
+    expect(dockItemsForRole('Guest').map((i) => i.view)).toEqual(['sim']);
+    expect(allowedViews('Guest').has('sim')).toBe(true);
+    expect(allowedViews('Guest').has('today')).toBe(false);
+  });
+
   it('falls back to the role home for unknown or foreign paths', () => {
     expect(defaultView('Astronaut')).toBe('today');
     expect(defaultView('Commander')).toBe('crew');

@@ -125,7 +125,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.hr')}
         unit="bpm"
         tone={hr > BAND_NUMBERS.restingHR.attentionHigh ? 'warn' : 'ok'}
-        size={72}
+        size={108}
       />
       <RingGauge
         value={spo2}
@@ -133,7 +133,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.spo2')}
         unit="%"
         tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
-        size={72}
+        size={108}
       />
       <RingGauge
         value={hrv}
@@ -141,17 +141,17 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         label={t('wear.hrv')}
         unit="ms"
         tone={hrv < BAND_NUMBERS.hrv.attentionBelow ? 'warn' : 'lilac'}
-        size={72}
+        size={108}
       />
-      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={72} />
+      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={108} />
     </>
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(200px,280px)_auto] lg:grid-rows-[auto_auto] gap-4 lg:gap-6 items-start">
-        <div className="min-w-0">
-          <h1 className="font-display text-3xl sm:text-[2.5rem] text-stone-900">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad">
+      <div className="min-h-full grid lg:grid-cols-[minmax(0,1fr)_minmax(240px,1fr)_auto] lg:grid-rows-[auto_1fr] gap-4 lg:gap-6 items-stretch">
+        <div className="min-w-0 flex flex-col">
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-stone-900">
             {t(greetingKey(world.t), { name: firstName(astronaut.name) })}
           </h1>
           <p className="mt-1.5 text-sm text-stone-500 flex items-center gap-2">
@@ -293,9 +293,9 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
 
         </div>
 
-        <div className="grid grid-cols-2 gap-2 lg:hidden order-2">{gauges}</div>
+        <div className="grid grid-cols-2 gap-3 content-start lg:hidden order-2">{gauges}</div>
 
-        <div className="flex justify-center order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 pb-24 md:pb-0">
+        <div className="flex justify-center items-stretch order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 min-h-[22rem] sm:min-h-[28rem] lg:min-h-0">
           {crew && (
             <BodyMapDashboard
               crew={crew}
@@ -321,7 +321,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
                   else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
                   else onOpenConsole();
                 }}
-                className="sm-wrap-btn w-[10.5rem] md:w-[14rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] h-auto overflow-hidden"
+                className="sm-wrap-btn w-[min(100%,14rem)] sm:w-[16rem] min-h-[7rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] h-auto overflow-hidden"
                 style={{ whiteSpace: 'normal' }}
               >
                 <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>

@@ -6,6 +6,7 @@ import { ensureCrewAnims, preloadSimAssets, sheetCols } from './assets.ts';
 import { crewPosesForShip } from './crewPose.ts';
 import { crewHitBox } from './crewHit.ts';
 import { FLEET_LABEL_GAP, FLEET_LABEL_H, fleetLabelHeight, unionHitBox } from './fleetHit.ts';
+import { EARTH, MAP_H, MAP_W, MARS, MOON, mapCamera, pinXY } from './focusStation.ts';
 import { INTERIOR_PAD_BOTTOM, INTERIOR_PAD_X, INTERIOR_PAD_Y, interiorCamera } from './interiorCamera.ts';
 import { isWalkable, layoutOf, roomAtTile, TILE, wallFrame, type ShipLayout } from './layouts.ts';
 
@@ -18,12 +19,6 @@ export type SimSelect =
 export type SimView = { kind: 'map' } | { kind: 'interior'; shipId: string } | { kind: 'hq' };
 
 export type SimTranslate = (key: string, vars?: Record<string, string | number>) => string;
-
-const MAP_W = 1080;
-const MAP_H = 640;
-const EARTH = { x: 170, y: 380 };
-const MOON = { x: 560, y: 180 };
-const MARS = { x: 980, y: 420 };
 
 function geomHit(
   obj: Phaser.GameObjects.GameObject,
@@ -142,9 +137,23 @@ interface FleetPin {
 
 class MapScene extends Phaser.Scene {
   private pins: FleetPin[] = [];
+  private youDot!: Phaser.GameObjects.Arc;
+  private youTag!: Phaser.GameObjects.Text;
+  private youHit!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('map');
+  }
+
+  applyCamera() {
+    const world: WorldState | undefined = this.registry.get('world');
+    if (!world) return;
+    const overview = Boolean(this.registry.get('fleetOverview'));
+    const pinId = (this.registry.get('focusPinId') as string | null) || null;
+    const pin = !overview && pinId ? pinXY(pinId, world) : null;
+    const cam = mapCamera(overview || !pin, pin, this.scale.width, this.scale.height);
+    this.cameras.main.setZoom(cam.zoom);
+    this.cameras.main.centerOn(cam.cx, cam.cy);
   }
 
   create() {
@@ -175,11 +184,30 @@ class MapScene extends Phaser.Scene {
     }
 
     this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
-    const fit = Math.min(this.scale.width / MAP_W, this.scale.height / MAP_H);
-    this.cameras.main.setZoom(Math.max(1, Math.min(2, Math.floor(fit) || 1)));
-    this.cameras.main.centerOn(MAP_W / 2, MAP_H / 2);
+    this.youDot = this.add.circle(0, 0, 8, 0xf0fdfa, 1).setStrokeStyle(2, 0x2b3bff, 1).setDepth(19).setVisible(false);
+    this.youTag = this.add
+      .text(0, 0, '', {
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        fontSize: '11px',
+        color: '#0f172a',
+        backgroundColor: '#f0fdfa',
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(20)
+      .setVisible(false);
+    this.youHit = this.add.rectangle(0, 0, 56, 40, 0x000000, 0.001).setOrigin(0.5, 1).setDepth(21);
+    geomHit(this.youHit, 0, 0, 56, 40, true);
+    this.youHit.on('pointerup', () => {
+      const crewId = this.registry.get('focusCrewId') as string | null;
+      const onSelect: (s: SimSelect) => void = this.registry.get('onSelect');
+      if (crewId) onSelect?.({ kind: 'crew', id: crewId });
+      else onSelect?.({ kind: 'hq' });
+    });
     enablePan(this);
     this.placePins();
+    this.applyCamera();
+    this.scale.on('resize', () => this.applyCamera());
   }
 
   private makePin(id: string, kind: 'ship' | 'hq', tex: string, scale: number): FleetPin {
@@ -244,30 +272,15 @@ class MapScene extends Phaser.Scene {
     }
   }
 
-  private shipXY(id: string, world: WorldState): { x: number; y: number } {
-    const ship = world.ships.find((s) => s.def.id === id);
-    const loc = ship?.location;
-    const rad = ((loc?.phaseDeg ?? 0) * Math.PI) / 180;
-    if (id === 'ship-harmony') {
-      return { x: 230 + Math.cos(rad) * 28, y: 195 + Math.sin(rad) * 16 };
-    }
-    if (id === 'ship-gateway') {
-      return { x: 430 + Math.cos(rad) * 22, y: 95 + Math.sin(rad) * 14 };
-    }
-    if (id === 'ship-mare') {
-      return { x: 670 + Math.sin(rad) * 6, y: 330 };
-    }
-    const au = loc?.auFromEarth ?? 1.05;
-    const a = Phaser.Math.Clamp((au - 1.05) / 0.55, 0.28, 0.72);
-    return bezier(a, EARTH.x, EARTH.y, MARS.x, MARS.y, -70);
-  }
-
   private placePins() {
     const world: WorldState | undefined = this.registry.get('world');
     const t: SimTranslate = this.registry.get('t');
     if (!world) return;
+    const overview = Boolean(this.registry.get('fleetOverview'));
+    const focusPinId = (this.registry.get('focusPinId') as string | null) || null;
+    const focusCrewId = (this.registry.get('focusCrewId') as string | null) || null;
     for (const pin of this.pins) {
-      const pos = pin.kind === 'hq' ? EARTH : this.shipXY(pin.id, world);
+      const pos = pin.kind === 'hq' ? EARTH : pinXY(pin.id, world);
       pin.sprite.setPosition(pos.x, pos.y);
       const ship = world.ships.find((s) => s.def.id === pin.id);
       const color = pin.kind === 'hq' ? 0x38bdf8 : statusColor(ship ? shipCrewStatus(ship) : 'Normal');
@@ -300,9 +313,10 @@ class MapScene extends Phaser.Scene {
       const area = pin.hit.input?.hitArea;
       if (area instanceof Phaser.Geom.Rectangle) area.setTo(0, 0, box.w, box.h);
 
+      const focused = !overview && focusPinId === pin.id;
       const pulse = 0.22 + 0.18 * Math.sin(this.time.now / 420);
       pin.ring.clear();
-      pin.ring.lineStyle(1, color, pulse);
+      pin.ring.lineStyle(focused ? 3 : 1, focused ? 0x2b3bff : color, focused ? 0.95 : pulse);
       const rx = Math.max(pin.sprite.displayWidth, tw) / 2 + 10;
       const ry = (pin.sprite.displayHeight + labelH + FLEET_LABEL_GAP) / 2 + 8;
       pin.ring.strokeEllipse(pos.x, pos.y + FLEET_LABEL_GAP / 2, rx * 2, ry * 2);
@@ -315,6 +329,21 @@ class MapScene extends Phaser.Scene {
       } else {
         pin.sprite.setScale(pin.baseScale);
       }
+    }
+    const youPin = !overview && focusPinId ? this.pins.find((p) => p.id === focusPinId) : undefined;
+    if (youPin && this.youDot) {
+      const pos = youPin.kind === 'hq' ? EARTH : pinXY(youPin.id, world);
+      const youCrew = focusCrewId
+        ? world.ships.flatMap((s) => s.crew).find((c) => c.def.id === focusCrewId)
+        : undefined;
+      const label = youCrew ? `${youCrew.def.name} · ${t('sim.you')}` : t('sim.you');
+      this.youDot.setPosition(pos.x + 26, pos.y - 30).setVisible(true);
+      this.youTag.setText(label).setPosition(pos.x + 26, pos.y - 38).setVisible(true);
+      this.youHit.setPosition(pos.x + 26, pos.y - 30).setVisible(true).setInteractive();
+    } else if (this.youDot) {
+      this.youDot.setVisible(false);
+      this.youTag.setVisible(false);
+      this.youHit.setVisible(false);
     }
   }
 
@@ -544,7 +573,11 @@ class InteriorScene extends Phaser.Scene {
   private bindCrewSprite(spr: Phaser.GameObjects.Sprite, crewId: string, name: string) {
     const box = crewHitBox();
     geomHit(spr, box.x, box.y, box.w, box.h, true);
-    spr.on('pointerover', () => this.showCrewHover(crewId, name, spr));
+    spr.on('pointerover', () => {
+      const youId = this.registry.get('focusCrewId') as string | null;
+      const tr: SimTranslate = this.registry.get('t');
+      this.showCrewHover(crewId, youId === crewId ? `${name} · ${tr('sim.you')}` : name, spr);
+    });
     spr.on('pointerout', () => {
       if (this.hoveredCrewId === crewId) this.hideCrewHover();
     });
@@ -625,6 +658,28 @@ class InteriorScene extends Phaser.Scene {
       }
     }
     this.syncCrewHover();
+    this.paintYouBadge();
+  }
+
+  private paintYouBadge() {
+    if (this.hoveredCrewId) return;
+    const youId = this.registry.get('focusCrewId') as string | null;
+    if (!youId) return;
+    const spr = this.crewSprites.get(youId);
+    if (!spr?.visible) return;
+    const t: SimTranslate = this.registry.get('t');
+    const crew = this.ship()?.crew.find((c) => c.def.id === youId);
+    const name = crew?.def.name ?? youId;
+    this.crewGlow.setPosition(spr.x + 16, spr.y + 16).setVisible(true);
+    this.crewTag.setText(`${name} · ${t('sim.you')}`).setPosition(spr.x + 16, spr.y - 4).setVisible(true);
+    const tw = Math.ceil(this.crewTag.width) + 10;
+    const th = 16;
+    this.crewTagBg.clear();
+    this.crewTagBg.fillStyle(0x2b3bff, 0.94);
+    this.crewTagBg.lineStyle(1, 0xf0fdfa, 1);
+    this.crewTagBg.fillRoundedRect(spr.x + 16 - tw / 2, spr.y - 4 - th, tw, th, 4);
+    this.crewTagBg.strokeRoundedRect(spr.x + 16 - tw / 2, spr.y - 4 - th, tw, th, 4);
+    this.crewTagBg.setVisible(true);
   }
 
   private syncNpcs() {
@@ -674,6 +729,9 @@ export function bootFleetGame(
     mobile: boolean;
     t: SimTranslate;
     onView?: (v: SimView) => void;
+    focusPinId?: string | null;
+    focusCrewId?: string | null;
+    fleetOverview?: boolean;
   }
 ): {
   destroy: (remove: boolean) => void;
@@ -682,15 +740,18 @@ export function bootFleetGame(
   openInterior: (id: string) => void;
   openHq: () => void;
   closeInterior: () => void;
+  viewFleet: () => void;
+  focusStation: () => void;
+  resize: () => void;
 } {
   const game = new Phaser.Game({
     type: Phaser.CANVAS,
     parent,
-    width: parent.clientWidth || 800,
-    height: Math.max(280, parent.clientHeight || 420),
+    width: Math.max(1, parent.clientWidth || 800),
+    height: Math.max(1, parent.clientHeight || 420),
     backgroundColor: '#020617',
     scene: [],
-    scale: { mode: Phaser.Scale.RESIZE },
+    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH, parent },
     audio: { noAudio: true },
     render: {
       antialias: false,
@@ -706,6 +767,9 @@ export function bootFleetGame(
   game.registry.set('t', data.t);
   game.registry.set('interiorId', null);
   game.registry.set('onView', data.onView ?? null);
+  game.registry.set('focusPinId', data.focusPinId ?? null);
+  game.registry.set('focusCrewId', data.focusCrewId ?? null);
+  game.registry.set('fleetOverview', Boolean(data.fleetOverview));
   game.scene.add('boot', BootScene, true);
   game.scene.add('map', MapScene, false);
   game.scene.add('interior', InteriorScene, false);
@@ -729,6 +793,21 @@ export function bootFleetGame(
       game.scene.stop('interior');
       game.scene.start('map');
       data.onView?.({ kind: 'map' });
+    },
+    viewFleet: () => {
+      game.registry.set('fleetOverview', true);
+      const map = game.scene.getScene('map') as MapScene;
+      if (map?.scene.isActive()) map.applyCamera();
+    },
+    focusStation: () => {
+      game.registry.set('fleetOverview', false);
+      const map = game.scene.getScene('map') as MapScene;
+      if (map?.scene.isActive()) map.applyCamera();
+    },
+    resize: () => {
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      if (w > 0 && h > 0) game.scale.resize(w, h);
     },
   };
 }

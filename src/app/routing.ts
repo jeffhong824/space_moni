@@ -46,12 +46,16 @@ export function viewFromPath(pathname: string): AppView | null {
 }
 
 export function defaultView(role: UserRole): AppView {
+  if (role === 'Guest') return 'sim';
   if (role === 'NASA') return 'hq';
   if (role === 'Commander') return 'crew';
   return 'today';
 }
 
 export function dockItemsForRole(role: UserRole): DockItemDef[] {
+  if (role === 'Guest') {
+    return [{ id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' }];
+  }
   if (role === 'Commander') {
     return [
       { id: 'crew', view: 'crew', path: '/crew', labelKey: 'nav.crew', shortKey: 'nav.crew' },

@@ -25,7 +25,10 @@
 html,
 body,
 #root {
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
   background: var(--sm-bg);
   color: var(--sm-ink);
 }
@@ -84,11 +87,11 @@ button:disabled {
 }
 
 .sm-page-pad {
-  padding-bottom: max(16rem, calc(env(safe-area-inset-bottom, 0px) + 14rem)) !important;
+  padding-bottom: max(6.25rem, calc(env(safe-area-inset-bottom, 0px) + 5.25rem)) !important;
 }
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .sm-page-pad {
-    padding-bottom: max(11rem, calc(env(safe-area-inset-bottom, 0px) + 10rem)) !important;
+    padding-bottom: 1.25rem !important;
   }
 }
 

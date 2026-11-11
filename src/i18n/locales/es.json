@@ -63,7 +63,9 @@
   "role": {
     "astronaut": "Astronauta",
     "commander": "Comandante",
-    "nasa": "Cirujano de vuelo NASA"
+    "nasa": "Cirujano de vuelo NASA",
+    "guest": "Invitado",
+    "visitor": "Visitante"
   },
   "nav": {
     "today": "Hoy",
@@ -94,6 +96,7 @@
     "hq": "Control de misión",
     "sim": "Sim. de flota",
     "logout": "Salir",
+    "signIn": "Iniciar sesión",
     "aiSurgeon": "Cirujano IA",
     "showTasks": "Mostrar objetivos",
     "hideTasks": "Ocultar objetivos",
@@ -231,6 +234,11 @@
     "subtitle": "Universo determinista compartido desde 2026-11-10 00:00 Taipei. No es vídeo NASA.",
     "backDash": "Volver a la consola",
     "clickHint": "Clic en una nave, la Tierra (control de misión) o un astronauta. El hover marca lo que se puede entrar.",
+    "you": "Tú",
+    "viewFleet": "Ver toda la flota",
+    "guestHint": "Vista de visitante — se ocultan los datos de salud privados. Esta es una simulación etiquetada.",
+    "crewSheet": "Lista de tripulación",
+    "publicRoster": "Lista pública",
     "mobileHint": "Móvil: solo mapa 2D. Abra una nave de la lista.",
     "loadingEngine": "Cargando motor de simulación…",
     "engineFail": "No se pudo iniciar el motor 2D. Use la lista.",
@@ -1115,6 +1123,7 @@
     "welcomeAboard": "Bienvenido a bordo.",
     "continue": "Continuar",
     "exploreFleet": "Explorar la simulación de flota",
+    "exploreHq": "Explorar la simulación de HQ (sin iniciar sesión)",
     "flightSurgeon": "Cirujano de vuelo",
     "goodMorning": "Buenos días, {name}.",
     "goodAfternoon": "Buenas tardes, {name}.",

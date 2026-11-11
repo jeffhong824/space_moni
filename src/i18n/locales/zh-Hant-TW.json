@@ -63,7 +63,9 @@
   "role": {
     "astronaut": "太空人",
     "commander": "指揮官",
-    "nasa": "NASA 飛行外科醫師"
+    "nasa": "NASA 飛行外科醫師",
+    "guest": "訪客",
+    "visitor": "訪客"
   },
   "nav": {
     "today": "今日",
@@ -94,6 +96,7 @@
     "hq": "任務控制",
     "sim": "船隊模擬",
     "logout": "登出",
+    "signIn": "登入",
     "aiSurgeon": "AI 飛行外科醫師",
     "showTasks": "顯示目標",
     "hideTasks": "隱藏目標",
@@ -231,6 +234,11 @@
     "subtitle": "共享決定性宇宙，起點 2026-11-10 00:00 台北。非 NASA 即時畫面。",
     "backDash": "返回控制台",
     "clickHint": "點選船艦、地球（任務控制）或太空人。游標停在可進入的物件上會醒目提示。",
+    "you": "你",
+    "viewFleet": "檢視整支艦隊",
+    "guestHint": "訪客視圖 — 不顯示私人健康細節。此為標示的模擬。",
+    "crewSheet": "組員名冊",
+    "publicRoster": "公開名冊",
     "mobileHint": "行動裝置：僅 2D 地圖。請從清單開啟船艦。",
     "loadingEngine": "載入模擬引擎…",
     "engineFail": "2D 引擎無法啟動。請改用下方船艦清單。",
@@ -1115,6 +1123,7 @@
     "welcomeAboard": "歡迎登機。",
     "continue": "繼續",
     "exploreFleet": "探索艦隊模擬",
+    "exploreHq": "探索總部模擬（無需登入）",
     "flightSurgeon": "飛行外科醫師",
     "goodMorning": "早安，{name}。",
     "goodAfternoon": "午安，{name}。",

@@ -71,7 +71,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   const r = wx?.scales.rScale ?? 'R?';
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-4 sm-page-pad">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
       <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.missionControl')}</p>
       <h1 className="font-display text-4xl sm:text-5xl mt-1">{t('ui.fourShips')}</h1>
       <p className="mt-2 text-sm text-stone-500 flex items-center gap-2">

@@ -1,4 +1,4 @@
-export type UserRole = 'Astronaut' | 'Commander' | 'NASA';
+export type UserRole = 'Astronaut' | 'Commander' | 'NASA' | 'Guest';
 
 export interface AuthUser {
   account: string; // e.g. "alice_smith", "marcus_vance", "nasa_flight_surgeon"

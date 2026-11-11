@@ -10,6 +10,18 @@ export const NASA_ACCOUNT: AuthUser = {
   title: 'NASA Flight Surgeon & Bio-Medical Ground Control',
 };
 
+/** Public visitor — no password, read-only fleet simulation. */
+export const GUEST_ACCOUNT: AuthUser = {
+  account: 'guest',
+  name: 'Visitor',
+  role: 'Guest',
+  title: 'role.visitor',
+};
+
+export function isGuestUser(user: Pick<AuthUser, 'role' | 'account'> | null | undefined): boolean {
+  return user?.role === 'Guest' || user?.account === GUEST_ACCOUNT.account;
+}
+
 /** Stable username slug: "Inés Vargas" → ines_vargas, "Samira Al-Farsi" → samira_al_farsi. */
 export function loginSlug(name: string): string {
   return name
@@ -36,6 +48,7 @@ export function allDemoAccounts(): AuthUser[] {
 
 export function accountByLogin(account: string): AuthUser | undefined {
   const clean = account.trim().toLowerCase();
+  if (clean === GUEST_ACCOUNT.account) return GUEST_ACCOUNT;
   return allDemoAccounts().find((a) => a.account.toLowerCase() === clean);
 }
 

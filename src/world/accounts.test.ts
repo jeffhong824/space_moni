@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { CREW } from './catalog.ts';
 import {
   DEMO_PASSWORD,
+  GUEST_ACCOUNT,
   NASA_ACCOUNT,
   accountByLogin,
   accountForCrew,
   allDemoAccounts,
+  isGuestUser,
   loginConfirmVars,
   loginSlug,
   parseLoginQuery,
@@ -27,6 +29,10 @@ describe('demo crew accounts', () => {
     expect(accounts).toHaveLength(CREW.length + 1);
     expect(accountForCrew(CREW.find((c) => c.id === 'astro-sofia')!).role).toBe('Commander');
     expect(accountForCrew(CREW.find((c) => c.id === 'astro-noah')!).role).toBe('Astronaut');
+    expect(GUEST_ACCOUNT.role).toBe('Guest');
+    expect(accountByLogin('guest')?.role).toBe('Guest');
+    expect(isGuestUser(GUEST_ACCOUNT)).toBe(true);
+    expect(allDemoAccounts().some((a) => a.role === 'Guest')).toBe(false);
   });
 
   it('slugifies accented and hyphenated names', () => {
