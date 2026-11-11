@@ -11,6 +11,35 @@ export function fleetLabelHeight(hovered: boolean): number {
 export const FLEET_CLICK_IDS = ['ship-harmony', 'ship-gateway', 'ship-ares', 'ship-mare', 'earth-hq'] as const;
 export type FleetClickId = (typeof FLEET_CLICK_IDS)[number];
 
+/** Native PNG size × map scale. Origin is the sprite center. */
+export const FLEET_SPRITE_SIZE: Record<string, { w: number; h: number; scale: number }> = {
+  'earth-hq': { w: 96, h: 96, scale: 2 },
+  'ship-harmony': { w: 256, h: 147, scale: 1 },
+  'ship-gateway': { w: 192, h: 109, scale: 1 },
+  'ship-ares': { w: 288, h: 81, scale: 1 },
+  'ship-mare': { w: 256, h: 159, scale: 1 },
+};
+
+export const OVERVIEW_SAFE_PAD = 40;
+
+/** Axis-aligned box covering the sprite, its label, and extra camera padding. */
+export function pinVisualBounds(
+  id: string,
+  pos: { x: number; y: number },
+  extraPad = OVERVIEW_SAFE_PAD
+): HitBox {
+  const s = FLEET_SPRITE_SIZE[id] ?? { w: 160, h: 100, scale: 1 };
+  const hw = (s.w * s.scale) / 2;
+  const hh = (s.h * s.scale) / 2;
+  const label = FLEET_LABEL_GAP + FLEET_LABEL_H;
+  return {
+    x: pos.x - hw - extraPad,
+    y: pos.y - hh - extraPad,
+    w: hw * 2 + extraPad * 2,
+    h: hh * 2 + extraPad * 2 + label,
+  };
+}
+
 export interface HitBox {
   x: number;
   y: number;

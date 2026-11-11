@@ -1,4 +1,5 @@
 import type { AuthUser } from '../types.ts';
+import { pinVisualBounds } from './fleetHit.ts';
 import { CREW, CREW_SIZE_BY_SHIP, crewByLogin } from '../world/catalog.ts';
 import type { WorldState } from '../world/worldState.ts';
 
@@ -102,22 +103,33 @@ export function youBadgeOffset(
   return candidates[0];
 }
 
+export function rectFullyInView(rect: MapRect, view: MapRect, inset = 2): boolean {
+  return (
+    rect.x >= view.x + inset &&
+    rect.y >= view.y + inset &&
+    rect.x + rect.w <= view.x + view.w - inset &&
+    rect.y + rect.h <= view.y + view.h - inset
+  );
+}
+
+export type OverviewPin = { x: number; y: number; id?: string };
+
 export function overviewCamera(
   viewW: number,
   viewH: number,
-  pins: Array<{ x: number; y: number }>
+  pins: OverviewPin[]
 ): { zoom: number; cx: number; cy: number } {
-  const pad = 64;
-  const xs = pins.map((p) => p.x);
-  const ys = pins.map((p) => p.y);
-  const minX = Math.min(...xs) - pad;
-  const maxX = Math.max(...xs) + pad;
-  const minY = Math.min(...ys) - pad;
-  const maxY = Math.max(...ys) + pad;
+  const boxes = pins.map((p) =>
+    p.id ? pinVisualBounds(p.id, p) : { x: p.x - 64, y: p.y - 64, w: 128, h: 128 }
+  );
+  const minX = Math.min(...boxes.map((b) => b.x));
+  const maxX = Math.max(...boxes.map((b) => b.x + b.w));
+  const minY = Math.min(...boxes.map((b) => b.y));
+  const maxY = Math.max(...boxes.map((b) => b.y + b.h));
   const bw = Math.max(1, maxX - minX);
   const bh = Math.max(1, maxY - minY);
   const zoom = Math.min(viewW / bw, viewH / bh);
-  return { zoom: Math.max(0.35, zoom), cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  return { zoom: Math.max(0.28, zoom), cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 }
 
 export function mapCamera(
@@ -125,7 +137,7 @@ export function mapCamera(
   pin: { x: number; y: number } | null,
   viewW: number,
   viewH: number,
-  overviewPins?: Array<{ x: number; y: number }>
+  overviewPins?: OverviewPin[]
 ): { zoom: number; cx: number; cy: number } {
   if ((overview || !pin) && overviewPins && overviewPins.length > 0) {
     return overviewCamera(viewW, viewH, overviewPins);

@@ -15,6 +15,7 @@ import {
   isPortraitView,
   mapCamera,
   pinXYForView,
+  rectFullyInView,
   youBadgeOffset,
   type MapRect,
 } from './focusStation.ts';
@@ -163,7 +164,7 @@ class MapScene extends Phaser.Scene {
     const portraitOverview = overview && isPortraitView(this.scale.width, this.scale.height);
     const pinId = (this.registry.get('focusPinId') as string | null) || null;
     const pin = !overview && pinId ? pinXYForView(pinId, world, false) : null;
-    const overviewPins = this.pins.map((p) => pinXYForView(p.id, world, portraitOverview));
+    const overviewPins = this.pins.map((p) => ({ ...pinXYForView(p.id, world, portraitOverview), id: p.id }));
     const cam = mapCamera(overview || !pin, pin, this.scale.width, this.scale.height, overview ? overviewPins : undefined);
     this.cameras.main.setZoom(cam.zoom);
     this.cameras.main.centerOn(cam.cx, cam.cy);
@@ -196,7 +197,8 @@ class MapScene extends Phaser.Scene {
       this.pins.push(this.makePin(id, 'ship', id, 1));
     }
 
-    this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
+    const camPad = 480;
+    this.cameras.main.setBounds(-camPad, -camPad, MAP_W + camPad * 2, MAP_H + camPad * 2);
     this.youDot = this.add.circle(0, 0, 8, 0xf0fdfa, 1).setStrokeStyle(2, 0x2b3bff, 1).setDepth(19).setVisible(false);
     this.youTag = this.add
       .text(0, 0, '', {
@@ -294,6 +296,12 @@ class MapScene extends Phaser.Scene {
     const focusPinId = (this.registry.get('focusPinId') as string | null) || null;
     const focusCrewId = (this.registry.get('focusCrewId') as string | null) || null;
     const labelRects: MapRect[] = [];
+    const worldView: MapRect = {
+      x: this.cameras.main.worldView.x,
+      y: this.cameras.main.worldView.y,
+      w: this.cameras.main.worldView.width,
+      h: this.cameras.main.worldView.height,
+    };
     for (const pin of this.pins) {
       const pos = pinXYForView(pin.id, world, portraitOverview);
       pin.sprite.setPosition(pos.x, pos.y);
@@ -304,24 +312,28 @@ class MapScene extends Phaser.Scene {
       pin.title.setText(title);
       pin.sub.setText(sub);
       pin.hint.setText(t('sim.clickEnter'));
-      pin.hint.setVisible(pin.hovered);
       const labelH = fleetLabelHeight(pin.hovered);
       const tw = Math.max(pin.title.width, pin.sub.width, pin.hovered ? pin.hint.width : 0) + 16;
       const labelY = pos.y + pin.sprite.displayHeight / 2 + FLEET_LABEL_GAP;
+      const labelRect: MapRect = { x: pos.x - tw / 2, y: labelY, w: tw, h: labelH };
+      const focused = !overview && focusPinId === pin.id;
+      const showLabel = focused || overview || rectFullyInView(labelRect, worldView);
       const labelDepth = pin.hovered ? 16 : 6;
       pin.labelBg.setDepth(labelDepth);
       pin.title.setDepth(labelDepth + 1);
       pin.sub.setDepth(labelDepth + 1);
       pin.hint.setDepth(labelDepth + 1);
       pin.labelBg.clear();
-      pin.labelBg.fillStyle(0x0f172a, 0.96);
-      pin.labelBg.lineStyle(pin.hovered ? 2 : 1, pin.hovered ? 0xf0fdfa : color, 1);
-      pin.labelBg.fillRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
-      pin.labelBg.strokeRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
-      pin.title.setPosition(pos.x, labelY + 3);
-      pin.sub.setPosition(pos.x, labelY + 19);
-      pin.hint.setPosition(pos.x, labelY + FLEET_LABEL_H - 1);
-      labelRects.push({ x: pos.x - tw / 2, y: labelY, w: tw, h: labelH });
+      pin.title.setPosition(pos.x, labelY + 3).setVisible(showLabel);
+      pin.sub.setPosition(pos.x, labelY + 19).setVisible(showLabel);
+      pin.hint.setPosition(pos.x, labelY + FLEET_LABEL_H - 1).setVisible(showLabel && pin.hovered);
+      if (showLabel) {
+        pin.labelBg.fillStyle(0x0f172a, 0.96);
+        pin.labelBg.lineStyle(pin.hovered ? 2 : 1, pin.hovered ? 0xf0fdfa : color, 1);
+        pin.labelBg.fillRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
+        pin.labelBg.strokeRoundedRect(pos.x - tw / 2, labelY, tw, labelH, 6);
+        if (!focused) labelRects.push(labelRect);
+      }
 
       const box = unionHitBox(pin.sprite.width, pin.sprite.height, pin.baseScale, tw, labelH, FLEET_LABEL_GAP);
       pin.hit.setPosition(pos.x + box.x, pos.y + box.y);
@@ -329,7 +341,6 @@ class MapScene extends Phaser.Scene {
       const area = pin.hit.input?.hitArea;
       if (area instanceof Phaser.Geom.Rectangle) area.setTo(0, 0, box.w, box.h);
 
-      const focused = !overview && focusPinId === pin.id;
       const pulse = 0.22 + 0.18 * Math.sin(this.time.now / 420);
       pin.ring.clear();
       pin.ring.lineStyle(focused ? 3 : 1, focused ? 0x2b3bff : color, focused ? 0.95 : pulse);
@@ -356,8 +367,7 @@ class MapScene extends Phaser.Scene {
       this.youTag.setText(label);
       const badgeW = Math.max(72, Math.ceil(this.youTag.width) + 14);
       const badgeH = 22;
-      const others = labelRects.filter((_, i) => this.pins[i]?.id !== youPin.id);
-      const off = youBadgeOffset(pos, { w: badgeW, h: badgeH }, others);
+      const off = youBadgeOffset(pos, { w: badgeW, h: badgeH }, labelRects);
       this.youDot.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true);
       this.youTag.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true);
       this.youHit.setPosition(pos.x + off.dx, pos.y + off.dy).setVisible(true).setInteractive();

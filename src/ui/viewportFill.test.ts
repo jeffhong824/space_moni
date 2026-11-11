@@ -65,6 +65,8 @@ describe('viewport cream fill', () => {
     expect(today).toMatch(/ui\.trendHr/);
     expect(today).toMatch(/lg:col-start-2 lg:row-start-1 lg:row-span-2/);
     expect(today).toMatch(/rounded-\[32px\] bg-white\/90/);
+    expect(today).toMatch(/hyphens-auto/);
+    expect(today).not.toMatch(/overflowWrap: 'anywhere'/);
     expect(hq).not.toMatch(/max-h-\[min\(62vh/);
     expect(hq).toMatch(/lg:overflow-hidden/);
     expect(hq).toMatch(/h-full/);
@@ -95,5 +97,8 @@ describe('viewport cream fill', () => {
     expect(script).toMatch(/1280/);
     expect(script).toMatch(/1920/);
     expect(script).toMatch(/bottomEmptyBandRatio/);
+    const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+    expect(app).toMatch(/top-\[4\.75rem\]/);
+    expect(app).not.toMatch(/lg:bottom-6 left-1\/2/);
   });
 });

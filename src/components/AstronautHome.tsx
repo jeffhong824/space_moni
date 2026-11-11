@@ -320,7 +320,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             <TrendSpark label={t('ui.trendHr')} points={hrSeries} color="#f08a80" />
             <TrendSpark label={t('ui.trendSpo2')} points={spo2Series} color="#2b3bff" />
           </div>
-          <div className="sm-snap flex lg:grid lg:grid-cols-3 gap-3 overflow-x-auto lg:overflow-visible pb-1 shrink-0">
+          <div className="sm-snap flex lg:grid lg:grid-cols-2 min-[1400px]:grid-cols-3 gap-3 overflow-x-auto lg:overflow-visible pb-1 shrink-0">
             {timeline.map((item, i) => (
               <button
                 key={`${item.t}-${i}`}
@@ -335,7 +335,11 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
               >
                 <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
                 <p className="mt-2 text-[11px] font-mono text-stone-400 tabular-nums">{item.t}</p>
-                <p className="mt-0.5 w-full text-sm font-medium leading-snug" style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                <p
+                  className="mt-0.5 w-full text-sm font-medium leading-snug break-normal hyphens-auto"
+                  lang={lang}
+                  style={{ whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'normal' }}
+                >
                   {item.title}
                 </p>
               </button>

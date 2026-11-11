@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { GUEST_ACCOUNT, NASA_ACCOUNT } from '../world/accounts.ts';
 import { CREW, CREW_SIZE_BY_SHIP } from '../world/catalog.ts';
 import { worldStateAt } from '../world/worldState.ts';
+import { pinVisualBounds } from './fleetHit.ts';
 import {
   PORTRAIT_FLEET_XY,
   catalogRoster,
   guestSeesPrivateVitals,
   mapCamera,
   overviewCamera,
+  rectFullyInView,
   rectsOverlap,
   simFocusForUser,
   worldRoster,
@@ -67,19 +69,31 @@ describe('signed-in roles focus the assigned station', () => {
     expect(rectsOverlap(placed, mareLabel, 10)).toBe(false);
   });
 
-  it('portrait overview camera fills the tall canvas with the fleet bbox', () => {
-    const pins = Object.values(PORTRAIT_FLEET_XY);
+  it('portrait overview camera pads sprite extents so Earth and solar panels stay in view', () => {
+    const pins = Object.entries(PORTRAIT_FLEET_XY).map(([id, p]) => ({ id, ...p }));
     const cam = overviewCamera(390, 780, pins);
-    const visH = 780 / cam.zoom;
     const visW = 390 / cam.zoom;
-    const ys = pins.map((p) => p.y);
-    const xs = pins.map((p) => p.x);
-    const bh = Math.max(...ys) - Math.min(...ys);
-    const bw = Math.max(...xs) - Math.min(...xs);
-    expect(bh / visH).toBeGreaterThan(0.68);
-    expect(bw / visW).toBeGreaterThan(0.5);
+    const visH = 780 / cam.zoom;
+    const view = { x: cam.cx - visW / 2, y: cam.cy - visH / 2, w: visW, h: visH };
+    for (const [id, pos] of Object.entries(PORTRAIT_FLEET_XY)) {
+      const box = pinVisualBounds(id, pos, 0);
+      expect(box.x, id).toBeGreaterThanOrEqual(view.x - 0.5);
+      expect(box.y, id).toBeGreaterThanOrEqual(view.y - 0.5);
+      expect(box.x + box.w, id).toBeLessThanOrEqual(view.x + view.w + 0.5);
+      expect(box.y + box.h, id).toBeLessThanOrEqual(view.y + view.h + 0.5);
+    }
+    const centersOnly = overviewCamera(390, 780, Object.values(PORTRAIT_FLEET_XY));
+    expect(cam.zoom).toBeLessThan(centersOnly.zoom);
     const landscape = mapCamera(true, null, 390, 780);
     expect(cam.zoom).toBeGreaterThan(landscape.zoom);
+  });
+
+  it('hides labels that sit outside the camera viewport', () => {
+    const view = { x: 0, y: 0, w: 390, h: 780 };
+    const inside = { x: 40, y: 80, w: 120, h: 36 };
+    const clipped = { x: 300, y: 200, w: 160, h: 36 };
+    expect(rectFullyInView(inside, view)).toBe(true);
+    expect(rectFullyInView(clipped, view)).toBe(false);
   });
 });
 

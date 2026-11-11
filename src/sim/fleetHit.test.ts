@@ -4,8 +4,10 @@ import {
   FLEET_CLICK_IDS,
   FLEET_HINT_H,
   FLEET_LABEL_H,
+  FLEET_SPRITE_SIZE,
   fleetLabelHeight,
   isFleetClickId,
+  pinVisualBounds,
   unionHitBox,
 } from './fleetHit.ts';
 
@@ -46,5 +48,17 @@ describe('fleet map hit areas', () => {
     expect(boxContains(box, 95, 96 + 6)).toBe(true);
     expect(box.w).toBeGreaterThanOrEqual(192);
     expect(box.h).toBeGreaterThan(192);
+  });
+
+  it('pads Earth and Harmony sprite extents for the overview camera', () => {
+    expect(FLEET_SPRITE_SIZE['earth-hq']).toEqual({ w: 96, h: 96, scale: 2 });
+    expect(FLEET_SPRITE_SIZE['ship-harmony'].w).toBe(256);
+    expect(FLEET_SPRITE_SIZE['ship-ares'].w).toBe(288);
+    const earth = pinVisualBounds('earth-hq', { x: 540, y: 48 }, 0);
+    expect(earth.y).toBe(48 - 96);
+    const harmony = pinVisualBounds('ship-harmony', { x: 430, y: 170 }, 0);
+    expect(harmony.x).toBe(430 - 128);
+    const ares = pinVisualBounds('ship-ares', { x: 430, y: 400 }, 0);
+    expect(ares.x).toBe(430 - 144);
   });
 });

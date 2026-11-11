@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { TopNav } from './components/TopNav';
 import { AstronautSidebar } from './components/AstronautSidebar';
 import { DailyRecordsPanel } from './components/DailyRecordsPanel';
@@ -193,17 +193,6 @@ export default function App() {
     const crew = crewByLogin(enriched.account);
     if (crew) setSelectedAstronaut(crewToProfile(crew, now));
     else if (enriched.role === 'NASA') setSelectedAstronaut(crewToProfile(CREW[1], now));
-    const roleLabel =
-      enriched.role === 'NASA'
-        ? t('role.nasa')
-        : enriched.role === 'Commander'
-          ? t('role.commander')
-          : enriched.role === 'Guest'
-            ? t('role.guest')
-            : t('role.astronaut');
-    if (enriched.role !== 'Guest') {
-      showToast(t('nav.loggedIn', { name: enriched.name, role: roleLabel }));
-    }
     replaceView(defaultView(enriched.role));
   };
 
@@ -226,9 +215,11 @@ export default function App() {
     localStorage.setItem('orbital_station_tasks', JSON.stringify(extraTasks));
   }, [extraTasks]);
 
-  const showToast = (msg: string) => {
+  const toastTimer = useRef<number | undefined>(undefined);
+  const showToast = (msg: string, ms = 2500) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
+    if (toastTimer.current != null) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToastMessage(null), ms);
   };
 
   const handleToggleActivity = (date: string, activityId: string) => {
@@ -550,7 +541,7 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed bottom-[9.75rem] lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
+        <div className="fixed top-[4.75rem] left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-[var(--sm-shadow)] text-xs font-medium">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
