@@ -130,7 +130,7 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
 
       {mode === 'orbit' ? (
         <div
-          className={`relative mt-6 aspect-square max-h-[min(68vh,640px)] transition-all duration-300 ${
+          className={`relative mt-4 aspect-square max-h-[min(42vh,22rem)] transition-all duration-300 ${
             inspectId
               ? 'w-[min(100%,calc(100%-min(38.75rem,52vw)))] ml-0 mr-auto'
               : 'w-full max-w-3xl mx-auto'

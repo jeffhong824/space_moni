@@ -274,18 +274,20 @@ export const BodyMapDashboard: React.FC<{
   );
 
   const figureBlock = (
-    <div className={hero ? 'flex flex-col h-full min-h-0' : ''}>
-      <div className="flex justify-center mb-2 shrink-0">
-        <Segmented
-          value={side}
-          onChange={setSide}
-          options={[
-            { id: 'front' as const, label: t('body.front') },
-            { id: 'back' as const, label: t('body.back') },
-          ]}
-          ariaLabel={t('body.title')}
-        />
-      </div>
+    <div className={compact ? 'flex flex-col' : hero ? 'flex flex-col' : ''}>
+      {!(compact && figureOnly) && (
+        <div className="flex justify-center mb-2 shrink-0">
+          <Segmented
+            value={side}
+            onChange={setSide}
+            options={[
+              { id: 'front' as const, label: t('body.front') },
+              { id: 'back' as const, label: t('body.back') },
+            ]}
+            ariaLabel={t('body.title')}
+          />
+        </div>
+      )}
       <AnatomicalFigure
         side={side}
         regionRank={health.regionRank}
@@ -294,7 +296,8 @@ export const BodyMapDashboard: React.FC<{
         pulse={pulseRegion}
         auraRank={health.domains.find((d) => d.id === 'radiation')?.rank ?? 0}
         labelFor={(id) => t(`body.region.${id}`)}
-        hero={hero}
+        hero={hero && !compact}
+        compact={compact}
       />
       {!figureOnly && (
         <p className="text-[10px] text-stone-400 mt-2 leading-relaxed text-center">{t('body.credit')}</p>
@@ -335,7 +338,7 @@ export const BodyMapDashboard: React.FC<{
   );
 
   return (
-    <section className={hero ? 'flex flex-col h-full min-h-0' : ''}>
+    <section className={compact || hero ? 'flex flex-col' : ''}>
       {!figureOnly && !hero && !tabbed && (
         <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -348,7 +351,7 @@ export const BodyMapDashboard: React.FC<{
         </header>
       )}
 
-      {tabbed ? inspectorTabs : <div className={`grid grid-cols-1 gap-4 ${hero ? 'flex-1 min-h-0 h-full' : ''}`}>{figureBlock}</div>}
+      {tabbed ? inspectorTabs : <div className="grid grid-cols-1 gap-2">{figureBlock}</div>}
 
       <Sheet
         open={sheetOpen && (hero || figureOnly || compact)}

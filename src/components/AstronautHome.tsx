@@ -1,26 +1,37 @@
-import React, { useState } from 'react';
-import { Activity, CheckCircle2, Circle, Heart, Leaf, Moon, Sun } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Activity, HeartPulse, Moon, Sun } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import {
-  BAND_NUMBERS,
-  interpretRecord,
-  THRESHOLDS,
   type SelfCheckEntry,
   type SelfCheckMood,
   type SelfCheckPain,
 } from '../domain/healthThresholds';
 import { sScaleElevated } from '../domain/spaceWeather';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
+import {
+  buildVitalTiles,
+  flaggedTiles,
+  hrNormalBand,
+  minutesInTaipei,
+  minutesUntil,
+  nextScheduleIndex,
+  overallFromTiles,
+  parseSlotStartMin,
+  spo2NormalBand,
+  todayAction,
+  type ScheduleItemModel,
+  type VitalTileModel,
+} from '../domain/todayStatus';
 import { useI18n } from '../i18n/I18nProvider';
 import { localizeKey, statusLabel } from '../i18n/index';
 import { CrewCommsInbox } from './CrewCommsInbox';
-import { ShipStatusCard } from './ShipStatusCard';
-import { WearableStrip } from './WearableHud';
 import { BodyMapDashboard } from './BodyMapDashboard';
 import { CREW } from '../world/catalog';
 import type { WorldState } from '../world/worldState';
-import { findCrewLive } from '../world/worldState';
-import { FilterChip, firstName, greetingKey, RingGauge, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
+import { findCrewLive, taipeiClockHms } from '../world/worldState';
+import { bodyHealthAt } from '../world/bodyHealth';
+import { firstName, greetingKey, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
+import { loadMessages, visibleToCrew } from '../world/comms';
 
 interface AstronautHomeProps {
   astronaut: AstronautProfile;
@@ -29,7 +40,7 @@ interface AstronautHomeProps {
   onSaveSelfCheck: (entry: SelfCheckEntry) => void;
   tasks: StationTask[];
   onToggleActivity: (date: string, activityId: string) => void;
-  onToggleTaskStatus: (taskId: string) => void;
+  onToggleTaskStatus?: (taskId: string) => void;
   onOpenAiCall: (prompt?: string) => void;
   onOpenConsole: () => void;
   spaceEnvironment: SpaceEnvironmentPayload | null;
@@ -37,16 +48,12 @@ interface AstronautHomeProps {
   world: WorldState;
 }
 
-type Filter = 'vitals' | 'sleep' | 'activity' | 'environment';
-
 export const AstronautHome: React.FC<AstronautHomeProps> = ({
   astronaut,
   todayRecord,
   selfCheck,
   onSaveSelfCheck,
-  tasks,
   onToggleActivity,
-  onToggleTaskStatus,
   onOpenAiCall,
   onOpenConsole,
   spaceEnvironment,
@@ -54,19 +61,19 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   world,
 }) => {
   const { t, lang } = useI18n();
-  const interp = interpretRecord(todayRecord, selfCheck);
   const sScale = spaceEnvironment?.scales.sScale ?? 'S?';
   const shelter = sScaleElevated(sScale);
   const countermeasures = todayRecord.dailyActivities.filter((a) => a.category === 'Health Countermeasure');
-  const assignedTasks = tasks.filter(
-    (task) => task.assignedCrew.some((c) => c.name === astronaut.name) && task.status !== 'Completed'
-  );
   const live = findCrewLive(world, astronaut.id);
   const crew = CREW.find((c) => c.id === astronaut.id);
   const w = live?.crew.wearable;
+  const health = useMemo(
+    () => (crew ? bodyHealthAt(crew, world.t, spaceEnvironment) : null),
+    [crew, world.t, spaceEnvironment]
+  );
 
-  const [filter, setFilter] = useState<Filter>('vitals');
   const [sleepOpen, setSleepOpen] = useState(false);
+  const [bodyOpen, setBodyOpen] = useState(false);
   const [sleepQuality, setSleepQuality] = useState<1 | 2 | 3 | 4 | 5>(selfCheck?.sleepQuality ?? 3);
   const [mood, setMood] = useState<SelfCheckMood>(selfCheck?.mood ?? 'normal');
   const [pain, setPain] = useState<SelfCheckPain>(selfCheck?.pain ?? 'none');
@@ -83,283 +90,204 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
     });
   };
 
-  const off = interp.metrics.find((m) => m.status !== 'Normal' && m.id !== 'selfCheck');
-  const headline = !off
-    ? t('ui.headlineNormal')
-    : off.status === 'Critical'
-      ? t('ui.headlineCritical', { issue: t(`metric.${off.id}`) })
-      : t('ui.headlineCaution', { issue: t(`metric.${off.id}`) });
-
-  const bandKey = (status: string) =>
-    status === 'Critical' ? 'band.critical' : status === 'Attention' ? 'band.caution' : 'band.normal';
-  const bandVal = (id: string, status: string) => {
-    const row = THRESHOLDS[id as keyof typeof THRESHOLDS];
-    if (!row) return '';
-    if (status === 'Critical') return row.critical;
-    if (status === 'Attention') return row.attention;
-    return row.normal;
-  };
-
   const hr = w?.hr ?? todayRecord.restingHR;
   const spo2 = w?.spo2 ?? todayRecord.spo2;
   const hrv = w?.hrv ?? todayRecord.hrv;
-  const dose = w?.doseMsv ?? 0;
-
-  const timeline = [
-    { t: '08:00', title: t('astro.overall'), icon: <Sun className="w-4 h-4" /> },
-    ...countermeasures.slice(0, 4).map((a) => ({
-      t: a.timeSlot ?? '',
-      title: localizeKey(lang, a.title),
-      icon: <Activity className="w-4 h-4" />,
-      id: a.id,
-      done: a.completed,
-    })),
-    { t: '18:00', title: t('astro.selfCheck'), icon: <Moon className="w-4 h-4" />, self: true },
-  ];
-
-  const gauges = (
-    <>
-      <RingGauge
-        value={hr}
-        max={120}
-        label={t('wear.hr')}
-        unit="bpm"
-        tone={hr > BAND_NUMBERS.restingHR.attentionHigh ? 'warn' : 'ok'}
-        size={120}
-      />
-      <RingGauge
-        value={spo2}
-        max={100}
-        label={t('wear.spo2')}
-        unit="%"
-        tone={spo2 < BAND_NUMBERS.spo2.attentionBelow ? 'warn' : 'info'}
-        size={120}
-      />
-      <RingGauge
-        value={hrv}
-        max={50}
-        label={t('wear.hrv')}
-        unit="ms"
-        tone={hrv < BAND_NUMBERS.hrv.attentionBelow ? 'warn' : 'lilac'}
-        size={120}
-      />
-      <RingGauge value={Number(dose)} max={1} label={t('wear.dose')} unit="mSv" tone="lilac" size={120} />
-    </>
-  );
-
+  const dose = live?.ship.radiationMsvDay ?? w?.doseMsv ?? 0;
   const hrSeries = todayRecord.hourlyTimeline.map((p) => p.hr);
   const spo2Series = todayRecord.hourlyTimeline.map((p) => p.spo2);
+  const hrvSeries = todayRecord.hourlyTimeline.map((p) => p.hrv ?? hrv);
+  const doseSeries = hrSeries.map(() => Number(dose));
+
+  const tiles = buildVitalTiles({
+    hr,
+    hrv,
+    spo2,
+    dose,
+    baselineHr: crew?.baselineHr ?? 70,
+    baselineHrv: crew?.baselineHrv ?? 30,
+    baselineSpo2: crew?.baselineSpo2 ?? 97,
+    baselineDose: live?.ship.def.baselineMsvDay ?? 0.42,
+    hrSeries,
+    hrvSeries,
+    spo2Series,
+    doseSeries,
+  });
+  const overall = overallFromTiles(tiles);
+  const action = todayAction(tiles);
+  const flagged = flaggedTiles(tiles);
+  const clock = taipeiClockHms(world.t).slice(0, 5);
+  const findings = (health?.domains ?? []).filter((d) => d.rank > 0).sort((a, b) => b.rank - a.rank);
+
+  const schedule: ScheduleItemModel[] = [
+    { id: 'overall', title: t('astro.overall'), startMin: 8 * 60, timeLabel: '08:00' },
+    ...countermeasures.slice(0, 4).map((a) => ({
+      id: a.id,
+      title: localizeKey(lang, a.title),
+      startMin: parseSlotStartMin(a.timeSlot) ?? 13 * 60,
+      timeLabel: a.timeSlot ?? '',
+      activityId: a.id,
+    })),
+    { id: 'self', title: t('astro.selfCheck'), startMin: 18 * 60, timeLabel: '18:00', self: true },
+  ];
+  const nowMin = minutesInTaipei(world.t);
+  const nextIdx = nextScheduleIndex(schedule, nowMin);
+  const nextItem = nextIdx >= 0 ? schedule[nextIdx] : schedule[0];
+  const until = nextItem ? minutesUntil(nextItem.startMin, nowMin) : 0;
+  const rest = schedule.filter((_, i) => i !== nextIdx);
+
+  const hqMessages = astronaut.assignedStation
+    ? loadMessages().filter((m) => m.shipId === astronaut.assignedStation && visibleToCrew(m, Date.now()))
+    : [];
+
+  const verdictLine =
+    flagged.length === 0
+      ? t('today.allInRange')
+      : t('today.verdictOff', {
+          parts: flagged
+            .map((v) =>
+              t('today.part', {
+                label: t(v.labelKey),
+                value: v.value,
+                unit: v.unit,
+                flag: t(v.flag === 'low' ? 'today.flagLow' : 'today.flagElevated'),
+              })
+            )
+            .join(' · '),
+          action: t('today.restHydrate'),
+        });
+
+  const primary = () => {
+    if (action === 'askAura') onOpenAiCall(verdictLine);
+    else setSleepOpen(true);
+  };
+
+  const tone = toneFromRank(overall);
+  const heroBg =
+    overall === 'Critical' ? 'bg-rose-50' : overall === 'Attention' ? 'bg-amber-50' : 'bg-emerald-50/80';
 
   return (
-    <div data-page="today" className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden px-4 sm:px-8 pt-2 sm-page-pad lg:pb-3 flex flex-col">
-      <div className="flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,1fr)_minmax(15rem,22rem)] lg:grid-rows-[auto_minmax(0,1fr)] gap-4 lg:gap-6 items-stretch h-full">
-        <div className="min-w-0 flex flex-col">
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-stone-900">
-            {t(greetingKey(world.t), { name: firstName(astronaut.name) })}
-          </h1>
-          <p className="mt-1.5 text-sm text-stone-500 flex items-center gap-2">
-            {headline}
-            {off && <StatusDot tone={toneFromRank(off.status)} />}
-          </p>
-          {off && (
-            <p className="sr-only">
-              {t('reason.metric', {
-                label: t(`metric.${off.id}`),
-                value: off.valueLabel,
-                status: statusLabel(lang, off.status),
-                band: t(bandKey(off.status), { v: bandVal(String(off.id), off.status) }),
-              })}
-            </p>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-2 pb-1">
-            <FilterChip
-              active={filter === 'vitals'}
-              onClick={() => setFilter('vitals')}
-              icon={<Heart className="w-3.5 h-3.5 text-rose-400" />}
-              label={t('ui.filterVitals')}
-            />
-            <FilterChip
-              active={filter === 'sleep'}
-              onClick={() => setFilter('sleep')}
-              icon={<Moon className="w-3.5 h-3.5 text-sky-400" />}
-              label={t('ui.filterSleep')}
-            />
-            <FilterChip
-              active={filter === 'activity'}
-              onClick={() => setFilter('activity')}
-              icon={<Activity className="w-3.5 h-3.5 text-amber-500" />}
-              label={t('ui.filterActivity')}
-            />
-            <FilterChip
-              active={filter === 'environment'}
-              onClick={() => setFilter('environment')}
-              icon={<Leaf className="w-3.5 h-3.5 text-emerald-500" />}
-              label={t('ui.filterEnvironment')}
-            />
-            <button
-              type="button"
-              onClick={() => setSleepOpen(true)}
-              className="h-8 px-3.5 rounded-full bg-[var(--sm-cobalt)] text-white text-[12px] font-semibold"
-            >
-              {t('ui.logSelfCheck')}
-            </button>
-          </div>
-
-          {shelter && (
-            <div className="mt-4 px-4 py-3 rounded-[28px] bg-rose-50 text-rose-950 flex gap-3">
-              <p className="text-sm font-semibold">{t('astro.shelterTitle', { scale: sScale })}</p>
-              <p className="text-xs">{t('astro.shelterBody')}{speDemo ? t('astro.shelterSpe') : ''}</p>
-            </div>
-          )}
-
-          {filter === 'sleep' && (
-            <section className="mt-6 space-y-3">
-              <p className="text-sm text-stone-600">
-                {t('ui.sleepLastNight')}: {Math.floor(todayRecord.avgSleepMinutes / 60)} h {todayRecord.avgSleepMinutes % 60} m
+    <div data-page="today" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-2 sm-page-pad">
+      <div className="mx-auto max-w-[88rem] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:items-start lg:gap-4">
+        <section data-today-hero className={`lg:col-span-12 rounded-[24px] ${heroBg} px-4 py-3 shadow-[var(--sm-shadow-soft)]`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase">
+                {t(greetingKey(world.t), { name: firstName(astronaut.name) })}
               </p>
-              {selfCheck && (
-                <p className="text-[12px] text-stone-500">{t('ui.sleepQualityNow', { n: selfCheck.sleepQuality })}</p>
-              )}
-            </section>
-          )}
-
-          {filter === 'activity' && (
-            <section className="mt-6">
-              <h2 className="text-sm font-semibold mb-2">{t('astro.countermeasures')}</h2>
-              <p className="text-[11px] text-stone-400 mb-3">{t('astro.counterHint')}</p>
-              <ul className="space-y-2">
-                {countermeasures.map((act) => (
-                  <CountermeasureRow
-                    key={act.id}
-                    title={localizeKey(lang, act.title)}
-                    timeSlot={act.timeSlot}
-                    completed={act.completed}
-                    onToggle={() => onToggleActivity(todayRecord.date, act.id)}
-                  />
-                ))}
-                {assignedTasks.map((tsk) => (
-                  <CountermeasureRow
-                    key={tsk.id}
-                    title={localizeKey(lang, tsk.title)}
-                    timeSlot={tsk.deadline}
-                    completed={tsk.status === 'Completed'}
-                    onToggle={() => onToggleTaskStatus(tsk.id)}
-                  />
-                ))}
-                {countermeasures.length === 0 && assignedTasks.length === 0 && (
-                  <li className="text-xs text-stone-500">{t('astro.noCounter')}</li>
-                )}
-              </ul>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => onOpenAiCall(t('astro.askAddTask'))}
-                  className="h-10 px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold"
-                >
-                  {t('astro.askAddTask')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenAiCall(t('astro.logAnomaly'))}
-                  className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
-                >
-                  {t('astro.logAnomaly')}
-                </button>
-                <button
-                  type="button"
-                  onClick={onOpenConsole}
-                  className="h-10 px-4 rounded-full bg-white text-xs font-semibold"
-                >
-                  {t('astro.console')}
-                </button>
-              </div>
-            </section>
-          )}
-
-          {filter === 'environment' && (
-            <section className="mt-6 space-y-3">
-              {live && <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />}
-              {live && <WearableStrip live={live.crew} />}
-              {spaceEnvironment && (
-                <p className="text-[12px] text-stone-500">
-                  {t('astro.wxLine', {
-                    g: spaceEnvironment.scales.gScale,
-                    r: spaceEnvironment.scales.rScale,
-                    s: spaceEnvironment.scales.sScale,
-                  })}
-                  {speDemo ? t('astro.speOn') : ''}
-                </p>
-              )}
-            </section>
-          )}
-
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 content-start lg:hidden order-2">{gauges}</div>
-
-        <div className="flex justify-center items-stretch order-3 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 min-h-[22rem] sm:min-h-[28rem] lg:min-h-0 h-full rounded-[32px] bg-white/90 shadow-[var(--sm-shadow-soft)] px-2 py-3">
-          {crew && (
-            <BodyMapDashboard
-              crew={crew}
-              tNow={world.t}
-              wx={spaceEnvironment}
-              onOpenAiCall={onOpenAiCall}
-              hero
-              figureOnly
-            />
-          )}
-        </div>
-
-        <div className="hidden lg:flex flex-col justify-evenly gap-2 rounded-[32px] bg-white/90 shadow-[var(--sm-shadow-soft)] px-4 py-4 lg:col-start-3 lg:row-start-1 lg:row-span-2 h-full min-h-0">
-          {gauges}
-        </div>
-
-        <div className="min-w-0 order-4 lg:order-none lg:col-start-1 flex flex-col gap-3 min-h-0 h-full">
-          <div className="rounded-[28px] bg-white/90 p-4 shadow-[var(--sm-shadow-soft)] grid sm:grid-cols-2 gap-3 flex-1 min-h-[9rem]">
-            <TrendSpark label={t('ui.trendHr')} points={hrSeries} color="#f08a80" />
-            <TrendSpark label={t('ui.trendSpo2')} points={spo2Series} color="#2b3bff" />
-          </div>
-          <div className="sm-snap flex lg:grid lg:grid-cols-2 min-[1400px]:grid-cols-3 gap-3 overflow-x-auto lg:overflow-visible pb-1 shrink-0">
-            {timeline.map((item, i) => (
-              <button
-                key={`${item.t}-${i}`}
-                type="button"
-                onClick={() => {
-                  if ('self' in item && item.self) setSleepOpen(true);
-                  else if ('id' in item && item.id) onToggleActivity(todayRecord.date, item.id as string);
-                  else onOpenConsole();
-                }}
-                className="sm-wrap-btn w-[min(100%,14rem)] sm:w-[16rem] lg:w-auto min-h-[7rem] shrink-0 rounded-[28px] bg-white/90 px-4 py-3 text-left shadow-[var(--sm-shadow-soft)] overflow-hidden"
-                style={{ whiteSpace: 'normal' }}
-              >
-                <div className="flex items-center gap-2 text-stone-400">{item.icon}</div>
-                <p className="mt-2 text-[11px] font-mono text-stone-400 tabular-nums">{item.t}</p>
-                <p
-                  className="mt-0.5 w-full text-sm font-medium leading-snug break-normal hyphens-auto"
-                  lang={lang}
-                  style={{ whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'normal' }}
-                >
-                  {item.title}
-                </p>
-              </button>
-            ))}
+              <p className="mt-1 text-sm sm:text-[15px] font-semibold text-stone-900 leading-snug">{verdictLine}</p>
+              <p className="mt-1 text-[11px] font-mono text-stone-500 flex items-center gap-1.5">
+                <StatusDot tone={tone} />
+                {t('today.updated', { time: clock })} · {t('common.simulation')}
+              </p>
+            </div>
             <button
               type="button"
-              onClick={onOpenConsole}
-              className="min-w-[3rem] shrink-0 rounded-full bg-white/80 flex lg:hidden items-center justify-center text-stone-400"
-              aria-label={t('common.next')}
+              data-today-action
+              onClick={primary}
+              className="h-9 shrink-0 px-3.5 rounded-full bg-[var(--sm-cobalt)] text-white text-[12px] font-semibold whitespace-nowrap"
             >
-              →
+              {action === 'askAura' ? t('today.askAura') : t('today.logSelfCheck')}
             </button>
           </div>
+        </section>
 
-          {astronaut.assignedStation && (
-            <div className="shrink-0">
-              <CrewCommsInbox shipId={astronaut.assignedStation} />
-            </div>
+        {shelter && (
+          <div className="lg:col-span-12 px-4 py-2.5 rounded-[20px] bg-rose-50 text-rose-950">
+            <p className="text-sm font-semibold">{t('astro.shelterTitle', { scale: sScale })}</p>
+            <p className="text-xs">{t('astro.shelterBody')}{speDemo ? t('astro.shelterSpe') : ''}</p>
+          </div>
+        )}
+
+        <section data-today-vitals className="lg:col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {tiles.map((tile) => (
+            <VitalTile key={tile.id} tile={tile} t={t} />
+          ))}
+        </section>
+
+        <section data-today-schedule className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+          {nextItem && (
+            <button
+              type="button"
+              data-today-next
+              onClick={() => {
+                if (nextItem.self) setSleepOpen(true);
+                else if (nextItem.activityId) onToggleActivity(todayRecord.date, nextItem.activityId);
+                else onOpenConsole();
+              }}
+              className="w-full text-left rounded-[18px] bg-sky-50 px-3 py-2.5"
+            >
+              <p className="text-[11px] font-semibold text-sky-800">
+                {t('today.next')} · {until <= 0 ? t('today.now') : t('today.inMin', { n: until })}
+              </p>
+              <p className="text-sm font-semibold mt-0.5">
+                {nextItem.timeLabel} · {nextItem.title}
+              </p>
+            </button>
           )}
-        </div>
+          <ul className="mt-2 space-y-1">
+            {rest.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.self) setSleepOpen(true);
+                    else if (item.activityId) onToggleActivity(todayRecord.date, item.activityId);
+                    else onOpenConsole();
+                  }}
+                  className="w-full flex items-center gap-2 rounded-[14px] px-2 py-1.5 text-left hover:bg-stone-50"
+                >
+                  {item.self ? <Moon className="w-3.5 h-3.5 text-stone-400" /> : item.id === 'overall' ? <Sun className="w-3.5 h-3.5 text-stone-400" /> : <Activity className="w-3.5 h-3.5 text-stone-400" />}
+                  <span className="text-[12px] font-mono text-stone-400">{item.timeLabel}</span>
+                  <span className="text-[13px] truncate">{item.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section data-today-body className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[12px] font-semibold">{t('today.attention')}</p>
+            <button type="button" onClick={() => setBodyOpen((v) => !v)} className="text-[11px] font-semibold text-[var(--sm-cobalt)]">
+              {bodyOpen ? t('body.closeMap') : t('today.expandBody')}
+            </button>
+          </div>
+          <div className="flex gap-3 items-start">
+            {crew && (
+              <div className="shrink-0 w-[6.5rem] sm:w-[7.5rem]">
+                <BodyMapDashboard
+                  crew={crew}
+                  tNow={world.t}
+                  wx={spaceEnvironment}
+                  onOpenAiCall={onOpenAiCall}
+                  compact
+                  figureOnly
+                />
+              </div>
+            )}
+            <ul className="min-w-0 flex-1 space-y-1.5">
+              {findings.length === 0 && <li className="text-[12px] text-stone-500">{t('today.noFindings')}</li>}
+              {findings.slice(0, bodyOpen ? 8 : 3).map((d) => (
+                <li key={d.id} className="rounded-[14px] bg-stone-50 px-2.5 py-1.5">
+                  <p className="text-[12px] font-semibold leading-tight">{t(`body.domain.${d.id}`)}</p>
+                  <p className="text-[11px] text-stone-500">
+                    {d.valueLabel} · {statusLabel(lang, ['Normal', 'Attention', 'Critical'][d.rank])}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <TrendCard hr={hrSeries} spo2={spo2Series} currentHr={hr} currentSpo2={spo2} t={t} />
+
+        {hqMessages.length > 0 ? (
+          <div data-today-hq className="lg:col-span-8">
+            <p className="text-[12px] font-semibold mb-2">{t('today.hqMessages', { n: hqMessages.length })}</p>
+            {astronaut.assignedStation && <CrewCommsInbox shipId={astronaut.assignedStation} />}
+          </div>
+        ) : null}
       </div>
 
       <Sheet open={sleepOpen} onClose={() => setSleepOpen(false)} title={<h2 className="font-display text-2xl">{t('astro.selfCheck')}</h2>}>
@@ -367,11 +295,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
         <form onSubmit={submitSelfCheck} className="space-y-3 text-sm">
           <label className="flex flex-col gap-1">
             <span>{t('astro.sleepQuality')}</span>
-            <select
-              className="h-11 rounded-full bg-stone-50 px-4"
-              value={sleepQuality}
-              onChange={(e) => setSleepQuality(Number(e.target.value) as 1 | 2 | 3 | 4 | 5)}
-            >
+            <select className="h-11 rounded-full bg-stone-50 px-4" value={sleepQuality} onChange={(e) => setSleepQuality(Number(e.target.value) as 1 | 2 | 3 | 4 | 5)}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
                   {n}
@@ -397,12 +321,7 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
           </label>
           <label className="flex flex-col gap-1">
             <span>{t('astro.symptoms')}</span>
-            <input
-              className="h-11 rounded-full bg-stone-50 px-4"
-              value={symptoms}
-              onChange={(e) => setSymptoms(e.target.value)}
-              placeholder={t('astro.symptomsPlaceholder')}
-            />
+            <input className="h-11 rounded-full bg-stone-50 px-4" value={symptoms} onChange={(e) => setSymptoms(e.target.value)} placeholder={t('astro.symptomsPlaceholder')} />
           </label>
           <button type="submit" className="h-11 w-full rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold">
             {t('astro.writeAnalysis')}
@@ -414,52 +333,138 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   );
 };
 
-function TrendSpark({ label, points, color }: { label: string; points: number[]; color: string }) {
-  const w = 240;
-  const h = 56;
-  const min = Math.min(...points, 0);
-  const max = Math.max(...points, 1);
+function VitalTile({ tile, t }: { tile: VitalTileModel; t: (k: string, v?: Record<string, string | number>) => string }) {
+  const warn = tile.status !== 'Normal';
+  return (
+    <article
+      data-vital={tile.id}
+      className={`rounded-[20px] px-3 py-2.5 shadow-[var(--sm-shadow-soft)] ${warn ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-white'}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold text-stone-500">{t(tile.labelKey)}</p>
+        <MiniSpark points={tile.series} color={warn ? '#c45c2a' : '#2b3bff'} />
+      </div>
+      <p className="mt-1 text-[22px] font-semibold tabular-nums leading-none">
+        {tile.value}
+        <span className="ml-1 text-[11px] font-medium text-stone-400">{tile.unit}</span>
+      </p>
+      <p className="mt-1.5 text-[10px] text-stone-500">{t('today.range', { band: tile.range })}</p>
+      <p className={`text-[10px] tabular-nums ${tile.delta > 0 ? 'text-amber-800' : tile.delta < 0 ? 'text-sky-800' : 'text-stone-400'}`}>
+        {tile.delta > 0 ? '+' : ''}
+        {tile.delta} {t('today.vsBaseline')}
+      </p>
+    </article>
+  );
+}
+
+function MiniSpark({ points, color }: { points: number[]; color: string }) {
+  const w = 56;
+  const h = 22;
+  if (points.length < 2) return <HeartPulse className="w-3.5 h-3.5 text-stone-300" />;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
   const span = max - min || 1;
   const d = points
     .map((v, i) => {
-      const x = points.length < 2 ? 0 : (i / (points.length - 1)) * w;
-      const y = h - 6 - ((v - min) / span) * (h - 12);
+      const x = (i / (points.length - 1)) * w;
+      const y = h - 2 - ((v - min) / span) * (h - 4);
       return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(' ');
   return (
-    <div data-spark={label} className="h-full min-h-0 flex flex-col">
-      <p className="text-[11px] font-semibold text-stone-500 mb-1 shrink-0">{label}</p>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-16 lg:h-full lg:min-h-[7rem]" role="img" aria-label={label}>
-        <path d={d} fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
-      </svg>
-    </div>
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-14 h-[22px] shrink-0" aria-hidden>
+      <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
   );
 }
 
-function CountermeasureRow({
-  title,
-  timeSlot,
-  completed,
-  onToggle,
+function TrendCard({
+  hr,
+  spo2,
+  currentHr,
+  currentSpo2,
+  t,
 }: {
-  title: string;
-  timeSlot?: string;
-  completed: boolean;
-  onToggle: () => void;
+  hr: number[];
+  spo2: number[];
+  currentHr: number;
+  currentSpo2: number;
+  t: (k: string, v?: Record<string, string | number>) => string;
 }) {
   return (
-    <li>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 rounded-full bg-white/90 px-4 py-2.5 text-left"
-      >
-        {completed ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <Circle className="w-4 h-4 text-stone-300 shrink-0" />}
-        <span className={`text-sm ${completed ? 'line-through text-stone-400' : ''}`}>{title}</span>
-        {timeSlot && <span className="ml-auto text-[11px] font-mono text-stone-400">{timeSlot}</span>}
-      </button>
-    </li>
+    <section data-today-trends className="lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+      <p className="text-[12px] font-semibold mb-2">{t('today.trends')}</p>
+      <AxisChart label={t('wear.hr')} unit="bpm" points={hr} current={currentHr} band={hrNormalBand()} color="#f08a80" t={t} />
+      <div className="mt-3">
+        <AxisChart label={t('wear.spo2')} unit="%" points={spo2} current={currentSpo2} band={spo2NormalBand()} color="#2b3bff" t={t} />
+      </div>
+    </section>
+  );
+}
+
+function AxisChart({
+  label,
+  unit,
+  points,
+  current,
+  band,
+  color,
+  t,
+}: {
+  label: string;
+  unit: string;
+  points: number[];
+  current: number;
+  band: { lo: number; hi: number };
+  color: string;
+  t: (k: string, v?: Record<string, string | number>) => string;
+}) {
+  const w = 320;
+  const h = 72;
+  const padL = 28;
+  const padR = 8;
+  const padT = 8;
+  const padB = 16;
+  const vals = points.length ? points : [current];
+  const min = Math.min(...vals, band.lo) - 2;
+  const max = Math.max(...vals, band.hi) + 2;
+  const span = max - min || 1;
+  const xAt = (i: number) => padL + (i / Math.max(1, vals.length - 1)) * (w - padL - padR);
+  const yAt = (v: number) => padT + (1 - (v - min) / span) * (h - padT - padB);
+  const d = vals.map((v, i) => `${i === 0 ? 'M' : 'L'}${xAt(i).toFixed(1)} ${yAt(v).toFixed(1)}`).join(' ');
+  const yLo = yAt(band.lo);
+  const yHi = yAt(band.hi);
+  const mn = Math.min(...vals);
+  const mx = Math.max(...vals);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-2 mb-0.5">
+        <p className="text-[11px] font-semibold text-stone-600">{label}</p>
+        <p className="text-[11px] tabular-nums text-stone-500">
+          {t('today.current', { n: current })} {unit} · {t('today.min', { n: mn })} · {t('today.max', { n: mx })}
+        </p>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[4.5rem] lg:h-28" role="img" aria-label={label}>
+        <rect x={padL} y={yHi} width={w - padL - padR} height={Math.max(1, yLo - yHi)} fill={color} opacity="0.12" />
+        <text x={2} y={yHi + 4} className="fill-stone-400" fontSize="8">
+          {band.hi}
+        </text>
+        <text x={2} y={yLo} className="fill-stone-400" fontSize="8">
+          {band.lo}
+        </text>
+        <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <text x={padL} y={h - 2} className="fill-stone-400" fontSize="8">
+          00
+        </text>
+        <text x={(w - padR) / 2} y={h - 2} className="fill-stone-400" fontSize="8">
+          12
+        </text>
+        <text x={w - 18} y={h - 2} className="fill-stone-400" fontSize="8">
+          24
+        </text>
+      </svg>
+      <p className="sr-only">{t('today.band')}</p>
+    </div>
   );
 }
 

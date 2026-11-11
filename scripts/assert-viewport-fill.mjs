@@ -1,45 +1,18 @@
 #!/usr/bin/env node
 /**
- * Pixel-check that /today and /hq have no >10% empty cream band at the bottom
- * of the viewport at 1280x800 and 1920x1080.
+ * Density check: 390×844 /today first screen shows verdict + vitals + next action.
+ * Desktop /today and /hq use multi-column content (not flex-grow stretch).
  *
  *   BASE_URL=http://127.0.0.1:3010 node scripts/assert-viewport-fill.mjs
  */
-import { createRequire } from 'node:module';
 import { accessSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const require = createRequire(import.meta.url);
-
-const SM_BG = { r: 246, g: 245, b: 241 };
-const MAX_BLANK_RATIO = 0.1;
-
-function isCreamPixel(r, g, b, bg = SM_BG, tolerance = 6) {
-  return Math.abs(r - bg.r) <= tolerance && Math.abs(g - bg.g) <= tolerance && Math.abs(b - bg.b) <= tolerance;
-}
-
-function bottomEmptyBandRatio(data, width, height, opts = {}) {
-  const bg = opts.bg ?? SM_BG;
-  const tolerance = opts.tolerance ?? 6;
-  const emptyRow = opts.emptyRow ?? 0.82;
-  let empty = 0;
-  for (let y = height - 1; y >= 0; y--) {
-    let cream = 0;
-    const row = y * width * 4;
-    for (let x = 0; x < width; x++) {
-      const o = row + x * 4;
-      if (isCreamPixel(data[o], data[o + 1], data[o + 2], bg, tolerance)) cream += 1;
-    }
-    if (cream / width >= emptyRow) empty += 1;
-    else break;
-  }
-  return height > 0 ? empty / height : 1;
-}
-
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:3010';
 const OUT = process.env.VIEWPORT_FILL_OUT || '/opt/cursor/artifacts';
 const VIEWPORTS = [
+  { w: 390, h: 844 },
   { w: 1280, h: 800 },
   { w: 1920, h: 1080 },
 ];
@@ -78,26 +51,6 @@ function chromePath() {
     }
   }
   return null;
-}
-
-async function pixelsFromPng(page, buf, w, h) {
-  const b64 = Buffer.from(buf).toString('base64');
-  return page.evaluate(
-    async (b64, w, h) => {
-      const img = new Image();
-      img.src = `data:image/png;base64,${b64}`;
-      await img.decode();
-      const c = document.createElement('canvas');
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      return Array.from(ctx.getImageData(0, 0, w, h).data);
-    },
-    b64,
-    w,
-    h
-  );
 }
 
 async function openAuthed(browser, vp, user) {
@@ -151,11 +104,46 @@ async function main() {
         const file = path.join(OUT, `${spec.path.slice(1)}-${vp.w}x${vp.h}.png`);
         const buf = await page.screenshot({ type: 'png', fullPage: false });
         writeFileSync(file, buf);
-        const data = Uint8ClampedArray.from(await pixelsFromPng(page, buf, vp.w, vp.h));
-        const band = bottomEmptyBandRatio(data, vp.w, vp.h);
-        const row = `${spec.path} ${vp.w}x${vp.h} bottomEmptyBand=${band.toFixed(3)} file=${file}`;
+        const layout = await page.evaluate((pathName) => {
+          const pageEl = document.querySelector('[data-page]');
+          const cs = pageEl ? getComputedStyle(pageEl) : null;
+          const hiddenOverflow = Boolean(cs && (cs.overflow === 'hidden' || cs.overflowY === 'hidden'));
+          const h = window.innerHeight;
+          const dock = 80;
+          const vis = (sel) => {
+            const el = document.querySelector(sel);
+            if (!el) return { sel, ok: false, reason: 'missing' };
+            const r = el.getBoundingClientRect();
+            return {
+              sel,
+              ok: r.bottom > 0 && r.top < h - dock,
+              top: Math.round(r.top),
+              bottom: Math.round(r.bottom),
+            };
+          };
+          if (pathName === '/today') {
+            return {
+              hiddenOverflow,
+              first: ['[data-today-hero]', '[data-today-vitals]', '[data-today-next]', '[data-today-action]'].map(vis),
+              orbitH: 0,
+            };
+          }
+          const orbit = document.querySelector('[data-hq-orbit]');
+          return {
+            hiddenOverflow,
+            first: ['[data-hq-fleet]', '[data-hq-orbit]', '[data-hq-station]'].map(vis),
+            orbitH: orbit ? Math.round(orbit.getBoundingClientRect().height) : 0,
+          };
+        }, spec.path);
+        const row = `${spec.path} ${vp.w}x${vp.h} layout=${JSON.stringify(layout)} file=${file}`;
         console.log(row);
-        if (band > MAX_BLANK_RATIO) failures.push(row);
+        const missing = layout.first.filter((v) => v.reason === 'missing');
+        if (missing.length) failures.push(`${row} missing density blocks`);
+        if (layout.hiddenOverflow) failures.push(`${row} overflow-hidden stretch`);
+        if (spec.path === '/today' && layout.first.some((v) => !v.ok)) {
+          failures.push(`${row} first-screen missing`);
+        }
+        if (spec.path === '/hq' && layout.orbitH > vp.h * 0.55) failures.push(`${row} orbit stretched`);
         await page.close();
       }
     }
@@ -166,7 +154,7 @@ async function main() {
     console.error('Viewport fill failed:\n' + failures.join('\n'));
     process.exit(1);
   }
-  console.log(`ok: empty cream band ≤ ${MAX_BLANK_RATIO} on /today and /hq`);
+  console.log('ok: /today first screen + dense /hq layout');
 }
 
 main().catch((err) => {

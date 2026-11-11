@@ -73,102 +73,131 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   const alerts = world.ships.filter((row) => shipCrewStatus(row) !== 'Normal');
 
   return (
-    <div data-page="hq" className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden px-4 sm:px-8 pt-3 sm-page-pad lg:pb-3 flex flex-col">
-      <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase shrink-0">{t('ui.missionControl')}</p>
-      <h1 className="font-display text-4xl sm:text-5xl mt-1 shrink-0">{t('ui.fourShips')}</h1>
-      <p className="mt-2 text-sm text-stone-500 flex items-center gap-2 shrink-0">
-        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        {t('ui.liveWx', { g, s, r })}
-      </p>
+    <div data-page="hq" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
+      <div className="mx-auto max-w-[88rem] flex flex-col gap-3 lg:gap-4">
+        <header>
+          <p className="text-[11px] font-semibold tracking-wide text-stone-400 uppercase">{t('ui.missionControl')}</p>
+          <h1 className="font-display text-3xl sm:text-4xl mt-1">{t('ui.fourShips')}</h1>
+          <p className="mt-1.5 text-[12px] text-stone-500 flex flex-wrap items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            {t('ui.liveWx', { g, s, r })}
+            <span className="font-mono">· {t('common.simulation')}</span>
+          </p>
+        </header>
 
-      <div className="mt-4 flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,28rem)] gap-4 lg:gap-6 items-stretch">
-        <div className="relative w-full min-h-[18rem] lg:min-h-0 h-full rounded-[32px] bg-white/85 shadow-[var(--sm-shadow-soft)]">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[26%] lg:w-[22%] aspect-square rounded-full bg-gradient-to-br from-stone-200 to-stone-400 shadow-inner" aria-hidden />
-          <div className="absolute left-[62%] top-[40%] w-[13%] lg:w-[12%] aspect-square rounded-full bg-gradient-to-br from-stone-300 to-stone-500" aria-hidden />
-          <div className="absolute left-[52%] top-[70%] w-[12%] lg:w-[11%] aspect-square rounded-full bg-gradient-to-br from-orange-300 to-rose-400" aria-hidden />
-          <div className="absolute inset-[8%] rounded-full border border-stone-200/70" />
-          <div className="absolute inset-[22%] rounded-full border border-stone-200/50" />
-          {world.ships.map((s) => {
-            const pos = ORBIT[s.def.id] ?? { x: 50, y: 50, color: '#2b3bff' };
-            const st = shipCrewStatus(s);
-            const active = ship.def.id === s.def.id;
-            return (
-              <button
-                key={s.def.id}
-                type="button"
-                onClick={() => {
-                  setShipId(s.def.id);
-                  setSheetOpen(true);
-                }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 text-left"
-                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                aria-label={`${t(s.def.nameKey)} ${s.crew.length}`}
-              >
-                <span
-                  className="block w-9 h-9 lg:w-12 lg:h-12 rounded-full shadow-[var(--sm-shadow)]"
-                  style={{
-                    background: pos.color,
-                    boxShadow: active ? `0 0 0 6px ${pos.color}33` : undefined,
-                  }}
-                />
-                <span className="mt-1 block px-2.5 py-1 rounded-full bg-white/90 text-[11px] font-medium whitespace-nowrap shadow-[var(--sm-shadow-soft)]">
-                  {t(s.def.nameKey)}
-                  <span className="ml-1 text-stone-400">{s.crew.length}</span>
-                  <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full" style={{ background: TONE_HEX[toneFromRank(st)] }} />
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {alerts.length > 0 && (
+          <div data-hq-alerts className="rounded-[20px] bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
+            <p className="font-semibold">{t('ui.stationAlerts')}</p>
+            <p className="mt-0.5">{alerts.map((row) => t(row.def.nameKey)).join(' · ')}</p>
+          </div>
+        )}
 
-        <aside className="rounded-[32px] bg-white/90 p-5 shadow-[var(--sm-shadow-soft)] flex flex-col min-h-0 h-full overflow-hidden">
-          <p className="text-sm font-semibold shrink-0">{t('ui.fleetStatus')}</p>
-          {alerts.length > 0 && (
-            <div className="mt-2 rounded-[18px] bg-amber-50 px-3 py-2 text-[12px] text-amber-950 shrink-0">
-              <p className="font-semibold">{t('ui.stationAlerts')}</p>
-              <p className="mt-0.5">
-                {alerts.map((row) => t(row.def.nameKey)).join(' · ')}
-              </p>
-            </div>
-          )}
-          <ul className="mt-3 space-y-2 flex-1 min-h-0 overflow-y-auto">
-            {world.ships.map((row) => {
-              const st = shipCrewStatus(row);
-              const active = ship.def.id === row.def.id;
+        <div className="grid gap-3 lg:grid-cols-12 lg:items-start lg:gap-4">
+          <aside data-hq-fleet className="order-1 lg:order-2 lg:col-span-3 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+            <p className="text-[12px] font-semibold">{t('ui.fleetStatus')}</p>
+            <ul className="mt-2 space-y-1.5">
+              {world.ships.map((row) => {
+                const st = shipCrewStatus(row);
+                const active = ship.def.id === row.def.id;
+                return (
+                  <li key={row.def.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShipId(row.def.id);
+                        setSheetOpen(true);
+                      }}
+                      className={`w-full text-left rounded-[18px] px-2.5 py-2 ${active ? 'bg-sky-50 ring-1 ring-sky-200' : 'bg-stone-50'}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[13px] font-semibold">{t(row.def.nameKey)}</span>
+                        <StatusPill tone={toneFromRank(st)}>{statusLabel(lang, st)}</StatusPill>
+                      </div>
+                      <p className="text-[11px] text-stone-500 mt-0.5">
+                        {t('sim.crewCount', { n: row.crew.length })} · {locLine(row, t)}
+                      </p>
+                      <p className="text-[11px] tabular-nums text-stone-400 mt-0.5">
+                        {row.radiationMsvDay.toFixed(3)} mSv/d
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+
+          <div
+            data-hq-orbit
+            className="order-2 lg:order-1 lg:col-span-5 relative aspect-square max-h-[14rem] lg:max-h-[20rem] w-full max-w-[14rem] lg:max-w-none mx-auto rounded-[24px] bg-white shadow-[var(--sm-shadow-soft)]"
+          >
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[26%] aspect-square rounded-full bg-gradient-to-br from-stone-200 to-stone-400 shadow-inner" aria-hidden />
+            <div className="absolute left-[62%] top-[40%] w-[13%] aspect-square rounded-full bg-gradient-to-br from-stone-300 to-stone-500" aria-hidden />
+            <div className="absolute left-[52%] top-[70%] w-[12%] aspect-square rounded-full bg-gradient-to-br from-orange-300 to-rose-400" aria-hidden />
+            <div className="absolute inset-[8%] rounded-full border border-stone-200/70" />
+            <div className="absolute inset-[22%] rounded-full border border-stone-200/50" />
+            {world.ships.map((s) => {
+              const pos = ORBIT[s.def.id] ?? { x: 50, y: 50, color: '#2b3bff' };
+              const st = shipCrewStatus(s);
+              const active = ship.def.id === s.def.id;
               return (
-                <li key={row.def.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShipId(row.def.id);
-                      setSheetOpen(true);
+                <button
+                  key={s.def.id}
+                  type="button"
+                  onClick={() => {
+                    setShipId(s.def.id);
+                    setSheetOpen(true);
+                  }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 text-left"
+                  style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+                  aria-label={`${t(s.def.nameKey)} ${s.crew.length}`}
+                >
+                  <span
+                    className="block w-8 h-8 lg:w-10 lg:h-10 rounded-full shadow-[var(--sm-shadow)]"
+                    style={{
+                      background: pos.color,
+                      boxShadow: active ? `0 0 0 6px ${pos.color}33` : undefined,
                     }}
-                    className={`w-full text-left rounded-[22px] px-3 py-2.5 ${active ? 'bg-sky-50 ring-1 ring-sky-200' : 'bg-stone-50'}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{t(row.def.nameKey)}</span>
-                      <StatusPill tone={toneFromRank(st)}>{statusLabel(lang, st)}</StatusPill>
-                    </div>
-                    <p className="text-[11px] text-stone-500 mt-0.5">
-                      {t('sim.crewCount', { n: row.crew.length })} · {locLine(row, t)}
-                    </p>
-                  </button>
-                </li>
+                  />
+                  <span className="mt-1 block px-2 py-0.5 rounded-full bg-white/90 text-[10px] font-medium whitespace-nowrap shadow-[var(--sm-shadow-soft)]">
+                    {t(s.def.nameKey)}
+                    <span className="ml-1 text-stone-400">{s.crew.length}</span>
+                    <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full" style={{ background: TONE_HEX[toneFromRank(st)] }} />
+                  </span>
+                </button>
               );
             })}
-          </ul>
-          <div className="mt-3 pt-3 border-t border-stone-100 shrink-0">
-            <p className="text-sm font-semibold">
+          </div>
+
+          <aside data-hq-station className="order-3 lg:col-span-4 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+            <p className="text-[13px] font-semibold">
               {t(ship.def.nameKey)} · {ship.crew.length} {t('hq.crew').toLowerCase()}
+            </p>
+            <p className="text-[11px] text-stone-500 mt-0.5">{locLine(ship, t)}</p>
+            <p className="text-[11px] tabular-nums text-stone-500 mt-1">
+              {t('hq.radiation')}: {ship.radiationMsvDay.toFixed(3)} mSv/d
+              {ship.sScaleUsed ? ` · S ${ship.sScaleUsed}` : ''}
+              {' · '}
+              O₂ {ship.cabin.oxygenPercent.toFixed(1)}% · CO₂ {ship.cabin.carbonDioxidePercent.toFixed(2)}%
             </p>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {ship.crew.map((c) => (
-                <AvatarBubble key={c.def.id} name={c.def.name} seed={c.def.avatarSeed} id={c.def.id} size={36} />
+                <button
+                  key={c.def.id}
+                  type="button"
+                  onClick={() => {
+                    setInspect(c.def);
+                    setSheetOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 pr-2.5"
+                >
+                  <AvatarBubble name={c.def.name} seed={c.def.avatarSeed} id={c.def.id} size={28} />
+                  <span className="text-[11px] font-medium">{c.def.name.split(' ')[0]}</span>
+                </button>
               ))}
             </div>
-            <div className="mt-3">
+            <div className="mt-2">
               <Segmented
-                value={delivered >= sent && sent > 0 ? 'onBoard' : sent > 0 ? 'sent' : 'sent'}
+                value={delivered >= sent && sent > 0 ? 'onBoard' : 'sent'}
                 onChange={() => undefined}
                 options={[
                   { id: 'sent', label: `${t('ui.sent')} ${sent}` },
@@ -177,12 +206,18 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
                 ]}
               />
             </div>
-            <p className="mt-3">
+            <p className="mt-2">
               <DelayCaption sec={ship.commLatencySec} />
             </p>
-            <div className="mt-3 flex gap-2">
+            <ul className="mt-2 space-y-1.5 max-h-36 overflow-y-auto">
+              {messages.length === 0 && <li className="text-[11px] text-stone-400">{t('hq.noMessages')}</li>}
+              {messages.slice(0, 3).map((m) => (
+                <MessageRow key={m.id} msg={m} now={Date.now()} t={t} />
+              ))}
+            </ul>
+            <div className="mt-2 flex gap-2">
               <input
-                className="flex-1 h-11 rounded-full bg-stone-50 px-4 text-sm"
+                className="flex-1 h-10 rounded-full bg-stone-50 px-4 text-sm"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={t('hq.messagePlaceholder')}
@@ -190,7 +225,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
               <button
                 type="button"
                 onClick={send}
-                className="h-11 px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold inline-flex items-center gap-1"
+                className="h-10 px-3.5 rounded-full bg-[var(--sm-cobalt)] text-white text-xs font-semibold inline-flex items-center gap-1"
               >
                 {t('ui.transmit')}
                 <Send className="w-3.5 h-3.5" />
@@ -203,8 +238,40 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
             >
               {t('hq.drill')} →
             </button>
-          </div>
-        </aside>
+          </aside>
+
+          <section data-hq-crew className="order-4 lg:col-span-12 rounded-[24px] bg-white px-3 py-3 shadow-[var(--sm-shadow-soft)]">
+            <p className="text-[12px] font-semibold">
+              {t(ship.def.nameKey)} · {t('hq.crew')}
+            </p>
+            <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
+              {ship.crew.map((c) => (
+                <li key={c.def.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInspect(c.def);
+                      setSheetOpen(true);
+                    }}
+                    className="w-full text-left rounded-[16px] bg-stone-50 px-2.5 py-2 flex items-center gap-2"
+                  >
+                    <AvatarBubble name={c.def.name} seed={c.def.avatarSeed} id={c.def.id} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold truncate">{c.def.name}</p>
+                      <p className="text-[11px] text-stone-500 truncate">
+                        {t(c.def.occupationKey)} · {t(c.activityKey)}
+                      </p>
+                    </div>
+                    <StatusDot
+                      tone={toneFromRank(['Normal', 'Attention', 'Critical'][overallRank(c)])}
+                      label={statusLabel(lang, ['Normal', 'Attention', 'Critical'][overallRank(c)])}
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
       </div>
 
       <Sheet

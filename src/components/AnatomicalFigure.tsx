@@ -176,7 +176,8 @@ export const AnatomicalFigure: React.FC<{
   auraRank: Rank;
   labelFor: (id: BodyRegionId) => string;
   hero?: boolean;
-}> = ({ side, regionRank, selected, onSelect, pulse, auraRank, labelFor, hero = false }) => {
+  compact?: boolean;
+}> = ({ side, regionRank, selected, onSelect, pulse, auraRank, labelFor, hero = false, compact = false }) => {
   const [hover, setHover] = useState<BodyRegionId | null>(null);
   useEffect(() => {
     setHover(null);
@@ -190,16 +191,20 @@ export const AnatomicalFigure: React.FC<{
   return (
     <div
       className={`relative mx-auto select-none overflow-hidden bodymap-frost ${
-        hero ? 'h-[22rem] sm:h-[28rem] lg:h-full lg:max-h-full lg:flex-1 lg:min-h-0' : 'h-80 sm:h-96'
+        compact
+          ? 'h-36 w-full'
+          : hero
+            ? 'h-[22rem] sm:h-[28rem]'
+            : 'h-80 sm:h-96'
       }`}
       style={{
         aspectRatio: '9 / 16',
-        width: 'auto',
-        maxHeight: hero ? '100%' : undefined,
-        maxWidth: hero ? 'min(100%, 36rem)' : 'min(100%, 16rem)',
+        width: compact ? '100%' : 'auto',
+        maxHeight: compact ? '9.5rem' : undefined,
+        maxWidth: compact ? '100%' : hero ? 'min(100%, 22rem)' : 'min(100%, 16rem)',
       }}
     >
-      <div className="absolute inset-0 bg-[#f6f5f1]" aria-hidden />
+      {!compact && <div className="absolute inset-0 bg-[#f6f5f1]" aria-hidden />}
       <picture>
         <source type="image/webp" srcSet={`/bodymap/${src}.webp`} />
         <img

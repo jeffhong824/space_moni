@@ -56,22 +56,31 @@ describe('viewport cream fill', () => {
     expect(bottomEmptyBandRatio(allCream, w, h)).toBe(1);
   });
 
-  it('keeps /today and /hq shells on a full-height fill grid', () => {
+  it('keeps /today and /hq dense without flex-grow stretching', () => {
     const today = readFileSync(new URL('../components/AstronautHome.tsx', import.meta.url), 'utf8');
     const hq = readFileSync(new URL('../components/HqConsole.tsx', import.meta.url), 'utf8');
-    expect(today).toMatch(/lg:overflow-hidden/);
-    expect(today).toMatch(/h-full/);
-    expect(today).toMatch(/TrendSpark/);
-    expect(today).toMatch(/ui\.trendHr/);
-    expect(today).toMatch(/lg:col-start-2 lg:row-start-1 lg:row-span-2/);
-    expect(today).toMatch(/rounded-\[32px\] bg-white\/90/);
-    expect(today).toMatch(/hyphens-auto/);
-    expect(today).not.toMatch(/overflowWrap: 'anywhere'/);
+    expect(today).toMatch(/data-today-hero/);
+    expect(today).toMatch(/data-today-vitals/);
+    expect(today).toMatch(/data-today-next/);
+    expect(today).toMatch(/data-today-trends/);
+    expect(today).toMatch(/today\.allInRange/);
+    expect(today).toMatch(/today\.verdictOff/);
+    expect(today).toMatch(/grid-cols-2 lg:grid-cols-4/);
+    expect(today).toMatch(/AxisChart/);
+    expect(today).toMatch(/lg:grid-cols-12/);
+    expect(today).toMatch(/lg:items-start/);
+    expect(today).not.toMatch(/lg:overflow-hidden/);
+    expect(today).not.toMatch(/justify-evenly/);
+    expect(today).not.toMatch(/TrendSpark/);
+    expect(hq).not.toMatch(/lg:overflow-hidden/);
+    expect(hq).not.toMatch(/items-stretch/);
     expect(hq).not.toMatch(/max-h-\[min\(62vh/);
-    expect(hq).toMatch(/lg:overflow-hidden/);
-    expect(hq).toMatch(/h-full/);
+    expect(hq).toMatch(/data-hq-orbit/);
+    expect(hq).toMatch(/data-hq-fleet/);
+    expect(hq).toMatch(/data-hq-crew/);
     expect(hq).toMatch(/ui\.fleetStatus/);
     expect(hq).toMatch(/ui\.stationAlerts/);
+    expect(hq).toMatch(/max-h-\[20rem\]/);
   });
 
   it('uses at least 11px initials on /day avatars', () => {
@@ -96,7 +105,9 @@ describe('viewport cream fill', () => {
     const script = readFileSync(new URL('../../scripts/assert-viewport-fill.mjs', import.meta.url), 'utf8');
     expect(script).toMatch(/1280/);
     expect(script).toMatch(/1920/);
-    expect(script).toMatch(/bottomEmptyBandRatio/);
+    expect(script).toMatch(/390/);
+    expect(script).toMatch(/data-today-hero/);
+    expect(script).toMatch(/data-today-next/);
     const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
     expect(app).toMatch(/top-\[4\.75rem\]/);
     expect(app).not.toMatch(/lg:bottom-6 left-1\/2/);
