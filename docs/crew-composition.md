@@ -41,7 +41,7 @@ Sources:
 - [Gateway | Canadian Space Agency](https://www.asc-csa.gc.ca/eng/astronomy/moon-exploration/gateway.asp)
 - [Houston We Have a Podcast: Gateway (NASA JSC)](https://www.nasa.gov/podcasts/houston-we-have-a-podcast/gateway-the-lunar-space-station/)
 
-**SpaceMoni mapping:** Selene Gateway carries **4** (Commander, Pilot, two Mission Specialists).
+**SpaceMoni mapping:** After NASA’s March 2026 pivot from Gateway to a lunar south-pole surface base, this four-person slot is a **hypothetical Moon Base · South Pole** (same `ship-gateway` id so existing art/layout stay). Commander, Pilot, two Mission Specialists. Labeled SIMULATION.
 
 ### Artemis lunar surface stays — 2 (early); habitat up to 4
 
@@ -102,7 +102,7 @@ Sources:
 | Ship | Analog | Sim crew | Roles (fictional people) |
 |---|---|---|---|
 | Harmony Station | ISS long-duration | **7** | Commander, Pilot, Flight Engineers, Mission Specialists |
-| Selene Gateway | Orion / Gateway | **4** | Commander, Pilot, 2 Mission Specialists |
+| Moon Base · South Pole | Hypothetical lunar south-pole surface base (Gateway pivot, Mar 2026) | **4** | Commander, Pilot, 2 Mission Specialists |
 | Ares Drift | Mars DRA 5.0 transit | **6** | Commander, Pilot, Flight Engineers, Medical, Science |
 | Mare Serenitatis | Artemis Base Camp habitat | **4** | Commander, habitat/EVA/geology specialists |
 

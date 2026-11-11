@@ -12,6 +12,10 @@ import { AstronautHome } from './components/AstronautHome';
 import { CommanderHome } from './components/CommanderHome';
 import { SurgeonHome } from './components/SurgeonHome';
 import { DataSourcesPage } from './components/DataSourcesPage';
+import { SciencePage } from './components/SciencePage';
+import { DelayBadge, SolClockChip } from './components/HrpPanels';
+import { earthDelayForKind } from './domain/earthDelay';
+import { marsDelayOverride } from './world/crewLogs';
 import { HqConsole } from './components/HqConsole';
 import {
   AstronautProfile,
@@ -64,7 +68,7 @@ export default function App() {
     if (stored) return enrichUser(stored);
     if (typeof window !== 'undefined') {
       const p = window.location.pathname.replace(/\/+$/, '') || '/';
-      if (p === '/sim' || p === '/world') {
+      if (p === '/sim' || p === '/world' || p === '/science') {
         writeDemoSession(GUEST_ACCOUNT);
         return GUEST_ACCOUNT;
       }
@@ -405,6 +409,18 @@ export default function App() {
           }).format(new Date(now)),
           time: taipeiClockHms(now).slice(0, 5),
         })}
+        clockExtra={
+          <>
+            <SolClockChip now={now} />
+            <DelayBadge
+              delay={earthDelayForKind(
+                selectedShip.def.kind,
+                selectedShip.location.auFromEarth,
+                marsDelayOverride()
+              )}
+            />
+          </>
+        }
       />
 
       {view === 'sim' && (
@@ -444,6 +460,7 @@ export default function App() {
           onRetry={() => void loadWx(true)}
         />
       )}
+      {view === 'science' && <SciencePage onBack={() => go(defaultView(currentUser.role))} />}
       {isConsoleView(view) && (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           <aside className="w-full lg:w-[21rem] xl:w-[22.5rem] shrink-0 flex flex-col overflow-y-auto sm-page-pad">

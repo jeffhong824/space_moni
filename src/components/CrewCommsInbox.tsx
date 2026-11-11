@@ -12,7 +12,7 @@ export const CrewCommsInbox: React.FC<{ shipId: string }> = ({ shipId }) => {
     return () => window.clearInterval(id);
   }, []);
   const now = Date.now();
-  const messages = loadMessages().filter((m) => m.shipId === shipId && visibleToCrew(m, now));
+  const messages = loadMessages().filter((m) => m.shipId === shipId && m.from === 'hq' && visibleToCrew(m, now));
   void tick;
 
   return (

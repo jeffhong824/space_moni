@@ -125,6 +125,8 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
   const windLast = lastOf(windRes.data);
   const proton10 = (protonRes.data || []).filter((row) => (row.energy || '').includes('>=10 MeV'));
   const protonLast = lastOf(proton10.length ? proton10 : protonRes.data);
+  const proton100 = (protonRes.data || []).filter((row) => (row.energy || '').includes('>=100 MeV'));
+  const proton100Last = lastOf(proton100);
 
   const kpValue = kpLast?.estimated_kp ?? kpLast?.kp_index ?? null;
   const goesClass = xrayLast?.flux != null ? fluxToGoesClass(xrayLast.flux) : null;
@@ -363,6 +365,17 @@ export async function fetchSpaceEnvironment(forceRefresh = false): Promise<Space
               satellite: protonLast.satellite != null ? `GOES-${protonLast.satellite}` : 'GOES',
               observedAt: protonLast.time_tag,
               sourceId: 'noaa-goes-protons',
+            }
+          : null,
+      protons100:
+        proton100Last?.flux != null
+          ? {
+              flux: proton100Last.flux,
+              unit: 'pfu',
+              energy: proton100Last.energy || '>=100 MeV',
+              satellite: proton100Last.satellite != null ? `GOES-${proton100Last.satellite}` : 'GOES',
+              observedAt: proton100Last.time_tag,
+              sourceId: 'noaa-goes-protons-100',
             }
           : null,
     },

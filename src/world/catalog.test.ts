@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CREW, CREW_SIZE_BY_SHIP, crewByLogin, SHIPS } from './catalog.ts';
 
 describe('research-based crew composition', () => {
-  it('sizes Harmony 7, Gateway 4, Ares 6, Mare 4', () => {
+  it('sizes Harmony 7, Moon Base south pole 4, Ares 6, Mare 4', () => {
     expect(CREW_SIZE_BY_SHIP).toEqual({
       'ship-harmony': 7,
       'ship-gateway': 4,
@@ -12,6 +12,7 @@ describe('research-based crew composition', () => {
     for (const ship of SHIPS) {
       expect(CREW.filter((c) => c.shipId === ship.id)).toHaveLength(CREW_SIZE_BY_SHIP[ship.id]);
     }
+    expect(SHIPS.find((s) => s.id === 'ship-gateway')?.kind).toBe('lunar-south-pole');
   });
 
   it('keeps demo logins on the original people', () => {

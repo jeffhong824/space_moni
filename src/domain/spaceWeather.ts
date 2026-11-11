@@ -110,6 +110,8 @@ export interface SpaceEnvironmentPayload {
     goesXray: GoesXrayObservation | null;
     solarWind: SolarWindObservation | null;
     protons: ProtonObservation | null;
+    /** GOES ≥100 MeV integral protons when the feed provides that energy band. */
+    protons100?: ProtonObservation | null;
   };
   scales: {
     gScale: string;

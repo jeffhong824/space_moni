@@ -20,6 +20,7 @@ import { AvatarBubble, DelayCaption, Segmented, Sheet, StatusDot, TONE_HEX, tone
 import { StatusPill } from '../ui/StatusPill';
 import { buildRiskMatrix } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
+import { EarthIndependentPanel, MoodCheckinCard, SpeAlertCard, useEarthDelay } from './HrpPanels';
 
 interface HqConsoleProps {
   world: WorldState;
@@ -56,6 +57,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
 
   const messages = useMemo(() => loadMessages().filter((m) => m.shipId === ship?.def.id), [ship?.def.id, tick]);
   const matrixRows = useMemo(() => buildRiskMatrix(CREW, now, wx, world.ships), [now, wx, world.ships]);
+  const delay = useEarthDelay(ship?.def.kind ?? 'leo-station', ship?.location.auFromEarth);
 
   const send = () => {
     if (!ship || !draft.trim()) return;
@@ -74,6 +76,7 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
   const r = wx?.scales.rScale ?? 'R?';
 
   const alerts = world.ships.filter((row) => shipCrewStatus(row) !== 'Normal');
+  const shipCrewIds = ship.crew.map((c) => c.def.id);
 
   return (
     <div data-page="hq" className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
@@ -87,6 +90,17 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
             <span className="font-mono">· {t('common.simulation')}</span>
           </p>
         </header>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <SpeAlertCard wx={wx} missionDays={world.missionDay} baselineMsvDay={ship.def.baselineMsvDay} />
+          <EarthIndependentPanel
+            kind={ship.def.kind}
+            shipId={ship.def.id}
+            auFromEarth={ship.location.auFromEarth}
+            delay={delay}
+          />
+          {shipCrewIds[0] && <MoodCheckinCard crewId={shipCrewIds[0]} shipCrewIds={shipCrewIds} />}
+        </div>
 
         {alerts.length > 0 && (
           <div data-hq-alerts className="rounded-[20px] bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
@@ -355,6 +369,9 @@ function MessageRow({
   const acked = ackVisible(msg, now);
   return (
     <li className="rounded-[22px] bg-stone-50 px-3 py-2 text-xs">
+      <p className="text-[10px] font-mono text-stone-400">
+        {msg.from === 'crew' ? t('hrp.fromCrew') : t('inbox.fromHq')}
+      </p>
       <p>{msg.text}</p>
       {!delivered && (
         <p className="text-[10px] font-mono text-amber-700 mt-1">{t('hq.inTransit', { eta: formatEta(msg.deliverAt - now) })}</p>

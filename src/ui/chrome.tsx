@@ -788,6 +788,7 @@ const DOCK_ICON: Record<string, React.ReactNode> = {
   hq: <LayoutGrid className="w-4 h-4" />,
   cases: <ClipboardList className="w-4 h-4" />,
   sources: <BookOpen className="w-4 h-4" />,
+  science: <BookText className="w-4 h-4" />,
   sim: <Orbit className="w-4 h-4" />,
 };
 
@@ -815,6 +816,8 @@ const GLOSSARY_KEYS = [
   'orthostatic',
   'logmar',
   'careerDose',
+  'eihso',
+  'sol',
 ] as const;
 
 export const GlossaryPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {

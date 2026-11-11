@@ -113,7 +113,9 @@
     "showTitle": "顯示站務目標面板",
     "hideTitle": "隱藏右側面板以放大健康視圖",
     "aiTitle": "與 AURA 飛行外科醫師通話",
-    "logoutTitle": "登出並返回登入頁"
+    "logoutTitle": "登出並返回登入頁",
+    "science": "科學追溯",
+    "scienceShort": "科學"
   },
   "glossary": {
     "met": "MET — 任務經過時間，自示範曆元（2026年11月10日台北）起算。",
@@ -138,7 +140,9 @@
     "bhp": "BHP — NASA HRP 行為健康與表現風險類別（通用分組）。",
     "orthostatic": "姿勢性低血壓風險 — 模擬起立試驗類比（微重力卸載後心率跳升）。非真實起立試驗。",
     "logmar": "logMAR — 最小分辨視角對數；視力變化類比。",
-    "careerDose": "生涯劑量類比 — 與 600 mSv NASA STD-3001 風格上限比較的演示。非真實組員劑量。"
+    "careerDose": "生涯劑量類比 — 與 600 mSv NASA STD-3001 風格上限比較的演示。非真實組員劑量。",
+    "eihso": "EIHSO-202 — HRP 地球獨立人系統作業項目：半自主監測儀表板建議（RAP 2026 年 6 月）。",
+    "sol": "Sol — 火星日，24 小時 39 分 35 秒。NASA-STD-3001 第 2 冊照明說明約 24 小時 40 分週期。"
   },
   "badge": {
     "simTelemetry": "模擬機組遙測（示範資料）",
@@ -640,8 +644,8 @@
       "kind": "近地軌道棲地（ISS 型）"
     },
     "gateway": {
-      "name": "朔望閘道",
-      "kind": "月球軌道前哨"
+      "name": "月面基地 · 南極",
+      "kind": "假設／模擬的月球南極地表基地"
     },
     "ares": {
       "name": "阿瑞斯航渡",
@@ -827,7 +831,7 @@
   },
   "loc": {
     "leo": "近地軌道 · 平近點角 {phase}° · 418 km 類比",
-    "gateway": "近直線暈軌道類比 · 月球方位 {phase}°",
+    "gateway": "月球南極（假設情境）· {lat}° · 太陽高度 {sun}°",
     "mars": "火星航渡 · 距地球 {au} AU · 太陽相位 {phase}°",
     "mare": "澄海 · {lat}°N {lon}°E · 太陽高度 {sun}°"
   },
@@ -1376,5 +1380,131 @@
     "active": "作用中",
     "synced": "已同步",
     "calibrated": "已校正"
+  },
+  "hrp": {
+    "scienceKicker": "Best Use of Science · Space Apps 2026 台北",
+    "scienceTitle": "科學追溯",
+    "scienceLead": "每一項 SpaceMoni 功能對應 HRP 風險、NASA-STD-3001 章節與資料來源。表格以英文供評審對照；週遭介面已在地化。本系統不是 NASA 產品。",
+    "scienceFoot": "LIVE = 執行時 NOAA/GOES 或 DONKI。SOURCED-STATIC = 有引用的文獻或標準。SIMULATION = 示範組員／世界。ASSUMPTION = 已標示的示範公式，非 NASA 方程式。250 mSv 30 日 SPE 界限為歷史 PEL，未在所附 Vol 2 Rev F 重述。",
+    "colFeature": "功能",
+    "colHrp": "HRP 風險／RAP 項目",
+    "colStd": "NASA-STD-3001",
+    "colSource": "資料來源",
+    "colProv": "出處標籤",
+    "tagLive": "即時",
+    "tagSourced": "靜態引用",
+    "tagAssumption": "假設",
+    "tagSim": "模擬",
+    "delayBadge": "對地延遲單程 {delay}",
+    "solCite": "火星日 24 小時 39 分 35 秒 · NASA-STD-3001 第 2 冊照明說明（約 24 小時 40 分）",
+    "eihsoTitle": "地球獨立決策",
+    "eihsoCite": "EIHSO-202 項目 2 — 半自主監測儀表板建議（HRP RAP 2026 年 6 月）。",
+    "roundTrip": "往返 {delay}",
+    "marsOverride": "火星延遲覆寫",
+    "crewAct": "組員可立即行動",
+    "crewActList": "進入掩蔽、補水、自我檢查、睡眠、SANS、情緒回報、著陸後自測",
+    "groundAct": "需地面核准",
+    "groundActList": "EVA 放行、醫護後送、中止、藥劑、艙壓回補",
+    "queueGround": "排隊傳送地面備註",
+    "queuedNote": "組員上行（模擬）：請求延遲地面審閱。",
+    "eta": "傳送中 · {eta}",
+    "auNote": "模擬距地球 AU：{au}（非 JPL Horizons）",
+    "fromCrew": "來自組員（上行）",
+    "speTitle": "太陽質子事件",
+    "speShelter": "掩蔽",
+    "speWatch": "警戒",
+    "speQuiet": "平靜",
+    "speQuietDetail": "無 DONKI SEP，且 GOES 質子低於 NOAA S1。",
+    "artemisCite": "Artemis I HERA GCR 0.96–1.24 mSv d⁻¹；HSU2 13.47 mGy（George 等，Nature 2024，doi:10.1038/s41586-024-07927-7）。",
+    "careerSim": "生涯累積為模擬值，非實測組員劑量。",
+    "doseLine": "GCR 類比 {gcr} mSv + SPE 額外 {spe} mSv = {total} mSv · 佔 600 mSv 生涯（V2 6095／Vol 1 §4.8）{pctC}% · 佔 250 mSv 30 日 SPE 歷史 PEL {pctS}%",
+    "baselineNote": "飛船 GCR 基線 {n} mSv/d 為依屏蔽縮放的標示模擬。",
+    "shelter": {
+      "move": "將組員移至屏蔽最高的艙段",
+      "eva": "終止 EVA；S 尺度下降前不再出艙",
+      "water": "程序允許時，以 ECLSS 水／灰水質量作為額外 SPE 屏蔽（HHP 2023）",
+      "dosimetry": "確認個人／區域監測器正在記錄（[V2 6161]）",
+      "cmo": "CMO 檢視前驅症狀；AURA 為決策支援，不是診斷",
+      "ground": "排隊延遲地面報告（EIHSO-202）；進入掩蔽不必等待核准"
+    },
+    "moodTitle": "30 秒情緒與團隊回報",
+    "moodCite": "BH-201／Team-201 — 半自主 BHP／團隊監測指標與閾值（HRP RAP 2026 年 6 月）。分數為模擬，非臨床心理測驗。",
+    "mood": "情緒",
+    "stress": "壓力",
+    "sleepQ": "睡眠品質",
+    "cohesion": "團隊凝聚力",
+    "conflict": "衝突",
+    "moodSubmit": "記錄回報",
+    "moodLast": "上次旗標：{flag}",
+    "teamAgg": "團隊 n={n} · 情緒 {mood} · 壓力 {stress} · {flag}",
+    "sansTitle": "每週 SANS 視力自檢",
+    "sansCite": "SANS-101／SANS-404；IRP-47065 §4.3.9。Amsler 類比 + logMAR。非 OCT。",
+    "amsler": "Amsler 類比",
+    "amsler0": "0 — 無扭曲",
+    "amsler1": "1 — 輕微波紋",
+    "amsler2": "2 — 扭曲／暗點",
+    "amsler3": "3 — 嚴重／缺損",
+    "sansSave": "儲存本週檢查",
+    "sansLast": "上次旗標 {flag} · {n} 筆",
+    "osdrTitle": "NASA OSDR · Inspiration4",
+    "osdrCite": "OSD-569 血球計數與 OSD-575 代謝／細胞激素。匿名 C001–C004。時點 L-92、L-44、L-3、R+1、R+45、R+82、R+194。模擬組員疊加僅為類比，非身分對應。",
+    "osdrMean": "I4 平均 WBC",
+    "osdrZ": "模擬類比 {analog}：z={z}（{band}）對該序列 L-3",
+    "sleepSolTitle": "睡眠 · 火星日鐘 · PVT",
+    "sleepSolCite": "Sol 24 小時 39 分 35 秒，與 UTC／MTC 類比並列。睡眠債與 PVT 為模擬（BH-201／晝夜節律說明）。",
+    "sleepDebt": "睡眠債 {h} 小時 · PVT 類比 {pvt} ms · 相對 24.0 小時晝夜漂移 {drift} 小時",
+    "egressTitle": "著陸後就緒檢查",
+    "egressCite": "[V2 7042] 直立不耐對策；SM-106／SM-206 G 轉換後姿勢控制。分數為模擬站立測試類比。",
+    "go": {
+      "go": "放行",
+      "conditional": "有條件",
+      "no-go": "不放行"
+    },
+    "egressTask": {
+      "stand": "無輔助站立／步行至氣閘",
+      "hatch": "艙蓋／穿裝（握力＋視力）",
+      "eva": "早期表面 EVA"
+    },
+    "cmoTitle": "AURA · CMO 決策支援",
+    "notDiagnosis": "不是診斷。AURA 是組員醫官的決策支援。",
+    "docInABox": "可離線運作（Doc-in-a-Box／地球獨立醫療能力，HHP 2023）。",
+    "cmoConfirm": "CMO 確認",
+    "cmoDismiss": "駁回",
+    "cmoState": {
+      "confirmed": "CMO 已確認",
+      "dismissed": "CMO 已駁回"
+    },
+    "cmoHrTitle": "心血管觀察",
+    "cmoHrDetail": "靜止心率偏離個人／示範區間。休息後再測並補水。不是診斷。",
+    "cmoSpo2Title": "艙室／呼吸檢查",
+    "cmoSpo2Detail": "SpO₂ 偏離區間。核對 ECLSS 氧分壓（模擬艙）與感測接觸。不是診斷。",
+    "cmoSleepTitle": "睡眠機會",
+    "cmoSleepDetail": "睡眠不足 6 小時。保護下一個睡眠時段（BH-201）。不是診斷。",
+    "cmoSpeTitle": "SPE 掩蔽",
+    "cmoSpeDetail": "S 尺度 {scale}。組員可自主掩蔽，不必等地面（EIHSO-202）。生涯 PEL {career}；30 日 SPE 界限 {spe30}。不是診斷。",
+    "cmoSansTitle": "SANS 自檢追蹤",
+    "cmoSansDetail": "視力類比偏離名義。重做 Amsler／logMAR 並記錄給 CMO。非 OCT，不是診斷。",
+    "cmoBhpTitle": "行為健康回報",
+    "cmoBhpDetail": "BH-201 指標跨過示範閾值。提供私下關懷會談。不是精神醫學診斷。",
+    "cmoEihsoTitle": "地球獨立作業",
+    "cmoEihsoDetail": "單程延遲 {sec} 秒。優先組員自主行動；地面項目排隊。",
+    "baselineTitle": "個人基線",
+    "baselineCite": "每項指標對照該員自己的飛前基線（z 分數）。警戒 |z|≥1.5，偏離 |z|≥2.5 — 示範政策，非 NASA 表格。",
+    "conf": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "flag": {
+      "ok": "正常",
+      "watch": "注意",
+      "concern": "關切",
+      "refer": "轉介"
+    },
+    "band": {
+      "inside": "區間內",
+      "caution": "警戒",
+      "off": "偏離"
+    }
   }
 }

@@ -98,7 +98,7 @@ describe('signed-in roles focus the assigned station', () => {
 });
 
 describe('sim roster parity with crew data', () => {
-  it('matches names and Harmony 7 / Gateway 4 / Ares 6 / Mare 4', () => {
+  it('matches names and Harmony 7 / Moon Base 4 / Ares 6 / Mare 4', () => {
     const world = worldStateAt(Date.now(), null);
     const catalog = catalogRoster();
     const live = worldRoster(world);

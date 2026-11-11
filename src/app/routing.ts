@@ -1,7 +1,7 @@
 import type { UserRole } from '../types';
 
 /** In-app destinations that correspond 1:1 with URL paths. */
-export type AppView = 'today' | 'day' | 'body' | 'crew' | 'ops' | 'hq' | 'cases' | 'sources' | 'sim';
+export type AppView = 'today' | 'day' | 'body' | 'crew' | 'ops' | 'hq' | 'cases' | 'sources' | 'science' | 'sim';
 
 export type DockItemId = AppView;
 
@@ -22,6 +22,7 @@ const PATH_BY_VIEW: Record<AppView, string> = {
   hq: '/hq',
   cases: '/cases',
   sources: '/sources',
+  science: '/science',
   sim: '/sim',
 };
 
@@ -54,13 +55,17 @@ export function defaultView(role: UserRole): AppView {
 
 export function dockItemsForRole(role: UserRole): DockItemDef[] {
   if (role === 'Guest') {
-    return [{ id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' }];
+    return [
+      { id: 'science', view: 'science', path: '/science', labelKey: 'nav.science', shortKey: 'nav.scienceShort' },
+      { id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' },
+    ];
   }
   if (role === 'Commander') {
     return [
       { id: 'crew', view: 'crew', path: '/crew', labelKey: 'nav.crew', shortKey: 'nav.crew' },
       { id: 'ops', view: 'ops', path: '/ops', labelKey: 'nav.ops', shortKey: 'nav.opsShort' },
       { id: 'sources', view: 'sources', path: '/sources', labelKey: 'nav.sources', shortKey: 'nav.sourcesShort' },
+      { id: 'science', view: 'science', path: '/science', labelKey: 'nav.science', shortKey: 'nav.scienceShort' },
       { id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' },
     ];
   }
@@ -69,6 +74,7 @@ export function dockItemsForRole(role: UserRole): DockItemDef[] {
       { id: 'hq', view: 'hq', path: '/hq', labelKey: 'nav.hq', shortKey: 'nav.hqShort' },
       { id: 'cases', view: 'cases', path: '/cases', labelKey: 'nav.cases', shortKey: 'nav.cases' },
       { id: 'sources', view: 'sources', path: '/sources', labelKey: 'nav.sources', shortKey: 'nav.sourcesShort' },
+      { id: 'science', view: 'science', path: '/science', labelKey: 'nav.science', shortKey: 'nav.scienceShort' },
       { id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' },
     ];
   }
@@ -77,6 +83,7 @@ export function dockItemsForRole(role: UserRole): DockItemDef[] {
     { id: 'day', view: 'day', path: '/day', labelKey: 'nav.day', shortKey: 'nav.dayShort' },
     { id: 'body', view: 'body', path: '/body', labelKey: 'nav.body', shortKey: 'nav.bodyShort' },
     { id: 'sources', view: 'sources', path: '/sources', labelKey: 'nav.sources', shortKey: 'nav.sourcesShort' },
+    { id: 'science', view: 'science', path: '/science', labelKey: 'nav.science', shortKey: 'nav.scienceShort' },
     { id: 'sim', view: 'sim', path: '/sim', labelKey: 'nav.sim', shortKey: 'nav.simShort' },
   ];
 }

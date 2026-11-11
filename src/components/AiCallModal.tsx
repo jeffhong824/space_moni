@@ -22,6 +22,11 @@ import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, StationTask,
 import { DetailedHealthAnalysis } from './DetailedHealthAnalysis';
 import { callAiDoctor } from '../api/aiDoctor';
 import { packHealthPayload, buildOfflineTwoLevelAnalysis } from '../domain/healthPacking';
+import { buildCmoRecommendations } from '../domain/cmoSupport';
+import { CmoRecs } from './HrpPanels';
+import { latestMood, sansHistory } from '../world/crewLogs';
+import { flagSans } from '../domain/sansCheck';
+import { scoreCheckin } from '../domain/moodCheckin';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import type { SelfCheckEntry } from '../domain/healthThresholds';
 import { useI18n } from '../i18n/I18nProvider';
@@ -61,6 +66,18 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
 }) => {
   const { t, lang } = useI18n();
   const packed = packHealthPayload(astronaut, todayRecord, envMetrics, spaceEnvironment, selfCheck, lang, crewPanel);
+  const sansHist = sansHistory(astronaut.id);
+  const lastMood = latestMood(astronaut.id);
+  const cmoRecs = buildCmoRecommendations({
+    hrStatus: packed.metrics.find((m) => m.id === 'restingHR')?.status,
+    spo2Status: packed.metrics.find((m) => m.id === 'spo2')?.status,
+    sleepMin: todayRecord.avgSleepMinutes,
+    sScale: spaceEnvironment?.scales.sScale,
+    sansFlag: sansHist.length
+      ? flagSans(sansHist[sansHist.length - 1], sansHist[sansHist.length - 2]).flag
+      : undefined,
+    moodFlag: lastMood ? scoreCheckin(lastMood).flag : undefined,
+  });
   const liveHr = liveVitals?.hr ?? todayRecord.restingHR;
   const liveHrv = liveVitals?.hrv ?? todayRecord.hrv;
   const buildGreeting = (): AiMessage => ({
@@ -571,6 +588,9 @@ export const AiCallModal: React.FC<AiCallModalProps> = ({
                             dataQuality={msg.dataQuality}
                             analysisMode={msg.analysisMode}
                           />
+                          <div className="mt-2">
+                            <CmoRecs recs={cmoRecs} />
+                          </div>
                         </div>
                       )}
                     </div>

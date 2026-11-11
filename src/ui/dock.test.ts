@@ -45,9 +45,9 @@ describe('PillDock aria-current per role', () => {
     }
   });
 
-  it('guest dock is sim-only and marks sim current', () => {
+  it('guest dock is science + sim and marks sim current', () => {
     const items = dockItemsForRole('Guest');
-    expect(items.map((i) => i.view)).toEqual(['sim']);
+    expect(items.map((i) => i.view)).toEqual(['science', 'sim']);
     const html = renderDock('Guest', 'sim');
     expect(html).toMatch(/data-dock="sim"[^>]*aria-current="page"/);
   });

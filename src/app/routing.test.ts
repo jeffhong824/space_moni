@@ -29,16 +29,23 @@ describe('dock destinations per role', () => {
     }
   });
 
-  it('astronaut dock is Today / Day report / Body / Sources / Fleet sim', () => {
-    expect(dockItemsForRole('Astronaut').map((i) => i.view)).toEqual(['today', 'day', 'body', 'sources', 'sim']);
+  it('astronaut dock is Today / Day report / Body / Sources / Science / Fleet sim', () => {
+    expect(dockItemsForRole('Astronaut').map((i) => i.view)).toEqual([
+      'today',
+      'day',
+      'body',
+      'sources',
+      'science',
+      'sim',
+    ]);
   });
 
-  it('commander dock is Crew / Ops / Sources / Fleet sim', () => {
-    expect(dockItemsForRole('Commander').map((i) => i.view)).toEqual(['crew', 'ops', 'sources', 'sim']);
+  it('commander dock is Crew / Ops / Sources / Science / Fleet sim', () => {
+    expect(dockItemsForRole('Commander').map((i) => i.view)).toEqual(['crew', 'ops', 'sources', 'science', 'sim']);
   });
 
-  it('NASA dock is Mission control / Cases / Sources / Fleet sim', () => {
-    expect(dockItemsForRole('NASA').map((i) => i.view)).toEqual(['hq', 'cases', 'sources', 'sim']);
+  it('NASA dock is Mission control / Cases / Sources / Science / Fleet sim', () => {
+    expect(dockItemsForRole('NASA').map((i) => i.view)).toEqual(['hq', 'cases', 'sources', 'science', 'sim']);
   });
 
   it('never reuses Today’s destination for another dock item', () => {
@@ -75,7 +82,8 @@ describe('path ↔ view', () => {
     expect(coerceView('/world', 'Guest')).toBe('sim');
     expect(coerceView('/', 'Guest')).toBe('sim');
     expect(coerceView('/today', 'Guest')).toBe('sim');
-    expect(dockItemsForRole('Guest').map((i) => i.view)).toEqual(['sim']);
+    expect(dockItemsForRole('Guest').map((i) => i.view)).toEqual(['science', 'sim']);
+    expect(coerceView('/science', 'Guest')).toBe('science');
     expect(allowedViews('Guest').has('sim')).toBe(true);
     expect(allowedViews('Guest').has('today')).toBe(false);
   });

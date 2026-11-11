@@ -113,7 +113,9 @@
     "showTitle": "Mostrar panel de objetivos",
     "hideTitle": "Ocultar el panel derecho para ampliar la salud",
     "aiTitle": "Llamar al cirujano AURA",
-    "logoutTitle": "Cerrar sesión y volver al acceso"
+    "logoutTitle": "Cerrar sesión y volver al acceso",
+    "science": "Ciencia",
+    "scienceShort": "Ciencia"
   },
   "glossary": {
     "met": "MET — Tiempo transcurrido de misión, desde la época demo (10 nov 2026, Taipéi).",
@@ -138,7 +140,9 @@
     "bhp": "BHP — Categoría de riesgo de salud conductual y rendimiento HRP de la NASA (agrupación genérica).",
     "orthostatic": "Riesgo de hipotensión ortostática — análogo simulado de la prueba de bipedestación (aumento de FC tras la descarga). No es una prueba real.",
     "logmar": "logMAR — logaritmo del ángulo mínimo de resolución; análogo de cambio de agudeza visual.",
-    "careerDose": "Análogo de dosis de carrera — comparación demo con un límite estilo NASA STD-3001 de 600 mSv. No es dosis real de tripulación."
+    "careerDose": "Análogo de dosis de carrera — comparación demo con un límite estilo NASA STD-3001 de 600 mSv. No es dosis real de tripulación.",
+    "eihso": "EIHSO-202 — Ítem HRP de operaciones humanas independientes de la Tierra: recomendaciones para un tablero de monitorización semi-autónomo (RAP junio 2026).",
+    "sol": "Sol — un día marciano, 24 h 39 m 35 s. NASA-STD-3001 Vol. 2 menciona un ciclo de ~24 h 40 min."
   },
   "badge": {
     "simTelemetry": "Telemetría de tripulación simulada (demo)",
@@ -640,8 +644,8 @@
       "kind": "Hábitat LEO (tipo ISS)"
     },
     "gateway": {
-      "name": "Pasarela Selene",
-      "kind": "Puesto orbital lunar"
+      "name": "Base lunar · Polo Sur",
+      "kind": "Base superficial hipotética del polo sur lunar (SIMULACIÓN)"
     },
     "ares": {
       "name": "Ares Drift",
@@ -827,7 +831,7 @@
   },
   "loc": {
     "leo": "LEO · anomalía {phase}° · análogo 418 km",
-    "gateway": "Análogo NRHO · acimut lunar {phase}°",
+    "gateway": "Polo sur lunar (hipotético) · {lat}° · elev. solar {sun}°",
     "mars": "Tránsito a Marte · {au} UA · fase {phase}°",
     "mare": "Mare Serenitatis · {lat}°N {lon}°E · sol {sun}°"
   },
@@ -1376,5 +1380,131 @@
     "active": "Activo",
     "synced": "Sincronizado",
     "calibrated": "Calibrado"
+  },
+  "hrp": {
+    "scienceKicker": "Best Use of Science · Space Apps 2026 Taipéi",
+    "scienceTitle": "Trazabilidad científica",
+    "scienceLead": "Cada función de SpaceMoni se mapea a un riesgo HRP, una sección de NASA-STD-3001 y una fuente de datos. La tabla está en inglés para los jueces; el marco está localizado. Esto no es un producto de la NASA.",
+    "scienceFoot": "LIVE = NOAA/GOES o DONKI en tiempo de ejecución. SOURCED-STATIC = publicación o norma citada. SIMULATION = tripulación/mundo demo. ASSUMPTION = fórmula demo etiquetada, no una ecuación de la NASA. El límite SPE de 250 mSv en 30 días es un PEL histórico no reafirmado en el Vol. 2 Rev F adjunto.",
+    "colFeature": "Función",
+    "colHrp": "Riesgo HRP / ítem RAP",
+    "colStd": "NASA-STD-3001",
+    "colSource": "Fuente de datos",
+    "colProv": "Procedencia",
+    "tagLive": "EN VIVO",
+    "tagSourced": "ESTÁTICO CITADO",
+    "tagAssumption": "SUPUESTO",
+    "tagSim": "SIMULACIÓN",
+    "delayBadge": "Retraso Tierra {delay} ida",
+    "solCite": "Sol de 24 h 39 m 35 s · fundamento de iluminación NASA-STD-3001 Vol. 2 (~24 h 40 min)",
+    "eihsoTitle": "Decisiones independientes de la Tierra",
+    "eihsoCite": "EIHSO-202 ítem 2 — Recomendaciones para un tablero de monitorización semi-autónomo (HRP RAP junio 2026).",
+    "roundTrip": "Ida y vuelta {delay}",
+    "marsOverride": "Anular retraso a Marte",
+    "crewAct": "La tripulación puede actuar ya",
+    "crewActList": "Refugio, hidratación, autoevaluación, sueño, SANS, ánimo, autotest de egreso",
+    "groundAct": "Requiere visto de tierra",
+    "groundActList": "EVA go, evacuación médica, aborto, farmacia, represurizar hábitat",
+    "queueGround": "Encolar una nota a tierra",
+    "queuedNote": "Enlace de tripulación (simulación): se solicita revisión diferida de tierra.",
+    "eta": "En tránsito · {eta}",
+    "auNote": "UA simulada desde la Tierra: {au} (no JPL Horizons)",
+    "fromCrew": "De la tripulación (enlace)",
+    "speTitle": "Evento de protones solares",
+    "speShelter": "REFUGIO",
+    "speWatch": "VIGILANCIA",
+    "speQuiet": "En calma",
+    "speQuietDetail": "Sin SEP DONKI y protones GOES por debajo de NOAA S1.",
+    "artemisCite": "Artemis I HERA GCR 0,96–1,24 mSv d⁻¹; HSU2 13,47 mGy (George et al., Nature 2024, doi:10.1038/s41586-024-07927-7).",
+    "careerSim": "El total de carrera es una acumulación simulada, no una dosis medida.",
+    "doseLine": "Análogo GCR {gcr} mSv + extra SPE {spe} mSv = {total} mSv · {pctC}% de 600 mSv de carrera (V2 6095 / Vol. 1 §4.8) · {pctS}% del PEL SPE histórico de 250 mSv / 30 d",
+    "baselineNote": "La línea base GCR de la nave {n} mSv/d es una simulación etiquetada escalada por apantallamiento.",
+    "shelter": {
+      "move": "Mover a la tripulación al volumen de mayor apantallamiento",
+      "eva": "Terminar EVA; no hay EVA nueva hasta que baje la escala S",
+      "water": "Usar masa de agua / aguas grises ECLSS como apantallamiento SPE extra si el procedimiento lo permite (HHP 2023)",
+      "dosimetry": "Confirmar que los monitores personales/de área registran ([V2 6161])",
+      "cmo": "El CMO revisa síntomas prodrómicos; AURA es apoyo a la decisión, no un diagnóstico",
+      "ground": "Encolar un informe diferido a tierra (EIHSO-202); no esperar el visto para refugiarse"
+    },
+    "moodTitle": "Chequeo de ánimo y equipo (30 s)",
+    "moodCite": "BH-201 / Team-201 — indicadores y umbrales para monitorización BHP/equipo semi-autónoma (HRP RAP junio 2026). Puntuaciones SIMULACIÓN, no psicometría clínica.",
+    "mood": "Ánimo",
+    "stress": "Estrés",
+    "sleepQ": "Calidad del sueño",
+    "cohesion": "Cohesión de equipo",
+    "conflict": "Conflicto",
+    "moodSubmit": "Registrar chequeo",
+    "moodLast": "Última bandera: {flag}",
+    "teamAgg": "Equipo n={n} · ánimo {mood} · estrés {stress} · {flag}",
+    "sansTitle": "Autochequeo visual SANS semanal",
+    "sansCite": "SANS-101 / SANS-404; IRP-47065 §4.3.9. Análogo de Amsler + logMAR. No es OCT.",
+    "amsler": "Análogo de Amsler",
+    "amsler0": "0 — sin distorsión",
+    "amsler1": "1 — ondulaciones leves",
+    "amsler2": "2 — distorsión / escotoma",
+    "amsler3": "3 — grave / parche ausente",
+    "sansSave": "Guardar el chequeo de esta semana",
+    "sansLast": "Última bandera {flag} · {n} entradas",
+    "osdrTitle": "NASA OSDR · Inspiration4",
+    "osdrCite": "OSD-569 hemograma y OSD-575 panel metabólico / citoquinas. C001–C004 anonimizados. Puntos L-92, L-44, L-3, R+1, R+45, R+82, R+194. La superposición de tripulación simulada es un análogo, no una identidad.",
+    "osdrMean": "WBC medio I4",
+    "osdrZ": "Análogo sim {analog}: z={z} ({band}) vs L-3 de esa serie",
+    "sleepSolTitle": "Sueño · reloj sol · PVT",
+    "sleepSolCite": "Sol 24 h 39 m 35 s junto al análogo UTC/MTC. Deuda de sueño y PVT son SIMULACIÓN (BH-201 / fundamento circadiano).",
+    "sleepDebt": "Deuda de sueño {h} h · PVT análogo {pvt} ms · deriva circadiana {drift} h vs 24,0 h",
+    "egressTitle": "Listos para aterrizaje",
+    "egressCite": "[V2 7042] contramedidas de intolerancia ortostática; SM-106 / SM-206 control postural tras transición G. Puntuaciones análogas de test de pie SIMULACIÓN.",
+    "go": {
+      "go": "GO",
+      "conditional": "CONDICIONAL",
+      "no-go": "NO-GO"
+    },
+    "egressTask": {
+      "stand": "Ponerse de pie / caminar a la esclusa sin ayuda",
+      "hatch": "Escotilla / donaje (agarre + visión)",
+      "eva": "EVA superficial temprana"
+    },
+    "cmoTitle": "AURA · apoyo a decisión del CMO",
+    "notDiagnosis": "No es un diagnóstico. AURA apoya al oficial médico de tripulación.",
+    "docInABox": "Funciona sin conexión (Doc-in-a-Box / capacidad médica independiente de la Tierra, HHP 2023).",
+    "cmoConfirm": "CMO confirma",
+    "cmoDismiss": "Descartar",
+    "cmoState": {
+      "confirmed": "Confirmado por CMO",
+      "dismissed": "Descartado por CMO"
+    },
+    "cmoHrTitle": "Observación cardiovascular",
+    "cmoHrDetail": "La FC en reposo está fuera de la banda personal/demo. Repose, hidrátese y vuelva a medir. No es un diagnóstico.",
+    "cmoSpo2Title": "Chequeo de cabina / respiratorio",
+    "cmoSpo2Detail": "SpO₂ fuera de banda. Verifique ppO₂ ECLSS (cabina simulada) y el contacto del sensor. No es un diagnóstico.",
+    "cmoSleepTitle": "Oportunidad de sueño",
+    "cmoSleepDetail": "Sueño <6 h. Proteja el siguiente periodo de sueño (BH-201). No es un diagnóstico.",
+    "cmoSpeTitle": "Refugio por SPE",
+    "cmoSpeDetail": "Escala S {scale}. Refugio autónomo de tripulación; no esperar a tierra (EIHSO-202). PEL de carrera {career}; límite SPE 30 d {spe30}. No es un diagnóstico.",
+    "cmoSansTitle": "Seguimiento SANS",
+    "cmoSansDetail": "Análogo visual fuera de nominal. Repita Amsler/logMAR y registre para el CMO. No es OCT ni un diagnóstico.",
+    "cmoBhpTitle": "Chequeo de salud conductual",
+    "cmoBhpDetail": "Los indicadores BH-201 cruzaron un umbral demo. Ofrezca un chequeo privado. No es un diagnóstico psiquiátrico.",
+    "cmoEihsoTitle": "Ops independientes de la Tierra",
+    "cmoEihsoDetail": "Retraso de ida {sec} s. Prefiera acciones autónomas de tripulación; encole ítems de tierra.",
+    "baselineTitle": "Líneas base personales",
+    "baselineCite": "Cada métrica frente a la línea base pre-misión de esa persona (z). Precaución |z|≥1,5, fuera |z|≥2,5 — política demo, no una tabla NASA.",
+    "conf": {
+      "high": "alta",
+      "medium": "media",
+      "low": "baja"
+    },
+    "flag": {
+      "ok": "ok",
+      "watch": "vigilancia",
+      "concern": "preocupación",
+      "refer": "derivar"
+    },
+    "band": {
+      "inside": "dentro",
+      "caution": "precaución",
+      "off": "fuera"
+    }
   }
 }

@@ -37,6 +37,7 @@ import {
 import { daySchedule, exerciseLog, worldStateAt } from '../world/worldState';
 import { attachSeries, crewPanelAt } from '../domain/crewSystems';
 import { SystemsAccordion } from './SystemsPanel';
+import { BaselineStrip, OsdrPanel, SansCheckCard } from './HrpPanels';
 
 const STATUS = ['Normal', 'Attention', 'Critical'] as const;
 
@@ -366,6 +367,18 @@ export const BodyMapDashboard: React.FC<{
           <SystemsAccordion panel={panel} />
         </div>
       ) : null}
+      {tabbed && (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          <OsdrPanel crewId={crew.id} />
+          <SansCheckCard crewId={crew.id} />
+          <BaselineStrip
+            hr={w.hr}
+            baselineHr={crew.baselineHr}
+            spo2={w.spo2}
+            baselineSpo2={crew.baselineSpo2}
+          />
+        </div>
+      )}
 
       <Sheet
         open={sheetOpen && (hero || figureOnly || compact)}

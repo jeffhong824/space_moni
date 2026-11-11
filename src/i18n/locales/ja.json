@@ -113,7 +113,9 @@
     "showTitle": "ステーション目標パネルを表示",
     "hideTitle": "右パネルを隠して健康ビューを拡大",
     "aiTitle": "AURA飛行外科医に通話",
-    "logoutTitle": "ログアウトしてログインへ"
+    "logoutTitle": "ログアウトしてログインへ",
+    "science": "科学トレーサビリティ",
+    "scienceShort": "科学"
   },
   "glossary": {
     "met": "MET — ミッション経過時間。デモ起点（2026年11月10日台北）から数えます。",
@@ -138,7 +140,9 @@
     "bhp": "BHP — NASA HRP 行動健康・パフォーマンスリスク区分（汎用グループ）。",
     "orthostatic": "起立性低血圧リスク — 除荷後の心拍数上昇を用いる模擬起立試験アナログ。実測の起立試験ではない。",
     "logmar": "logMAR — 最小分離視角の対数。視力変化のアナログ。",
-    "careerDose": "生涯線量アナログ — 600 mSv の NASA STD-3001 風上限とのデモ比較。実クルー線量ではない。"
+    "careerDose": "生涯線量アナログ — 600 mSv の NASA STD-3001 風上限とのデモ比較。実クルー線量ではない。",
+    "eihso": "EIHSO-202 — HRP 地球非依存ヒューマンシステム運用項目：半自律モニタリングダッシュボードの推奨（RAP 2026年6月）。",
+    "sol": "Sol — 火星日。24時間39分35秒。NASA-STD-3001 第2巻の照明根拠は約24時間40分周期に言及。"
   },
   "badge": {
     "simTelemetry": "乗員テレメトリは模擬（デモ）",
@@ -640,8 +644,8 @@
       "kind": "LEO居住（ISS型）"
     },
     "gateway": {
-      "name": "セレネ・ゲートウェイ",
-      "kind": "月軌道前哨"
+      "name": "月面基地 · 南極",
+      "kind": "仮想・模擬の月南極地表基地"
     },
     "ares": {
       "name": "アレス・ドリフト",
@@ -827,7 +831,7 @@
   },
   "loc": {
     "leo": "LEO · 平均近点角 {phase}° · 418 km 相当",
-    "gateway": "NRHO相当 · 月方位 {phase}°",
+    "gateway": "月南極（仮想シナリオ）· {lat}° · 太陽高度 {sun}°",
     "mars": "火星遷移 · 地球から {au} AU · 太陽位相 {phase}°",
     "mare": "静かの海 · {lat}°N {lon}°E · 太陽高度 {sun}°"
   },
@@ -1376,5 +1380,131 @@
     "active": "動作中",
     "synced": "同期済み",
     "calibrated": "校正済み"
+  },
+  "hrp": {
+    "scienceKicker": "Best Use of Science · Space Apps 2026 台北",
+    "scienceTitle": "科学トレーサビリティ",
+    "scienceLead": "SpaceMoni の各機能を HRP リスク、NASA-STD-3001 節、データ源に対応づけています。表は審査用に英語、周囲の UI は各言語です。NASA 製品ではありません。",
+    "scienceFoot": "LIVE = 実行時の NOAA/GOES または DONKI。SOURCED-STATIC = 引用した文献・規格。SIMULATION = デモ乗員／世界。ASSUMPTION = ラベル付きデモ式であり NASA の式ではない。250 mSv の 30 日 SPE 限界は歴史的 PEL で、添付の Vol 2 Rev F には再掲されていません。",
+    "colFeature": "機能",
+    "colHrp": "HRP リスク／RAP 項目",
+    "colStd": "NASA-STD-3001",
+    "colSource": "データ源",
+    "colProv": "出自",
+    "tagLive": "ライブ",
+    "tagSourced": "静的出典",
+    "tagAssumption": "仮定",
+    "tagSim": "シミュレーション",
+    "delayBadge": "対地遅延 片道 {delay}",
+    "solCite": "Sol 24時間39分35秒 · NASA-STD-3001 第2巻の照明根拠（約24時間40分の火星周期）",
+    "eihsoTitle": "地球非依存の判断",
+    "eihsoCite": "EIHSO-202 項目2 — 半自律モニタリングダッシュボードの推奨（HRP RAP 2026年6月）。",
+    "roundTrip": "往復 {delay}",
+    "marsOverride": "火星遅延の上書き",
+    "crewAct": "乗員が今すぐ実施可",
+    "crewActList": "退避、補水、自己点検、睡眠、SANS、気分チェックイン、着陸後セルフテスト",
+    "groundAct": "地上の承認が必要",
+    "groundActList": "EVA ゴー、医務移送、中止、薬剤、居住区再加圧",
+    "queueGround": "地上へメモをキュー",
+    "queuedNote": "乗員アップリンク（シミュレーション）：遅延した地上レビューを依頼。",
+    "eta": "転送中 · {eta}",
+    "auNote": "地球からの模擬 AU：{au}（JPL Horizons ではない）",
+    "fromCrew": "乗員から（アップリンク）",
+    "speTitle": "太陽陽子イベント",
+    "speShelter": "退避",
+    "speWatch": "警戒",
+    "speQuiet": "静穏",
+    "speQuietDetail": "DONKI SEP なし、GOES 陽子は NOAA S1 未満。",
+    "artemisCite": "Artemis I HERA GCR 0.96–1.24 mSv d⁻¹；HSU2 13.47 mGy（George ら、Nature 2024、doi:10.1038/s41586-024-07927-7）。",
+    "careerSim": "生涯積算はシミュレーションであり、実測乗員線量ではない。",
+    "doseLine": "GCR アナログ {gcr} mSv + SPE 追加 {spe} mSv = {total} mSv · 生涯 600 mSv（V2 6095／Vol 1 §4.8）の {pctC}% · 30日 SPE 歴史的 PEL 250 mSv の {pctS}%",
+    "baselineNote": "船の GCR ベースライン {n} mSv/d は遮蔽でスケールしたラベル付きシミュレーション。",
+    "shelter": {
+      "move": "最も遮蔽の高い区画へ乗員を移動",
+      "eva": "EVA を終了し、Sスケールが下がるまで新規 EVA なし",
+      "water": "手順が許せば ECLSS 水／グレーウォーター質量を追加 SPE 遮蔽に使う（HHP 2023）",
+      "dosimetry": "個人／エリアモニタが記録中であることを確認（[V2 6161]）",
+      "cmo": "CMO が前駆症状を確認。AURA は意思決定支援であり診断ではない",
+      "ground": "遅延した地上報告をキュー（EIHSO-202）。退避は承認を待たない"
+    },
+    "moodTitle": "30秒の気分・チームチェックイン",
+    "moodCite": "BH-201／Team-201 — 半自律 BHP／チーム監視の指標と閾値（HRP RAP 2026年6月）。スコアはシミュレーションであり臨床心理測定ではない。",
+    "mood": "気分",
+    "stress": "ストレス",
+    "sleepQ": "睡眠の質",
+    "cohesion": "チーム結束",
+    "conflict": "対立",
+    "moodSubmit": "チェックインを記録",
+    "moodLast": "前回フラグ：{flag}",
+    "teamAgg": "チーム n={n} · 気分 {mood} · ストレス {stress} · {flag}",
+    "sansTitle": "週次 SANS 視力セルフチェック",
+    "sansCite": "SANS-101／SANS-404；IRP-47065 §4.3.9。Amsler アナログ + logMAR。OCT ではない。",
+    "amsler": "Amsler アナログ",
+    "amsler0": "0 — 歪みなし",
+    "amsler1": "1 — 軽い波打ち",
+    "amsler2": "2 — 歪み／暗点",
+    "amsler3": "3 — 重度／欠損",
+    "sansSave": "今週の検査を保存",
+    "sansLast": "前回フラグ {flag} · {n} 件",
+    "osdrTitle": "NASA OSDR · Inspiration4",
+    "osdrCite": "OSD-569 CBC と OSD-575 代謝パネル／サイトカイン。匿名 C001–C004。時点 L-92、L-44、L-3、R+1、R+45、R+82、R+194。模擬乗員の重ね合わせは類比であり同一性ではない。",
+    "osdrMean": "I4 平均 WBC",
+    "osdrZ": "模擬アナログ {analog}：z={z}（{band}）対その系列の L-3",
+    "sleepSolTitle": "睡眠 · Sol 時計 · PVT",
+    "sleepSolCite": "Sol 24時間39分35秒を UTC／MTC アナログの横に表示。睡眠負債と PVT はシミュレーション（BH-201／概日根拠）。",
+    "sleepDebt": "睡眠負債 {h} 時間 · PVT アナログ {pvt} ms · 24.0時間に対する概日ドリフト {drift} 時間",
+    "egressTitle": "着陸後レディネス",
+    "egressCite": "[V2 7042] 起立不耐の対策；SM-106／SM-206 G遷移後の姿勢制御。スコアはシミュレーションの立位テスト類比。",
+    "go": {
+      "go": "GO",
+      "conditional": "条件付き",
+      "no-go": "NO-GO"
+    },
+    "egressTask": {
+      "stand": "補助なし起立／エアロックまで歩行",
+      "hatch": "ハッチ／スーツ装着（握力＋視力）",
+      "eva": "初期の表面 EVA"
+    },
+    "cmoTitle": "AURA · CMO 意思決定支援",
+    "notDiagnosis": "診断ではありません。AURA は乗員医官の意思決定支援です。",
+    "docInABox": "オフラインで動作（Doc-in-a-Box／地球非依存の医療能力、HHP 2023）。",
+    "cmoConfirm": "CMO 確認",
+    "cmoDismiss": "却下",
+    "cmoState": {
+      "confirmed": "CMO が確認",
+      "dismissed": "CMO が却下"
+    },
+    "cmoHrTitle": "循環器の観察",
+    "cmoHrDetail": "安静時心拍が個人／デモ帯域から外れています。休息後に再測し補水。診断ではありません。",
+    "cmoSpo2Title": "キャビン／呼吸チェック",
+    "cmoSpo2Detail": "SpO₂ が帯域外。ECLSS 酸素分圧（模擬キャビン）とセンサ接触を確認。診断ではありません。",
+    "cmoSleepTitle": "睡眠機会",
+    "cmoSleepDetail": "睡眠が6時間未満。次の睡眠帯を守る（BH-201）。診断ではありません。",
+    "cmoSpeTitle": "SPE 退避",
+    "cmoSpeDetail": "Sスケール {scale}。乗員は自律的に退避し、地上を待たない（EIHSO-202）。生涯 PEL {career}；30日 SPE 限界 {spe30}。診断ではありません。",
+    "cmoSansTitle": "SANS セルフチェック追跡",
+    "cmoSansDetail": "視力アナログが公称外。Amsler／logMAR を再実施し CMO に記録。OCT ではなく診断でもない。",
+    "cmoBhpTitle": "行動健康チェックイン",
+    "cmoBhpDetail": "BH-201 指標がデモ閾値を超えました。非公開のチェックインを。精神科診断ではありません。",
+    "cmoEihsoTitle": "地球非依存オペレーション",
+    "cmoEihsoDetail": "片道遅延 {sec} 秒。乗員自律行動を優先し、地上案件はキューへ。",
+    "baselineTitle": "個人ベースライン",
+    "baselineCite": "各指標をその人自身の飛行前ベースライン（zスコア）と比較。注意 |z|≥1.5、逸脱 |z|≥2.5 — デモ方針であり NASA 表ではない。",
+    "conf": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "flag": {
+      "ok": "正常",
+      "watch": "警戒",
+      "concern": "懸念",
+      "refer": "紹介"
+    },
+    "band": {
+      "inside": "範囲内",
+      "caution": "注意",
+      "off": "逸脱"
+    }
   }
 }

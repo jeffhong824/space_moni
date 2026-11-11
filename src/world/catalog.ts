@@ -1,4 +1,4 @@
-export type ShipKind = 'leo-station' | 'lunar-gateway' | 'mars-transit' | 'lunar-habitat';
+export type ShipKind = 'leo-station' | 'lunar-south-pole' | 'mars-transit' | 'lunar-habitat';
 export type OccupationKey =
   | 'occ.commander'
   | 'occ.pilot'
@@ -62,7 +62,7 @@ export const SHIPS: ShipDef[] = [
     id: 'ship-gateway',
     nameKey: 'ship.gateway.name',
     kindKey: 'ship.gateway.kind',
-    kind: 'lunar-gateway',
+    kind: 'lunar-south-pole',
     shielding: 0.55,
     baselineMsvDay: 0.61,
     modules: ['mod.hab', 'mod.pps', 'mod.airlock'],

@@ -20,6 +20,8 @@ import { buildRiskMatrix, crewPanelAt } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
+import { CmoRecs, MoodCheckinCard, SpeAlertCard } from './HrpPanels';
+import { buildCmoRecommendations } from '../domain/cmoSupport';
 
 interface SurgeonHomeProps {
   surgeonName: string;
@@ -121,6 +123,13 @@ export const SurgeonHome: React.FC<SurgeonHomeProps> = ({
     <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad sm-orb-gutter">
       <h1 className="font-display text-4xl sm:text-5xl">{t('ui.casesHeadline')}</h1>
       <p className="text-sm text-stone-400 mt-1">{t('surg.hint', { name: surgeonName })}</p>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <SpeAlertCard wx={spaceEnvironment} missionDays={world.missionDay} baselineMsvDay={0.61} />
+        {astronauts[0] && (
+          <MoodCheckinCard crewId={astronauts[0].id} shipCrewIds={astronauts.map((a) => a.id)} />
+        )}
+      </div>
 
       <div className="mt-4">
         <RiskMatrix
@@ -348,6 +357,15 @@ function CaseInspector({
           analysisMode="offline_fallback"
         />
       )}
+      <CmoRecs
+        recs={buildCmoRecommendations({
+          hrStatus: analysis.detailedAnalysis.metrics.find((m) => m.id === 'restingHR')?.status,
+          spo2Status: analysis.detailedAnalysis.metrics.find((m) => m.id === 'spo2')?.status,
+          sleepMin: analysis.detailedAnalysis.metrics.find((m) => m.id === 'sleepMinutes')?.numericValue,
+          sScale: spaceEnvironment?.scales.sScale,
+          delaySec: 0,
+        })}
+      />
 
       {selected.state !== 'closed' && (
         <button

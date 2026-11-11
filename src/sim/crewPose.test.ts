@@ -62,7 +62,7 @@ describe('crewPoseAt', () => {
     expect(pose.roomId).toBe('medical');
   });
 
-  it('sends Gateway crew to shelter when S-scale is elevated', () => {
+  it('sends Moon Base (ship-gateway) crew to shelter when S-scale is elevated', () => {
     const t = WORLD_EPOCH_MS + 10 * HOUR;
     const storm = worldStateAt(t, {
       fetchedAt: '',

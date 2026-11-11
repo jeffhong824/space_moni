@@ -23,7 +23,7 @@ import {
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 
-/** Demo analog of a career effective-dose limit (mSv). Labeled simulation. */
+/** Career PEL 600 mSv (NASA-STD-3001 Vol 1 §4.8 via Vol 2 [V2 6095]). Crew totals here are SIMULATION. */
 export const DOSE_LIMIT_MSV = 600;
 /** ISS-like lumbar/hip BMD loss rate used in the transparent model: ~1.2% / 30 d without full loading. */
 export const BONE_LOSS_PCT_PER_30D = 1.2;

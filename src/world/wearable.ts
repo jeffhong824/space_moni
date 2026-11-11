@@ -165,7 +165,7 @@ export function wearableAt(t: number, ctx: WearableContext): WearableSample {
 
   let battery = 97 - hour * 1.6 + (activity === 'act.sleep' ? 8 : 0);
   battery = Math.max(18, Math.min(100, battery + (lerpNoise(t, crew.id, 'bat') - 0.5) * 2));
-  let signal = ship.kind === 'leo-station' ? 96 : ship.kind === 'lunar-gateway' ? 82 : ship.kind === 'mars-transit' ? 54 : 88;
+  let signal = ship.kind === 'leo-station' ? 96 : ship.kind === 'lunar-south-pole' ? 82 : ship.kind === 'mars-transit' ? 54 : 88;
   if (activity === 'act.eva') signal -= 14;
   signal = Math.max(12, Math.min(99, signal + (lerpNoise(t, crew.id, 'sig') - 0.5) * 4));
 

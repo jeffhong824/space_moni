@@ -15,6 +15,14 @@ import { buildRiskMatrix } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
 import { AvatarBubble, Segmented, Sheet, StatusDot, TONE_HEX, toneFromRank } from '../ui/chrome';
 import { StatusPill } from '../ui/StatusPill';
+import {
+  EarthIndependentPanel,
+  EgressCard,
+  MoodCheckinCard,
+  SpeAlertCard,
+  useEarthDelay,
+} from './HrpPanels';
+import { simulatedEgressScores } from '../domain/egressReady';
 
 interface CommanderHomeProps {
   astronauts: AstronautProfile[];
@@ -72,6 +80,19 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
   const conflicts = weatherTaskConflicts(tasks, sScale);
   const live = findCrewLive(world, commanderId || astronauts[0]?.id);
   const n = rows.length;
+  const kind = live?.ship.def.kind ?? 'leo-station';
+  const delay = useEarthDelay(kind, live?.ship.location.auFromEarth);
+  const shipId = live?.ship.def.id ?? astronauts[0]?.assignedStation ?? 'ship-harmony';
+  const shipCrewIds = CREW.filter((c) => c.shipId === shipId).map((c) => c.id);
+  const surface = kind === 'lunar-south-pole' || kind === 'lunar-habitat';
+  const cmdId = commanderId || astronauts[0]?.id;
+  const cmdLive = live?.crew;
+  const egressScores = simulatedEgressScores({
+    hr: cmdLive?.wearable.hr ?? 72,
+    baselineHr: cmdLive?.def.baselineHr ?? 72,
+    spo2: cmdLive?.wearable.spo2 ?? 98,
+    missionDays: world.missionDay,
+  });
   const matrixRows = useMemo(() => {
     const defs = astronauts.map((a) => CREW.find((c) => c.id === a.id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
     return buildRiskMatrix(defs, world.t, spaceEnvironment, world.ships);
@@ -204,6 +225,21 @@ export const CommanderHome: React.FC<CommanderHomeProps> = ({
           <ShipStatusCard world={world} ship={live.ship} me={live.crew} showFleetStrip />
         </div>
       )}
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        {cmdId && <MoodCheckinCard crewId={cmdId} shipCrewIds={shipCrewIds} />}
+        <SpeAlertCard
+          wx={spaceEnvironment}
+          missionDays={world.missionDay}
+          baselineMsvDay={live?.ship.def.baselineMsvDay ?? 0.61}
+        />
+        <EarthIndependentPanel
+          kind={kind}
+          shipId={shipId}
+          auFromEarth={live?.ship.location.auFromEarth}
+          delay={delay}
+        />
+        <EgressCard scores={egressScores} surface={surface} />
+      </div>
       {astronauts[0]?.assignedStation && <CrewCommsInbox shipId={astronauts[0].assignedStation} />}
 
       <Sheet

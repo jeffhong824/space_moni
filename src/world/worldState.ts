@@ -17,6 +17,7 @@ export const TAIPEI_OFFSET_MS = 8 * 3600 * 1000;
 const DAY_MS = 86_400_000;
 const C_KM_S = 299_792.458;
 const AU_KM = 149_597_870.7;
+const MOON_KM = 384_400;
 
 export type ActivityKey =
   | 'act.sleep'
@@ -120,7 +121,7 @@ export function activityAtHour(hour: number, shipKind: ShipDef['kind'], day: num
     if (
       evaDay &&
       evaCrew &&
-      (shipKind === 'leo-station' || shipKind === 'lunar-habitat' || shipKind === 'lunar-gateway')
+      (shipKind === 'leo-station' || shipKind === 'lunar-habitat' || shipKind === 'lunar-south-pole')
     ) {
       return 'act.eva';
     }
@@ -156,10 +157,10 @@ function shipLocation(ship: ShipDef, t: number): ShipLive['location'] {
     const phase = ((elapsed % period) / period) * 360;
     return { phaseDeg: phase, auFromEarth: 0.0000028, sunElevDeg: 0, lat: 0, lon: 0 };
   }
-  if (ship.kind === 'lunar-gateway') {
-    const period = 6.5 * 3600 * 1000;
-    const phase = ((elapsed % period) / period) * 360;
-    return { phaseDeg: phase, auFromEarth: 0.00257, sunElevDeg: 0, lat: 0, lon: 0 };
+  if (ship.kind === 'lunar-south-pole') {
+    const lunarDay = 29.53 * DAY_MS;
+    const sun = Math.sin((2 * Math.PI * (elapsed % lunarDay)) / lunarDay) * 90;
+    return { phaseDeg: 0, auFromEarth: 0.00257, sunElevDeg: sun, lat: -89.9, lon: 0 };
   }
   if (ship.kind === 'mars-transit') {
     const day = missionDayAt(t);
@@ -174,8 +175,9 @@ function shipLocation(ship: ShipDef, t: number): ShipLive['location'] {
 
 function latencySec(loc: ShipLive['location'], kind: ShipDef['kind']): number {
   if (kind === 'leo-station') return 0;
+  if (kind === 'lunar-south-pole' || kind === 'lunar-habitat') return MOON_KM / C_KM_S;
   const seconds = (loc.auFromEarth * AU_KM) / C_KM_S;
-  return Math.max(kind === 'mars-transit' ? 180 : 1.28, seconds);
+  return Math.max(kind === 'mars-transit' ? 240 : 1.28, seconds);
 }
 
 function modeledRadiation(ship: ShipDef, wx: SpaceEnvironmentPayload | null): { msv: number; sScale: string | null } {

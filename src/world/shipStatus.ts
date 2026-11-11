@@ -4,7 +4,9 @@ import { overallRank } from './worldState.ts';
 export function locationVars(ship: ShipLive): { key: string; vars: Record<string, string | number> } {
   const loc = ship.location;
   if (ship.def.kind === 'leo-station') return { key: 'loc.leo', vars: { phase: loc.phaseDeg.toFixed(0) } };
-  if (ship.def.kind === 'lunar-gateway') return { key: 'loc.gateway', vars: { phase: loc.phaseDeg.toFixed(0) } };
+  if (ship.def.kind === 'lunar-south-pole') {
+    return { key: 'loc.gateway', vars: { lat: loc.lat.toFixed(1), sun: loc.sunElevDeg.toFixed(0) } };
+  }
   if (ship.def.kind === 'mars-transit') {
     return { key: 'loc.mars', vars: { au: loc.auFromEarth.toFixed(2), phase: loc.phaseDeg.toFixed(0) } };
   }

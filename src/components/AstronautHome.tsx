@@ -2,10 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { Activity, Moon, Sun } from 'lucide-react';
 import type { AstronautProfile, DailyHealthRecord, StationTask } from '../types';
 import {
+  interpretRecord,
   type SelfCheckEntry,
   type SelfCheckMood,
   type SelfCheckPain,
 } from '../domain/healthThresholds';
+import { buildCmoRecommendations } from '../domain/cmoSupport';
+import { simulatedEgressScores } from '../domain/egressReady';
+import { flagSans } from '../domain/sansCheck';
+import { scoreCheckin } from '../domain/moodCheckin';
 import { sScaleElevated } from '../domain/spaceWeather';
 import type { SpaceEnvironmentPayload } from '../domain/spaceWeather';
 import { attachSeries, crewPanelAt, panelAction } from '../domain/crewSystems';
@@ -29,6 +34,17 @@ import { findCrewLive, taipeiClockHms } from '../world/worldState';
 import { bodyHealthAt } from '../world/bodyHealth';
 import { firstName, greetingKey, Sheet, StatusDot, toneFromRank } from '../ui/chrome';
 import { loadMessages, visibleToCrew } from '../world/comms';
+import { latestMood, sansHistory } from '../world/crewLogs';
+import {
+  BaselineStrip,
+  CmoRecs,
+  EarthIndependentPanel,
+  EgressCard,
+  MoodCheckinCard,
+  SleepSolCard,
+  SpeAlertCard,
+  useEarthDelay,
+} from './HrpPanels';
 
 interface AstronautHomeProps {
   astronaut: AstronautProfile;
@@ -101,6 +117,31 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
   const flagged = panel?.flagged ?? [];
   const clock = taipeiClockHms(world.t).slice(0, 5);
   const findings = (health?.domains ?? []).filter((d) => d.rank > 0).sort((a, b) => b.rank - a.rank);
+  const kind = live?.ship.def.kind ?? 'leo-station';
+  const delay = useEarthDelay(kind, live?.ship.location.auFromEarth);
+  const shipId = live?.ship.def.id ?? astronaut.assignedStation ?? 'ship-harmony';
+  const shipCrewIds = CREW.filter((c) => c.shipId === shipId).map((c) => c.id);
+  const surface = kind === 'lunar-south-pole' || kind === 'lunar-habitat';
+  const interp = interpretRecord(todayRecord, selfCheck ?? null);
+  const sansHist = sansHistory(astronaut.id);
+  const lastMood = latestMood(astronaut.id);
+  const recs = buildCmoRecommendations({
+    hrStatus: interp.metrics.find((m) => m.id === 'restingHR')?.status,
+    spo2Status: interp.metrics.find((m) => m.id === 'spo2')?.status,
+    sleepMin: todayRecord.avgSleepMinutes,
+    sScale,
+    sansFlag: sansHist.length
+      ? flagSans(sansHist[sansHist.length - 1], sansHist[sansHist.length - 2]).flag
+      : undefined,
+    moodFlag: lastMood ? scoreCheckin(lastMood).flag : undefined,
+    delaySec: delay.oneWaySec,
+  });
+  const egressScores = simulatedEgressScores({
+    hr,
+    baselineHr: crew?.baselineHr ?? 72,
+    spo2,
+    missionDays: astronaut.missionDaysElapsed,
+  });
 
   const schedule: ScheduleItemModel[] = [
     { id: 'overall', title: t('astro.overall'), startMin: 8 * 60, timeLabel: '08:00' },
@@ -269,6 +310,32 @@ export const AstronautHome: React.FC<AstronautHomeProps> = ({
             <SystemsAccordion panel={panel} />
           </div>
         )}
+
+        <div className="order-6 lg:col-span-12 grid gap-3 lg:grid-cols-2">
+          <EarthIndependentPanel
+            kind={kind}
+            shipId={shipId}
+            auFromEarth={live?.ship.location.auFromEarth}
+            delay={delay}
+          />
+          <SpeAlertCard
+            wx={spaceEnvironment}
+            missionDays={astronaut.missionDaysElapsed}
+            baselineMsvDay={live?.ship.def.baselineMsvDay ?? 0.42}
+          />
+          <MoodCheckinCard crewId={astronaut.id} shipCrewIds={shipCrewIds} />
+          <SleepSolCard sleepMin={todayRecord.avgSleepMinutes} now={world.t} />
+          {crew && (
+            <BaselineStrip
+              hr={hr}
+              baselineHr={crew.baselineHr}
+              spo2={spo2}
+              baselineSpo2={crew.baselineSpo2}
+            />
+          )}
+          <EgressCard scores={egressScores} surface={surface} />
+          <CmoRecs recs={recs} />
+        </div>
 
         {hqMessages.length > 0 ? (
           <div data-today-hq className="order-7 lg:col-span-8">

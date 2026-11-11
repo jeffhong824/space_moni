@@ -113,7 +113,9 @@
     "showTitle": "Show station-objectives panel",
     "hideTitle": "Hide the right panel to enlarge the health view",
     "aiTitle": "Call AURA flight surgeon",
-    "logoutTitle": "Log out and return to sign-in"
+    "logoutTitle": "Log out and return to sign-in",
+    "science": "Science",
+    "scienceShort": "Science"
   },
   "glossary": {
     "met": "MET — Mission elapsed time, counted from the demo epoch (10 Nov 2026, Taipei).",
@@ -138,7 +140,9 @@
     "bhp": "BHP — NASA HRP Behavioral Health and Performance risk category (generic grouping).",
     "orthostatic": "Orthostatic flag — simulated stand-test analog (heart-rate jump after unloading).",
     "logmar": "logMAR — logarithm of the minimum angle of resolution; visual-acuity change analog.",
-    "careerDose": "Career dose analog — demo comparison to a 600 mSv NASA STD-3001-style limit. Not a real crew dose."
+    "careerDose": "Career dose analog — demo comparison to a 600 mSv NASA STD-3001-style limit. Not a real crew dose.",
+    "eihso": "EIHSO-202 — HRP Earth-Independent Human Systems Operations item: recommendations for a semi-autonomous monitoring dashboard (RAP June 2026).",
+    "sol": "Sol — a Mars day, 24 h 39 m 35 s. NASA-STD-3001 Vol 2 lighting rationale notes a ~24 h 40 min cycle."
   },
   "badge": {
     "simTelemetry": "Simulated crew telemetry (demo)",
@@ -640,8 +644,8 @@
       "kind": "LEO habitat (ISS-like)"
     },
     "gateway": {
-      "name": "Selene Gateway",
-      "kind": "Lunar orbital outpost"
+      "name": "Moon Base · South Pole",
+      "kind": "Hypothetical lunar south-pole surface base (SIMULATION)"
     },
     "ares": {
       "name": "Ares Drift",
@@ -827,7 +831,7 @@
   },
   "loc": {
     "leo": "LEO · {phase}° mean anomaly · 418 km analog",
-    "gateway": "NRHO analog · lunar far-side azimuth {phase}°",
+    "gateway": "Lunar south pole (hypothetical) · {lat}° · sun elev. {sun}°",
     "mars": "Trans-Mars · {au} AU from Earth · solar phase {phase}°",
     "mare": "Mare Serenitatis · {lat}°N {lon}°E · sun elev. {sun}°"
   },
@@ -1376,5 +1380,131 @@
     "active": "Active",
     "synced": "Synced",
     "calibrated": "Calibrated"
+  },
+  "hrp": {
+    "scienceKicker": "Best Use of Science · Space Apps 2026 Taipei",
+    "scienceTitle": "Science traceability",
+    "scienceLead": "Every SpaceMoni feature mapped to an HRP risk, NASA-STD-3001 section, and data source. Table text is English for judges; chrome around it is localized. Nothing here is a NASA product.",
+    "scienceFoot": "LIVE = NOAA/GOES or DONKI at runtime. SOURCED-STATIC = cited publication or standard. SIMULATION = demo crew/world. ASSUMPTION = labeled demo formula, not a NASA equation. 250 mSv 30-day SPE bound is a historical PEL not restated in attached Vol 2 Rev F.",
+    "colFeature": "Feature",
+    "colHrp": "HRP risk / RAP item",
+    "colStd": "NASA-STD-3001",
+    "colSource": "Data source",
+    "colProv": "Provenance",
+    "tagLive": "LIVE",
+    "tagSourced": "SOURCED-STATIC",
+    "tagAssumption": "ASSUMPTION",
+    "tagSim": "SIMULATION",
+    "delayBadge": "Earth delay {delay} one-way",
+    "solCite": "Sol length 24 h 39 m 35 s · NASA-STD-3001 Vol 2 lighting rationale (~24 h 40 min Mars cycle)",
+    "eihsoTitle": "Earth-independent decisions",
+    "eihsoCite": "EIHSO-202 item 2 — Recommendations for semi-autonomous monitoring dashboard (HRP RAP June 2026).",
+    "roundTrip": "Round-trip {delay}",
+    "marsOverride": "Mars delay override",
+    "crewAct": "Crew can act now",
+    "crewActList": "Shelter, hydrate, self-check, sleep, SANS, mood check-in, egress self-test",
+    "groundAct": "Needs ground sign-off",
+    "groundActList": "EVA go, medevac, abort, pharmacy, habitat repress",
+    "queueGround": "Queue a note to ground",
+    "queuedNote": "Crew uplink (simulation): requesting delayed ground review.",
+    "eta": "In transit · {eta}",
+    "auNote": "Simulated AU from Earth: {au} (not JPL Horizons)",
+    "fromCrew": "From crew (uplink)",
+    "speTitle": "Solar proton event",
+    "speShelter": "SHELTER",
+    "speWatch": "WATCH",
+    "speQuiet": "Quiet",
+    "speQuietDetail": "No DONKI SEP and GOES protons below NOAA S1.",
+    "artemisCite": "Artemis I HERA GCR 0.96–1.24 mSv d⁻¹; HSU2 13.47 mGy (George et al., Nature 2024, doi:10.1038/s41586-024-07927-7).",
+    "careerSim": "Career total is a simulated accumulation, not a measured crew dose.",
+    "doseLine": "GCR analog {gcr} mSv + SPE extra {spe} mSv = {total} mSv · {pctC}% of 600 mSv career (V2 6095 / Vol 1 §4.8) · {pctS}% of 250 mSv 30-day SPE bound (historical PEL)",
+    "baselineNote": "Ship GCR baseline {n} mSv/d is a labeled simulation scaled by shielding.",
+    "shelter": {
+      "move": "Move crew to the highest-shielding volume",
+      "eva": "Terminate EVA; no new EVA until S-scale declines",
+      "water": "Use ECLSS water / gray-water mass as additional SPE shielding if procedure allows (HHP 2023)",
+      "dosimetry": "Confirm personal/area monitors are logging ([V2 6161])",
+      "cmo": "CMO reviews prodromal symptoms; AURA is decision support, not a diagnosis",
+      "ground": "Queue a delayed ground report (EIHSO-202); do not wait for sign-off to shelter"
+    },
+    "moodTitle": "30-second mood & team check-in",
+    "moodCite": "BH-201 / Team-201 — indicators and thresholds for semi-autonomous BHP/team monitoring (HRP RAP June 2026). Scores are SIMULATION, not clinical psychometrics.",
+    "mood": "Mood",
+    "stress": "Stress",
+    "sleepQ": "Sleep quality",
+    "cohesion": "Team cohesion",
+    "conflict": "Conflict",
+    "moodSubmit": "Log check-in",
+    "moodLast": "Last flag: {flag}",
+    "teamAgg": "Team n={n} · mood {mood} · stress {stress} · {flag}",
+    "sansTitle": "Weekly SANS vision self-check",
+    "sansCite": "SANS-101 / SANS-404; IRP-47065 §4.3.9. Amsler analog + logMAR. Not OCT.",
+    "amsler": "Amsler analog",
+    "amsler0": "0 — no distortion",
+    "amsler1": "1 — mild waviness",
+    "amsler2": "2 — distortion / scotoma",
+    "amsler3": "3 — severe / missing patch",
+    "sansSave": "Save this week’s check",
+    "sansLast": "Last flag {flag} · {n} entries",
+    "osdrTitle": "NASA OSDR · Inspiration4",
+    "osdrCite": "OSD-569 CBC and OSD-575 metabolic panel / cytokines. Anonymized C001–C004. Timepoints L-92, L-44, L-3, R+1, R+45, R+82, R+194. Simulated crew overlay is an analog, not identity.",
+    "osdrMean": "I4 mean WBC",
+    "osdrZ": "Sim analog {analog}: z={z} ({band}) vs that series’ L-3",
+    "sleepSolTitle": "Sleep · sol clock · PVT",
+    "sleepSolCite": "Sol 24 h 39 m 35 s next to UTC/MTC analog. Sleep debt and PVT are SIMULATION (BH-201 / circadian rationale).",
+    "sleepDebt": "Sleep debt {h} h · PVT analog {pvt} ms · circadian drift {drift} h vs 24.0 h",
+    "egressTitle": "Post-landing readiness",
+    "egressCite": "[V2 7042] orthostatic countermeasures; SM-106 / SM-206 postural control after G-transition. Scores are SIMULATION stand-test analogs.",
+    "go": {
+      "go": "GO",
+      "conditional": "CONDITIONAL",
+      "no-go": "NO-GO"
+    },
+    "egressTask": {
+      "stand": "Unassisted stand / walk to airlock",
+      "hatch": "Hatch / suit donning (grip + vision)",
+      "eva": "Early surface EVA"
+    },
+    "cmoTitle": "AURA · CMO decision support",
+    "notDiagnosis": "Not a diagnosis. AURA is decision support for the crew medical officer.",
+    "docInABox": "Works offline (Doc-in-a-Box / Earth-independent medical capability, HHP 2023).",
+    "cmoConfirm": "CMO confirm",
+    "cmoDismiss": "Dismiss",
+    "cmoState": {
+      "confirmed": "Confirmed by CMO",
+      "dismissed": "Dismissed by CMO"
+    },
+    "cmoHrTitle": "Cardiovascular observation",
+    "cmoHrDetail": "Resting HR is off the personal/demo band. Recheck after rest and hydrate. Not a diagnosis.",
+    "cmoSpo2Title": "Cabin / respiratory check",
+    "cmoSpo2Detail": "SpO₂ off band. Verify ECLSS ppO₂ (simulated cabin) and sensor contact. Not a diagnosis.",
+    "cmoSleepTitle": "Sleep opportunity",
+    "cmoSleepDetail": "Sleep under 6 h. Protect the next sleep period (BH-201). Not a diagnosis.",
+    "cmoSpeTitle": "Shelter for SPE",
+    "cmoSpeDetail": "S-scale {scale}. Crew-autonomous shelter; do not wait for ground (EIHSO-202). Career PEL {career}; 30-day SPE bound {spe30}. Not a diagnosis.",
+    "cmoSansTitle": "SANS self-check follow-up",
+    "cmoSansDetail": "Vision analog off nominal. Repeat Amsler/logMAR and log for CMO. Not OCT, not a diagnosis.",
+    "cmoBhpTitle": "Behavioral-health check-in",
+    "cmoBhpDetail": "BH-201 indicators crossed a demo threshold. Offer a private check-in. Not a psychiatric diagnosis.",
+    "cmoEihsoTitle": "Earth-independent ops",
+    "cmoEihsoDetail": "One-way delay {sec} s. Prefer crew-autonomous actions; queue ground items.",
+    "baselineTitle": "Personal baselines",
+    "baselineCite": "Each metric vs that person’s own pre-mission baseline (z-score). Caution |z|≥1.5, off |z|≥2.5 — demo policy, not a NASA table.",
+    "conf": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "flag": {
+      "ok": "ok",
+      "watch": "watch",
+      "concern": "concern",
+      "refer": "refer"
+    },
+    "band": {
+      "inside": "inside",
+      "caution": "caution",
+      "off": "off"
+    }
   }
 }

@@ -29,6 +29,7 @@ interface TopNavProps {
   onToggleSpeDemo?: () => void;
   wordmark?: string;
   clockLabel?: string;
+  clockExtra?: React.ReactNode;
   onGoHome?: () => void;
 }
 
@@ -45,6 +46,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onToggleSpeDemo,
   wordmark,
   clockLabel,
+  clockExtra,
   onGoHome,
 }) => {
   const { t } = useI18n();
@@ -66,6 +68,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               {clockLabel}
             </span>
           )}
+          {clockExtra && <span className="hidden xl:inline-flex items-center gap-1.5">{clockExtra}</span>}
         </div>
 
         {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}
@@ -103,7 +106,9 @@ export const TopNav: React.FC<TopNavProps> = ({
           onAction={onOpenAiCall}
         />
       )}
-      {currentUser && currentUser.role !== 'Guest' && view !== 'sim' && <AskAuraOrb onClick={onOpenAiCall} />}
+      {currentUser && currentUser.role !== 'Guest' && view !== 'sim' && view !== 'science' && (
+        <AskAuraOrb onClick={onOpenAiCall} />
+      )}
     </>
   );
 };

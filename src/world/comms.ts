@@ -67,6 +67,24 @@ export function etaMs(msg: HqMessage, now: number): number {
   return Math.max(0, msg.deliverAt - now);
 }
 
+export function sendCrewUplink(shipId: string, text: string, latencySec: number, now: number): HqMessage {
+  const deliverAt = now + Math.max(0, latencySec) * 1000;
+  const msg: HqMessage = {
+    id: `uplink-${now}-${Math.floor(Math.random() * 1e6)}`,
+    shipId,
+    from: 'crew',
+    text,
+    sentAt: now,
+    deliverAt,
+  };
+  saveMessages([...loadMessages(), msg]);
+  return msg;
+}
+
+export function pendingUplink(shipId: string, now: number): HqMessage[] {
+  return loadMessages().filter((m) => m.shipId === shipId && m.from === 'crew' && now < m.deliverAt);
+}
+
 export function formatEta(ms: number): string {
   const s = Math.ceil(ms / 1000);
   if (s < 60) return `${s}s`;
