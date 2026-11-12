@@ -100,6 +100,16 @@ describe('QA fixes from production check 6235bd1', () => {
     expect(src).toMatch(/onStartTour/);
   });
 
+  it('HQ station objectives keys exist in all locales', () => {
+    for (const lang of LANGUAGES) {
+      expect(translate(lang.id, 'tasks.fleetHint').length).toBeGreaterThan(12);
+      expect(translate(lang.id, 'tasks.behind').length).toBeGreaterThan(1);
+      expect(translate(lang.id, 'tasks.overAlloc').length).toBeGreaterThan(2);
+      expect(translate(lang.id, 'tasks.viewObjectives').length).toBeGreaterThan(2);
+    }
+    expect(translate('en', 'tasks.behindCount', { n: 1 })).toMatch(/behind schedule/i);
+  });
+
   it('next check-in copy is localized and names Evening 21:00', () => {
     expect(translate('en', 'prompt.nextCheckIn', { label: translate('en', 'prompt.when.evening') })).toBe(
       'Next check-in: Evening 21:00'

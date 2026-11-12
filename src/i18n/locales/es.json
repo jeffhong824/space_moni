@@ -563,7 +563,18 @@
     "emptyFilter": "Ningún objetivo coincide con el filtro",
     "reset": "Restablecer filtros",
     "progress": "Progreso",
-    "hideWide": "Ocultar el panel para una vista más ancha"
+    "hideWide": "Ocultar el panel para una vista más ancha",
+    "fleetHint": "Tareas de mision de la flota. SIMULACION — no es un horario NASA en vivo.",
+    "behind": "Retrasada",
+    "behindCount": "{n} retrasadas",
+    "onSchedule": "En plazo",
+    "workload": "Carga de tripulacion",
+    "overAlloc": "Sobreasignado",
+    "overAllocCount": "{n} sobreasignados",
+    "openTasks": "{n} abiertas",
+    "viewObjectives": "Ver objetivos",
+    "crewObjectives": "{name}",
+    "noTasks": "Sin objetivos abiertos"
   },
   "priority": {
     "Critical": "Crítico",

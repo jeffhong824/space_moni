@@ -21,6 +21,8 @@ import { StatusPill } from '../ui/StatusPill';
 import { buildRiskMatrix } from '../domain/crewSystems';
 import { RiskMatrix } from './RiskMatrix';
 import { CmoRecs, EarthIndependentPanel, EgressCard, MoodCheckinCard, SpeAlertCard, useEarthDelay } from './HrpPanels';
+import { FleetObjectives } from './FleetObjectives';
+import type { StationTask } from '../types';
 import { evaluateCmoSupport } from '../domain/cmoSupport';
 import { simulatedEgressScores } from '../domain/egressReady';
 import { defaultSigma, personalZ } from '../domain/baselines';
@@ -34,6 +36,7 @@ interface HqConsoleProps {
   now: number;
   wx: SpaceEnvironmentPayload | null;
   onOpenAiCall: (prompt?: string) => void;
+  extraTasks?: StationTask[];
 }
 
 function locLine(ship: ShipLive, t: (k: string, v?: Record<string, string | number>) => string) {
@@ -48,7 +51,7 @@ const ORBIT: Record<string, { x: number; y: number; color: string }> = {
   'ship-ares': { x: 58, y: 78, color: '#f08a80' },
 };
 
-export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCall }) => {
+export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCall, extraTasks = [] }) => {
   const { t, lang } = useI18n();
   const [shipId, setShipId] = useState(world.ships[0]?.def.id ?? '');
   const [draft, setDraft] = useState('');
@@ -145,6 +148,8 @@ export const HqConsole: React.FC<HqConsoleProps> = ({ world, now, wx, onOpenAiCa
             );
           })}
         </div>
+
+        <FleetObjectives world={world} extraTasks={extraTasks} now={now} />
 
         {alerts.length > 0 && (
           <div data-hq-alerts className="rounded-[20px] bg-amber-50 px-3 py-2 text-[12px] text-amber-950">

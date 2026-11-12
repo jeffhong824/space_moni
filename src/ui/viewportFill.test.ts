@@ -84,6 +84,12 @@ describe('viewport cream fill', () => {
     expect(hq).toMatch(/data-hq-orbit/);
     expect(hq).toMatch(/data-hq-fleet/);
     expect(hq).toMatch(/data-hq-crew/);
+    expect(hq).toMatch(/FleetObjectives/);
+    const objectives = readFileSync(new URL('../components/FleetObjectives.tsx', import.meta.url), 'utf8');
+    expect(objectives).toMatch(/data-hq-objectives/);
+    const day = readFileSync(new URL('../components/DailyRecordsPanel.tsx', import.meta.url), 'utf8');
+    expect(day).not.toMatch(/records\.callAi/);
+    expect(day).not.toMatch(/records\.askAi/);
     expect(hq).toMatch(/RiskMatrix/);
     expect(matrix).toMatch(/data-risk-matrix/);
     expect(matrix).toMatch(/data-risk-prompts/);

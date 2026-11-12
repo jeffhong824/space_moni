@@ -563,7 +563,18 @@
     "emptyFilter": "フィルタに一致する目標はありません",
     "reset": "フィルタをリセット",
     "progress": "進捗",
-    "hideWide": "パネルを隠して健康ビューを広く"
+    "hideWide": "パネルを隠して健康ビューを広く",
+    "fleetHint": "各ステーションの任務。シミュレーション — NASA の実スケジュールではありません。",
+    "behind": "遅延",
+    "behindCount": "{n} 件遅延",
+    "onSchedule": "予定どおり",
+    "workload": "クルー負荷",
+    "overAlloc": "過負荷",
+    "overAllocCount": "{n} 名が過負荷",
+    "openTasks": "{n} 件進行中",
+    "viewObjectives": "目標を見る",
+    "crewObjectives": "{name}",
+    "noTasks": "進行中の目標なし"
   },
   "priority": {
     "Critical": "危険",

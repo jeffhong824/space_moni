@@ -79,6 +79,8 @@ export interface StationTask {
   assignedCrew: { name: string; role: string; avatarBg: string }[];
   deadline: string;
   description: string;
+  /** Owning station id when known (fleet HQ grouping). */
+  shipId?: string;
 }
 
 export interface MetricAnalysis {

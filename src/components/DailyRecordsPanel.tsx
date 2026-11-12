@@ -7,7 +7,6 @@ import {
   Brain,
   Bone,
   Apple,
-  Mic,
   ChevronDown,
   ChevronUp,
   Plus,
@@ -16,7 +15,6 @@ import {
   AlertTriangle,
   Info,
   Calendar,
-  Sparkles,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
@@ -53,7 +51,6 @@ interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
   onToggleActivity: (date: string, activityId: string) => void;
   onOpenAddActivity: (date: string) => void;
-  onOpenAiCall: (initialPrompt?: string) => void;
   selectedDate: string;
   onSelectDate: (date: string) => void;
   currentUserRole: UserRole;
@@ -66,7 +63,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   records,
   onToggleActivity,
   onOpenAddActivity,
-  onOpenAiCall,
   selectedDate,
   onSelectDate,
   currentUserRole,
@@ -106,17 +102,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   const currentRecord = records.find((r) => r.date === focusedDate);
 
   // Helper to trigger AI with pre-filled question based on abnormal metrics of that day
-  const handleDirectAskAi = (record: DailyHealthRecord) => {
-    const abnormalHours = record.hourlyTimeline?.filter((p) => hourlyAbnormal(p)) || [];
-    const prompt = t('records.askPrompt', {
-      date: record.date,
-      hr: record.restingHR,
-      hrv: record.hrv,
-      n: abnormalHours.length,
-    });
-    onOpenAiCall(prompt);
-  };
-
   // ==========================================
   // SINGLE DAY FOCUSED DETAIL VIEW
   // ==========================================
@@ -169,13 +154,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => handleDirectAskAi(currentRecord)}
-              className="h-10 px-4 rounded-full bg-[var(--sm-cobalt)] text-white font-semibold text-xs inline-flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>{t('records.askAi')}</span>
-            </button>
             {onToggleRightPanel && (
               <button
                 onClick={onToggleRightPanel}
@@ -199,27 +177,19 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             </p>
           </div>
           {hasCriticalVitals && (
-            <div className="rounded-[28px] bg-rose-50 p-4 text-rose-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-bold">
-                  {t('records.alert', { reason: statusLabel(lang, interp.overall) })}
-                </h3>
-                <span className="text-[11px] font-semibold">{statusLabel(lang, interp.overall)}</span>
-                <p className="text-xs mt-1">
-                  {t('records.hrHrvLine', {
-                    hr: currentRecord.restingHR,
-                    hrStatus: statusLabel(lang, hrStatus),
-                    hrv: currentRecord.hrv,
-                    hrvStatus: statusLabel(lang, hrvStatus),
-                  })}
-                </p>
-              </div>
-              <button
-                onClick={() => handleDirectAskAi(currentRecord)}
-                className="h-10 px-4 rounded-full bg-rose-600 text-white text-xs font-semibold"
-              >
-                {t('records.askSurgeon')}
-              </button>
+            <div className="rounded-[28px] bg-rose-50 p-4 text-rose-950">
+              <h3 className="text-sm font-bold">
+                {t('records.alert', { reason: statusLabel(lang, interp.overall) })}
+              </h3>
+              <span className="text-[11px] font-semibold">{statusLabel(lang, interp.overall)}</span>
+              <p className="text-xs mt-1">
+                {t('records.hrHrvLine', {
+                  hr: currentRecord.restingHR,
+                  hrStatus: statusLabel(lang, hrStatus),
+                  hrv: currentRecord.hrv,
+                  hrvStatus: statusLabel(lang, hrvStatus),
+                })}
+              </p>
             </div>
           )}
 
@@ -232,7 +202,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               spike: Boolean(pt.isAbnormal || hourlyAbnormal(pt)),
               note: pt.activityNote,
             }))}
-            onAsk={() => handleDirectAskAi(currentRecord)}
           />
 
           <div className="flex flex-wrap gap-6">
@@ -589,10 +558,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
           </div>
 
           <div className={dayTab === 'equipment' ? '' : 'hidden'}>
-            <ConditioningDetailCard
-              currentRecord={currentRecord}
-              onAskAi={(prompt) => onOpenAiCall(prompt)}
-            />
+            <ConditioningDetailCard currentRecord={currentRecord} />
           </div>
         </div>
       </section>
@@ -1011,7 +977,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                     <ConditioningDetailCard
                       currentRecord={record}
                       initialCategory={multiDayConditioning.category}
-                      onAskAi={(prompt) => onOpenAiCall(prompt)}
                     />
                   </div>
                 )}
@@ -1048,20 +1013,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             </div>
           );
         })}
-      </div>
-
-      {/* Floating Action Button at Middle Bottom: "Call with AI" */}
-      <div className="absolute bottom-24 left-5 z-10">
-        <button
-          onClick={() => onOpenAiCall()}
-          className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#c8f0f8] hover:bg-[#b2eaf5] text-sky-950 font-semibold text-sm shadow-md hover:shadow-lg transition-all border border-sky-300/80 active:scale-97 cursor-pointer group"
-        >
-          <div className="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xs">
-            <Mic className="w-3.5 h-3.5" />
-          </div>
-          <span className="tracking-wide">{t('records.callAi')}</span>
-          <Sparkles className="w-4 h-4 text-sky-600 animate-pulse" />
-        </button>
       </div>
 
       {/* Commander Clearance Restriction Modal */}

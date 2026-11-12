@@ -482,7 +482,9 @@ export default function App() {
         </div>
       )}
 
-      {pageView === 'hq' && <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} />}
+      {pageView === 'hq' && (
+        <HqConsole world={world} now={now} wx={displayWx} onOpenAiCall={handleOpenAiCall} extraTasks={extraTasks} />
+      )}
       {(pageView === 'today' || pageView === 'crew' || pageView === 'cases') && currentUser.role !== 'Guest' && roleHome}
       {pageView === 'body' && (
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 pt-3 sm-page-pad">
@@ -546,7 +548,6 @@ export default function App() {
             records={dailyRecords}
             onToggleActivity={handleToggleActivity}
             onOpenAddActivity={(date) => setActivityModalDate(date)}
-            onOpenAiCall={handleOpenAiCall}
             selectedDate={selectedDate || world.taipeiIsoDate}
             onSelectDate={setSelectedDate}
             currentUserRole={currentUser.role}

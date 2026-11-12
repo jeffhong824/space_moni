@@ -563,7 +563,18 @@
     "emptyFilter": "No station objectives match the filter",
     "reset": "Reset filters",
     "progress": "Progress",
-    "hideWide": "Hide panel for a wider health view"
+    "hideWide": "Hide panel for a wider health view",
+    "fleetHint": "Fleet mission tasks. SIMULATION — not a live NASA schedule.",
+    "behind": "Behind schedule",
+    "behindCount": "{n} behind schedule",
+    "onSchedule": "On schedule",
+    "workload": "Crew workload",
+    "overAlloc": "Over-allocated",
+    "overAllocCount": "{n} over-allocated",
+    "openTasks": "{n} open",
+    "viewObjectives": "View objectives",
+    "crewObjectives": "{name}",
+    "noTasks": "No open objectives"
   },
   "priority": {
     "Critical": "Critical",

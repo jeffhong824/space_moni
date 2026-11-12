@@ -563,7 +563,18 @@
     "emptyFilter": "沒有符合篩選的站務目標",
     "reset": "重設篩選",
     "progress": "進度",
-    "hideWide": "隱藏面板以寬螢幕檢視健康"
+    "hideWide": "隱藏面板以寬螢幕檢視健康",
+    "fleetHint": "各站任務。模擬 — 非 NASA 即時班表。",
+    "behind": "進度落後",
+    "behindCount": "{n} 項進度落後",
+    "onSchedule": "進度正常",
+    "workload": "組員負荷",
+    "overAlloc": "負荷過重",
+    "overAllocCount": "{n} 人負荷過重",
+    "openTasks": "{n} 項進行中",
+    "viewObjectives": "查看目標",
+    "crewObjectives": "{name}",
+    "noTasks": "沒有進行中的目標"
   },
   "priority": {
     "Critical": "危急",

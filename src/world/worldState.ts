@@ -319,6 +319,7 @@ export function tasksForShip(ship: ShipLive, t: number): StationTask[] {
       assignedCrew: [{ name: eva.def.name, role: eva.def.occupationKey, avatarBg: 'bg-slate-700' }],
       deadline: new Date(ship.nextEventAt).toISOString(),
       description: 'act.eva',
+      shipId: ship.def.id,
     },
     {
       id: `${ship.def.id}-ex-${day}`,
@@ -330,6 +331,7 @@ export function tasksForShip(ship: ShipLive, t: number): StationTask[] {
       assignedCrew: [{ name: commander?.def.name || ship.crew[0].def.name, role: 'occ.commander', avatarBg: 'bg-cyan-600' }],
       deadline: new Date(t + 4 * 3600 * 1000).toISOString(),
       description: 'act.exercise',
+      shipId: ship.def.id,
     },
   ];
 }
