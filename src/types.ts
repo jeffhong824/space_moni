@@ -1,4 +1,4 @@
-export type UserRole = 'Astronaut' | 'Commander' | 'NASA';
+export type UserRole = 'Astronaut' | 'Commander' | 'NASA' | 'Guest';
 
 export interface AuthUser {
   account: string; // e.g. "alice_smith", "marcus_vance", "nasa_flight_surgeon"
@@ -72,13 +72,34 @@ export interface DailyHealthRecord {
 export interface StationTask {
   id: string;
   title: string;
-  module: 'Columbus BioLab' | 'Destiny Lab' | 'Kibo Module' | 'Tranquility ECLSS' | 'Station Exterior';
+  module: string;
   priority: 'Critical' | 'High' | 'Medium' | 'Routine';
   status: 'In Progress' | 'Scheduled' | 'Completed' | 'Pending Review';
   progress: number; // 0 - 100
   assignedCrew: { name: string; role: string; avatarBg: string }[];
   deadline: string;
   description: string;
+  /** Owning station id when known (fleet HQ grouping). */
+  shipId?: string;
+}
+
+export interface MetricAnalysis {
+  metric: string;
+  value: string;
+  status: 'Normal' | 'Attention' | 'Critical';
+  analysis: string;
+  recommendations: string[];
+  unit?: string;
+  threshold?: string;
+  source?: string;
+}
+
+export interface SystemAnalysis {
+  system: string;
+  status: 'Normal' | 'Attention' | 'Critical';
+  summary: string;
+  concerns: string[];
+  recommendations: string[];
 }
 
 export interface AiMessage {
@@ -91,11 +112,21 @@ export interface AiMessage {
     id: string;
     label: string;
     type: 'ADD_TASK' | 'LOG_ANOMALY' | 'UPDATE_VITALS' | 'NOTIFY_MISSION_CONTROL';
-    payload?: any;
+    payload?: Record<string, string>;
     executed?: boolean;
   }[];
   healthAssessment?: {
-    status: 'Nominal' | 'Attention Required' | 'Critical';
+    status: 'Normal' | 'Attention' | 'Critical' | 'Nominal' | 'Attention Required';
     summary: string;
+  };
+  detailedAnalysis?: {
+    metrics: MetricAnalysis[];
+    systems: SystemAnalysis[];
+  };
+  analysisMode?: 'live_gemini' | 'live_openai' | 'offline_fallback';
+  dataQuality?: {
+    telemetry: string;
+    cabin: string;
+    spaceEnvironment: string;
   };
 }

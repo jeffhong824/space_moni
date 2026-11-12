@@ -7,7 +7,6 @@ import {
   Brain,
   Bone,
   Apple,
-  Mic,
   ChevronDown,
   ChevronUp,
   Plus,
@@ -16,7 +15,6 @@ import {
   AlertTriangle,
   Info,
   Calendar,
-  Sparkles,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
@@ -31,15 +29,28 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react';
-import { DailyHealthRecord, DailyActivityItem, HourlyVitalPoint, UserRole, AstronautProfile } from '../types';
+import { DailyHealthRecord, DailyActivityItem, UserRole, AstronautProfile } from '../types';
+import { CREW } from '../world/catalog';
+import { minutesInTaipei } from '../domain/todayStatus';
+import { PromptToast, SelfLogCard, useDayIso } from './CrewTools';
 import { ConditioningDetailCard } from './ConditioningDetailCard';
 import { ConditioningCategory } from '../data/conditioningData';
+import {
+  BAND_NUMBERS,
+  interpretHourlyPoint,
+  interpretRecord,
+  THRESHOLDS,
+  hourlyAbnormal,
+} from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey, statusLabel } from '../i18n/index';
+import { RingGauge, Segmented, WaveScrubber } from '../ui/chrome';
+import { taipeiWeekdayLong } from '../utils/dateUtils';
 
 interface DailyRecordsPanelProps {
   records: DailyHealthRecord[];
   onToggleActivity: (date: string, activityId: string) => void;
   onOpenAddActivity: (date: string) => void;
-  onOpenAiCall: (initialPrompt?: string) => void;
   selectedDate: string;
   onSelectDate: (date: string) => void;
   currentUserRole: UserRole;
@@ -52,7 +63,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   records,
   onToggleActivity,
   onOpenAddActivity,
-  onOpenAiCall,
   selectedDate,
   onSelectDate,
   currentUserRole,
@@ -60,9 +70,13 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   isRightPanelCollapsed = false,
   onToggleRightPanel,
 }) => {
+  const { t, lang } = useI18n();
+  const dayIso = useDayIso(Date.now());
+  const logAccount = CREW.find((c) => c.id === currentAstronaut.id)?.loginAccount ?? currentAstronaut.id;
   // If focusedDate is set, other days are hidden and only this day's full 24-hour detail is displayed
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [showCommanderModal, setShowCommanderModal] = useState<boolean>(false);
+  const [dayTab, setDayTab] = useState<'hourly' | 'equipment' | 'notes'>('hourly');
 
   const isCommander = currentUserRole === 'Commander';
   const isNASA = currentUserRole === 'NASA';
@@ -88,208 +102,207 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   const currentRecord = records.find((r) => r.date === focusedDate);
 
   // Helper to trigger AI with pre-filled question based on abnormal metrics of that day
-  const handleDirectAskAi = (record: DailyHealthRecord) => {
-    const abnormalHours = record.hourlyTimeline?.filter((p) => p.isAbnormal) || [];
-    const prompt = `AURA, please analyze my 24-hour biomedical telemetry for ${record.date}. Resting heart rate is abnormal at ${record.restingHR} bpm, HRV is critically low at ${record.hrv} ms, with ${abnormalHours.length} elevated tachycardic episodes logged (peak at 14:00 UTC). What immediate microgravity countermeasures and task adjustments do you recommend?`;
-    onOpenAiCall(prompt);
-  };
-
   // ==========================================
   // SINGLE DAY FOCUSED DETAIL VIEW
   // ==========================================
   if (focusedDate && currentRecord) {
-    const abnormalPoints = currentRecord.hourlyTimeline.filter((p) => p.isAbnormal);
-    const hasElevatedHR = currentRecord.restingHR > 100;
+    const abnormalPoints = currentRecord.hourlyTimeline.filter((p) => p.isAbnormal || hourlyAbnormal(p));
+    const interp = interpretRecord(currentRecord);
+    const hrStatus = interp.metrics.find((m) => m.id === 'restingHR')?.status ?? 'Normal';
+    const hrvStatus = interp.metrics.find((m) => m.id === 'hrv')?.status ?? 'Normal';
+    const hasCriticalVitals = interp.overall === 'Critical';
     const currentIndex = records.findIndex((r) => r.date === focusedDate);
     const prevRecord = records[currentIndex + 1]; // Older date
     const nextRecord = records[currentIndex - 1]; // Newer date
 
     return (
-      <section className="flex-1 flex flex-col h-full bg-slate-50/70 overflow-hidden relative">
-        {/* Top Control Bar with Back button and Quick Direct-Ask AI */}
-        <div className="p-4 lg:px-6 py-3.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-2xs">
+      <section className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div className="p-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setFocusedDate(null)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-stone-600"
             >
-              <ArrowLeft className="w-4 h-4 text-slate-600" />
-              <span>Back to All Days</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="sr-only">{t('records.backDates')}</span>
             </button>
 
-            <div className="h-5 w-px bg-slate-200" />
-
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold font-mono text-slate-900">
+              <button
+                disabled={!prevRecord}
+                onClick={() => prevRecord && setFocusedDate(prevRecord.date)}
+                className="w-9 h-9 rounded-full bg-white disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4 mx-auto" />
+              </button>
+              <span className="px-4 py-1.5 rounded-full bg-white text-sm font-medium">
                 {currentRecord.date}
               </span>
+              <button
+                disabled={!nextRecord}
+                onClick={() => nextRecord && setFocusedDate(nextRecord.date)}
+                className="w-9 h-9 rounded-full bg-white disabled:opacity-30"
+              >
+                <ChevronRight className="w-4 h-4 mx-auto" />
+              </button>
               {currentRecord.isToday && (
-                <span className="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-md border border-sky-200 font-mono">
-                  TODAY
-                </span>
-              )}
-              {hasElevatedHR && (
-                <span className="px-2.5 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-700 rounded-md border border-rose-300 font-mono flex items-center gap-1 animate-pulse">
-                  <AlertTriangle className="w-3 h-3 text-rose-600" />
-                  ABNORMAL TAUGHT
+                <span className="px-3 py-1 text-[11px] font-semibold bg-white rounded-full">
+                  {t('records.today')}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Quick Direct-Ask AI Shortcut Button & Date Switcher */}
           <div className="flex items-center gap-2.5">
-            {/* Quick Direct-Ask AI for health suggestions */}
-            <button
-              onClick={() => handleDirectAskAi(currentRecord)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold text-xs shadow-sm hover:shadow transition-all active:scale-98 cursor-pointer"
-              title="Direct-Ask AI for Health Suggestions on this day's abnormal telemetry"
-            >
-              <Sparkles className="w-4 h-4 text-sky-200 animate-spin" />
-              <span>Direct-Ask AI for Health Suggestions</span>
-              <Mic className="w-3.5 h-3.5 text-white/90" />
-            </button>
-
-            {/* Stepper to adjacent days */}
-            <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-              <button
-                disabled={!prevRecord}
-                onClick={() => prevRecord && setFocusedDate(prevRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors cursor-pointer"
-                title="View previous day"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                disabled={!nextRecord}
-                onClick={() => nextRecord && setFocusedDate(nextRecord.date)}
-                className="p-1.5 hover:bg-white text-slate-600 disabled:opacity-30 transition-colors border-l border-slate-200 cursor-pointer"
-                title="View next day"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Toggle Right Station Objectives Panel */}
             {onToggleRightPanel && (
               <button
                 onClick={onToggleRightPanel}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
-                title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for maximum viewing of 24h health diagrams"}
+                className="h-10 px-4 rounded-full bg-white text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                {isRightPanelCollapsed ? (
-                  <>
-                    <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Show Objectives</span>
-                  </>
-                ) : (
-                  <>
-                    <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden sm:inline">Maximize View</span>
-                  </>
-                )}
+                {isRightPanelCollapsed ? t('records.showTasks') : t('records.expandView')}
               </button>
             )}
           </div>
         </div>
 
-        {/* Scrollable Detailed Dashboard */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-28">
-          {/* 1. Red Alert Banner for Abnormal Biometrics (If Present) */}
-          {hasElevatedHR && (
-            <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-4 sm:p-5 text-rose-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <ShieldAlert className="w-5 h-5 animate-bounce" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                      CRITICAL BIOMETRIC ALERT: RESTING TACHYCARDIA & AUTONOMIC STRAIN
-                    </h3>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-200 text-rose-900 uppercase">
-                      Action Required
-                    </span>
-                  </div>
-                  <p className="text-xs text-rose-800 mt-1 leading-relaxed">
-                    Resting heart rate reached <strong>103 bpm</strong> (normal ceiling: 85 bpm) with peak spike at <strong>114 bpm</strong> during the 14:00 UTC resistive exercise block. Heart Rate Variability (HRV) is critically suppressed to <strong>14 ms</strong>.
-                  </p>
-                </div>
-              </div>
-
-              {/* Direct ask shortcut inside alert banner */}
-              <button
-                onClick={() => handleDirectAskAi(currentRecord)}
-                className="shrink-0 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all active:scale-98 cursor-pointer"
-              >
-                <Mic className="w-3.5 h-3.5" />
-                <span>Ask AI Medical Officer</span>
-              </button>
+        <div className="flex-1 overflow-y-auto px-4 lg:px-8 space-y-6 sm-page-pad">
+          <div>
+            <h2 className="font-display text-4xl">
+              {taipeiWeekdayLong(currentRecord.date, lang)}, {currentRecord.date}
+            </h2>
+            <p className="mt-2 text-sm text-stone-500">
+              {abnormalPoints[0]
+                ? t('ui.expectedSpike', { time: abnormalPoints[0].hour })
+                : t('reason.allNormal')}
+            </p>
+          </div>
+          {hasCriticalVitals && (
+            <div className="rounded-[28px] bg-rose-50 p-4 text-rose-950">
+              <h3 className="text-sm font-bold">
+                {t('records.alert', { reason: statusLabel(lang, interp.overall) })}
+              </h3>
+              <span className="text-[11px] font-semibold">{statusLabel(lang, interp.overall)}</span>
+              <p className="text-xs mt-1">
+                {t('records.hrHrvLine', {
+                  hr: currentRecord.restingHR,
+                  hrStatus: statusLabel(lang, hrStatus),
+                  hrv: currentRecord.hrv,
+                  hrvStatus: statusLabel(lang, hrvStatus),
+                })}
+              </p>
             </div>
           )}
 
-          {/* 2. Primary 24-Hour Metric Cards Grid (Red-Highlighting Abnormal Parts) */}
+          <WaveScrubber
+            points={currentRecord.hourlyTimeline.map((pt) => ({
+              hour: pt.hour,
+              hr: pt.hr,
+              spo2: pt.spo2,
+              hrv: pt.hrv,
+              spike: Boolean(pt.isAbnormal || hourlyAbnormal(pt)),
+              note: pt.activityNote,
+            }))}
+          />
+
+          <div className="flex flex-wrap gap-6">
+            <RingGauge
+              value={currentRecord.restingHR}
+              max={120}
+              label={t('ui.restingHr')}
+              unit="bpm"
+              tone={hrStatus === 'Normal' ? 'ok' : hrStatus === 'Critical' ? 'crit' : 'warn'}
+              size={72}
+            />
+            <RingGauge
+              value={currentRecord.hrv}
+              max={50}
+              label={t('records.hrvLabel')}
+              unit="ms"
+              tone={hrvStatus === 'Normal' ? 'warn' : 'warn'}
+              size={72}
+            />
+            <RingGauge
+              value={currentRecord.spo2}
+              max={100}
+              label={t('records.spo2')}
+              unit="%"
+              tone="lilac"
+              size={72}
+            />
+          </div>
+
+          <Segmented
+            value={dayTab}
+            onChange={setDayTab}
+            options={[
+              { id: 'hourly' as const, label: t('ui.hourly') },
+              { id: 'equipment' as const, label: t('ui.equipment') },
+              { id: 'notes' as const, label: t('ui.notes') },
+            ]}
+          />
+
+          <div className={dayTab === 'hourly' ? '' : 'hidden'}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {/* Resting HR (RED-HIGHLIGHTED IF >100) */}
             <div
               className={`rounded-2xl p-4 border transition-all ${
-                hasElevatedHR
+                hrStatus !== 'Normal'
                   ? 'bg-rose-50/90 border-2 border-rose-500 text-rose-900 shadow-sm'
                   : 'bg-white border-slate-200 text-slate-800'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className={hasElevatedHR ? 'text-rose-700 font-bold' : 'text-slate-500'}>
-                  RESTING HEART RATE
+                <span className={hrStatus !== 'Normal' ? 'text-rose-700 font-bold' : 'text-slate-500'}>
+                  {t('records.hr')}
                 </span>
-                <Heart className={`w-4 h-4 ${hasElevatedHR ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
+                <Heart className={`w-4 h-4 ${hrStatus !== 'Normal' ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hasElevatedHR ? 'text-rose-700' : 'text-slate-900'}`}>
+                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hrStatus !== 'Normal' ? 'text-rose-700' : 'text-slate-900'}`}>
                   {currentRecord.restingHR}
                 </span>
                 <span className="text-xs font-mono font-medium text-slate-500">bpm</span>
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
-                <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {hasElevatedHR ? '▲ +28 bpm vs Norm' : '● Nominal range'}
+                <span className={hrStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
+                  {statusLabel(lang, hrStatus)}
                 </span>
-                <span className="text-slate-400">Ceiling: 85</span>
+                <span className="text-slate-400">{THRESHOLDS.restingHR.normal}</span>
               </div>
             </div>
 
             {/* HRV (RED-HIGHLIGHTED IF <20) */}
             <div
               className={`rounded-2xl p-4 border transition-all ${
-                currentRecord.hrv < 20
+                hrvStatus !== 'Normal'
                   ? 'bg-rose-50/90 border-2 border-rose-500 text-rose-900 shadow-sm'
                   : 'bg-white border-slate-200 text-slate-800'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className={currentRecord.hrv < 20 ? 'text-rose-700 font-bold' : 'text-slate-500'}>
-                  HRV (AUTONOMIC TONE)
+                <span className={hrvStatus !== 'Normal' ? 'text-rose-700 font-bold' : 'text-slate-500'}>
+                  {t('records.hrvLabel')}
                 </span>
-                <Activity className={`w-4 h-4 ${currentRecord.hrv < 20 ? 'text-rose-600' : 'text-slate-400'}`} />
+                <Activity className={`w-4 h-4 ${hrvStatus !== 'Normal' ? 'text-rose-600' : 'text-slate-400'}`} />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className={`text-3xl font-extrabold font-mono tabular-nums ${currentRecord.hrv < 20 ? 'text-rose-700' : 'text-slate-900'}`}>
+                <span className={`text-3xl font-extrabold font-mono tabular-nums ${hrvStatus !== 'Normal' ? 'text-rose-700' : 'text-slate-900'}`}>
                   {currentRecord.hrv}
                 </span>
                 <span className="text-xs font-mono font-medium text-slate-500">ms</span>
               </div>
               <div className="mt-2 pt-2 border-t border-current/15 flex items-center justify-between text-[11px] font-mono">
-                <span className={currentRecord.hrv < 20 ? 'text-rose-600 font-bold' : 'text-slate-400'}>
-                  {currentRecord.hrv < 20 ? '▼ Severe Suppression' : '● Normal variability'}
+                <span className={hrvStatus !== 'Normal' ? 'text-rose-600 font-bold' : 'text-slate-400'}>
+                  {statusLabel(lang, hrvStatus)}
                 </span>
-                <span className="text-slate-400">Target: &gt;25</span>
+                <span className="text-slate-400">{THRESHOLDS.hrv.normal}</span>
               </div>
             </div>
 
             {/* VO2 Max */}
             <div className="rounded-2xl p-4 border bg-white border-slate-200 text-slate-800">
               <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-                <span>VO2 MAX</span>
+                <span>VO₂ max</span>
                 <TrendingUp className="w-4 h-4 text-sky-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
@@ -299,7 +312,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <span className="text-xs font-mono font-medium text-slate-500">mL/kg/min</span>
               </div>
               <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                <span className="text-emerald-600 font-medium">● Aerobic Baseline</span>
+                <span className="text-emerald-600 font-medium">● {t('records.aerobic')}</span>
                 <span className="text-slate-400">Ref: 20.5</span>
               </div>
             </div>
@@ -307,7 +320,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             {/* SpO2 */}
             <div className="rounded-2xl p-4 border bg-white border-slate-200 text-slate-800">
               <div className="flex items-center justify-between text-xs font-mono text-slate-500">
-                <span>BLOOD OXYGEN (SPO2)</span>
+                <span>{t('records.spo2')}</span>
                 <Activity className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
@@ -317,7 +330,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <span className="text-xs font-mono font-medium text-slate-500">%</span>
               </div>
               <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                <span className="text-emerald-600 font-medium">● Stable Saturation</span>
+                <span className="text-emerald-600 font-medium">● {t('records.spo2Stable')}</span>
                 <span className="text-slate-400">Min: 94%</span>
               </div>
             </div>
@@ -328,13 +341,13 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>24-Hour Continuous Heart Rate & Tachycardia Diagram</span>
+                  <span>{t('records.chartTitle')}</span>
                   <span className="text-xs font-mono text-slate-400 font-normal">
-                    (Continuous sensor stream from 00:00 to 23:59 UTC)
+                    {t('records.streamNote')}
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 font-mono mt-0.5">
-                  Points exceeding 100 bpm are highlighted in red as abnormal tachycardic episodes
+                  {t('records.chartHint', { bpm: BAND_NUMBERS.restingHR.criticalHigh })}
                 </p>
               </div>
 
@@ -342,11 +355,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               <div className="flex items-center gap-4 text-xs font-mono">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-rose-600 inline-block"></span>
-                  <span className="font-semibold text-rose-700">Abnormal / Critical (&gt;100 bpm)</span>
+                  <span className="font-semibold text-rose-700">{t('records.critBand', { bpm: BAND_NUMBERS.restingHR.criticalHigh })}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-sky-400 inline-block"></span>
-                  <span className="text-slate-600">Nominal (&le;100 bpm)</span>
+                  <span className="text-slate-600">{t('records.okBand', { bpm: BAND_NUMBERS.restingHR.criticalHigh })}</span>
                 </div>
               </div>
             </div>
@@ -360,7 +373,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   style={{ top: '35%' }}
                 >
                   <span className="bg-rose-100 text-rose-800 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold shadow-2xs">
-                    ABNORMAL CEILING: 100 BPM
+                    {t('records.critCap', { bpm: BAND_NUMBERS.restingHR.criticalHigh })}
                   </span>
                 </div>
 
@@ -370,7 +383,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   style={{ top: '80%' }}
                 >
                   <span className="bg-slate-200 text-slate-600 text-[10px] font-mono px-1.5 py-0.5 rounded">
-                    RESTING BASELINE: 60 BPM
+                    {t('records.baseline')}
                   </span>
                 </div>
 
@@ -378,6 +391,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <div className="flex-1 flex items-end gap-2 justify-between z-20 pt-6">
                   {currentRecord.hourlyTimeline.map((pt) => {
                     const heightPct = Math.min(100, Math.max(15, ((pt.hr - 50) / 80) * 100));
+                    const spike = hourlyAbnormal(pt);
 
                     return (
                       <div
@@ -392,7 +406,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         </div>
 
                         {/* Top tag for abnormal points */}
-                        {pt.isAbnormal && (
+                        {spike && (
                           <span className="text-[9px] font-mono font-bold text-rose-700 bg-rose-100 px-1 rounded animate-pulse">
                             {pt.hr}
                           </span>
@@ -401,7 +415,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         {/* The Bar: Red-highlighted if abnormal! */}
                         <div
                           className={`w-full rounded-t-md transition-all duration-300 ${
-                            pt.isAbnormal
+                            spike
                               ? 'bg-rose-600 ring-2 ring-rose-400 shadow-md shadow-rose-200 animate-pulse'
                               : 'bg-sky-400 hover:bg-sky-500'
                           }`}
@@ -409,7 +423,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         />
 
                         {/* Time label */}
-                        <span className={`text-[10px] font-mono ${pt.isAbnormal ? 'font-bold text-rose-700' : 'text-slate-500'}`}>
+                        <span className={`text-[10px] font-mono ${spike ? 'font-bold text-rose-700' : 'text-slate-500'}`}>
                           {pt.hour.slice(0, 2)}h
                         </span>
                       </div>
@@ -434,7 +448,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-slate-100/90 text-slate-600 border-b border-slate-200 text-[11px]">
                     <tr>
-                      <th className="py-2.5 px-3 font-semibold">TIME (UTC)</th>
+                      <th className="py-2.5 px-3 font-semibold">TIME ({t('ui.zoneTaipei')})</th>
                       <th className="py-2.5 px-3 font-semibold">HEART RATE</th>
                       <th className="py-2.5 px-3 font-semibold">SPO2</th>
                       <th className="py-2.5 px-3 font-semibold">HRV</th>
@@ -444,11 +458,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {currentRecord.hourlyTimeline.map((pt) => {
+                      const spike = hourlyAbnormal(pt);
                       return (
                         <tr
                           key={pt.hour}
                           className={`transition-colors ${
-                            pt.isAbnormal
+                            spike
                               ? 'bg-rose-50/90 text-rose-950 font-medium border-l-4 border-l-rose-600'
                               : 'bg-white hover:bg-slate-50/80 text-slate-700'
                           }`}
@@ -457,7 +472,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <td className="py-2.5 px-3">
                             <span
                               className={`tabular-nums px-1.5 py-0.5 rounded ${
-                                pt.isAbnormal ? 'bg-rose-200 text-rose-900 font-bold' : 'text-slate-900'
+                                spike ? 'bg-rose-200 text-rose-900 font-bold' : 'text-slate-900'
                               }`}
                             >
                               {pt.hr} bpm
@@ -467,15 +482,15 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                           <td className="py-2.5 px-3 tabular-nums">{pt.hrv || 22} ms</td>
                           <td className="py-2.5 px-3 font-sans text-xs">{pt.activityNote}</td>
                           <td className="py-2.5 px-3">
-                            {pt.isAbnormal ? (
+                            {spike ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white shadow-2xs">
                                 <AlertTriangle className="w-3 h-3" />
-                                ABNORMAL TACHYCARDIA
+                                {statusLabel(lang, interpretHourlyPoint(pt))}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                NOMINAL
+                                {t('records.normal')}
                               </span>
                             )}
                           </td>
@@ -488,10 +503,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
             </div>
           </div>
 
-          {/* 5. Activities List (2nd) & Daily Conditioning with Details (3rd) */}
-          <div className="space-y-6">
-            {/* 2nd: Daily Experiment & Activity Checklist */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-2xs">
+          </div>
+
+          <div className={dayTab === 'notes' ? '' : 'hidden'}>
+            <div className="rounded-[28px] bg-white/90 p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-sky-600" />
@@ -504,7 +519,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   className="text-xs text-sky-700 hover:text-sky-900 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Activity</span>
+                  <span>{t('records.addActivity')}</span>
                 </button>
               </div>
 
@@ -540,28 +555,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
               </div>
             </div>
 
-            {/* 3rd: Daily Conditioning Overview with Clickable Past Data Inspection */}
-            <div>
-              <ConditioningDetailCard
-                currentRecord={currentRecord}
-                onAskAi={(prompt) => onOpenAiCall(prompt)}
-              />
-            </div>
           </div>
-        </div>
 
-        {/* Floating Call with AI at bottom */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
-          <button
-            onClick={() => handleDirectAskAi(currentRecord)}
-            className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all border border-sky-300 active:scale-97 cursor-pointer group"
-          >
-            <div className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Mic className="w-3.5 h-3.5" />
-            </div>
-            <span className="tracking-wide">Ask AI About {currentRecord.date} Abnormalities</span>
-            <Sparkles className="w-4 h-4 text-sky-200 animate-pulse" />
-          </button>
+          <div className={dayTab === 'equipment' ? '' : 'hidden'}>
+            <ConditioningDetailCard currentRecord={currentRecord} />
+          </div>
         </div>
       </section>
     );
@@ -571,36 +569,38 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
   // MULTI-DAY STACK VIEW (DEFAULT LIST)
   // ==========================================
   return (
-    <section className="flex-1 flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
+    <section id="main-records" className="flex-1 flex flex-col h-full overflow-hidden relative">
       {/* Scrollable container for the stack of daily cards */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 lg:px-6 lg:pt-6 space-y-4 sm-page-pad">
+        <PromptToast account={logAccount} dayIso={dayIso} nowMin={minutesInTaipei(Date.now())} onLog={() => undefined} />
+        <SelfLogCard account={logAccount} dayIso={dayIso} />
         {/* Header bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-                24-Hour Daily Health & Activity Records
+                {t('records.header')}
               </h1>
               {isNASA && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  NASA FLIGHT SURGEON · 24H ACCESS UNLOCKED
+                  {t('records.nasaUnlocked')}
                 </span>
               )}
               {isCommander && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
                   <Lock className="w-3 h-3 text-amber-700" />
-                  COMMANDER DUTY LOG (24H DETAIL RESTRICTED)
+                  {t('records.cmdLog')}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 font-mono mt-0.5">
-              Subject: <strong className="text-slate-800">{currentAstronaut.name}</strong> ({currentAstronaut.role}) · Station Module: {currentAstronaut.stationModule}
+              {t('records.subject', { name: currentAstronaut.name, role: localizeKey(lang, currentAstronaut.role), module: localizeKey(lang, currentAstronaut.stationModule) })}
             </p>
           </div>
           <div className="text-xs font-mono text-slate-500 flex items-center gap-3">
             <div className="items-center gap-1.5 hidden sm:flex">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Sensor Stream Active</span>
+              <span>{t('records.simStream')}</span>
             </div>
 
             {onToggleRightPanel && (
@@ -616,12 +616,12 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 {isRightPanelCollapsed ? (
                   <>
                     <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Show Objectives</span>
+                    <span>{t('records.showTasks')}</span>
                   </>
                 ) : (
                   <>
                     <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden sm:inline">Maximize View</span>
+                    <span className="hidden sm:inline">{t('records.expandView')}</span>
                   </>
                 )}
               </button>
@@ -633,7 +633,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
         {records.map((record) => {
           const isExpanded = expandedDates[record.date] ?? false;
           const isToday = record.date === '2026/11/22';
-          const hasElevatedHR = record.restingHR > 100;
+          const dayInterp = interpretRecord(record);
+          const dayHr = dayInterp.metrics.find((m) => m.id === 'restingHR')?.status ?? 'Normal';
+          const dayHrv = dayInterp.metrics.find((m) => m.id === 'hrv')?.status ?? 'Normal';
+          const hasCriticalVitals = dayInterp.overall === 'Critical';
 
           return (
             <div
@@ -658,20 +661,20 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   </span>
                   {isToday && (
                     <span className="px-2 py-0.5 text-[11px] font-semibold bg-sky-100 text-sky-800 rounded-md border border-sky-200">
-                      TODAY
+                      {t('records.today')}
                     </span>
                   )}
-                  {hasElevatedHR && (
+                  {dayHr !== 'Normal' && (
                     <span className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold bg-rose-100 text-rose-800 rounded-md border border-rose-300">
                       <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      Elevated HR (103 bpm)
+                      {statusLabel(lang, dayHr)}（{record.restingHR} bpm）
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
-                  <span className={hasElevatedHR ? 'text-rose-700 font-bold' : ''}>
-                    Resting HR: {record.restingHR} bpm
+                  <span className={dayHr !== 'Normal' ? 'text-rose-700 font-bold' : ''}>
+                    {t('records.hrToday', { hr: record.restingHR })}
                   </span>
                   <span aria-hidden="true">·</span>
                   <span>SpO2: {record.spo2}%</span>
@@ -684,11 +687,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         e.stopPropagation();
                         setShowCommanderModal(true);
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold shadow-2xs transition-all cursor-pointer ml-1"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-semibold ml-1"
                       title="24-hour details are restricted to NASA"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>NASA Only</span>
+                      <span>{t('records.nasaOnly')}</span>
                     </button>
                   ) : (
                     <button
@@ -697,11 +700,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         e.stopPropagation();
                         setFocusedDate(record.date);
                       }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white hover:bg-sky-50 text-sky-800 border border-sky-200 text-xs font-semibold shadow-2xs transition-all active:scale-98 cursor-pointer ml-1"
+                      className="flex items-center gap-1 px-3 py-1 rounded-full bg-white text-[var(--sm-cobalt)] text-xs font-semibold ml-1"
                       title="Hide other days and inspect full 24h diagrams and abnormal telemetry"
                     >
                       <Maximize2 className="w-3.5 h-3.5 text-sky-600" />
-                      <span>View 24h Details</span>
+                      <span>{t('records.detail24')}</span>
                     </button>
                   )}
 
@@ -729,17 +732,17 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   {/* Column 1: Daily Health Situation */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
-                      <span>Daily Health Situation</span>
+                      <span>{t('records.todayHealth')}</span>
                       <Heart className="w-3.5 h-3.5 text-rose-500" />
                     </h3>
 
                     <div className="space-y-2 text-xs font-mono">
                       <div className="flex justify-between items-center py-1 border-b border-slate-200/40">
-                        <span className="text-slate-600">Resting HR:</span>
+                        <span className="text-slate-600">{t('records.hr')}</span>
                         <div className="flex items-center gap-1.5">
                           <span
                             className={`font-bold tabular-nums text-sm ${
-                              hasElevatedHR ? 'text-rose-700 bg-rose-100 px-1 rounded font-bold' : 'text-slate-900'
+                              dayHr !== 'Normal' ? 'text-rose-700 bg-rose-100 px-1 rounded font-bold' : 'text-slate-900'
                             }`}
                           >
                             {record.restingHR} bpm
@@ -751,7 +754,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         <span className="text-slate-600">HRV:</span>
                         <span
                           className={`font-semibold tabular-nums ${
-                            record.hrv < 20 ? 'text-rose-700 font-bold bg-rose-50 px-1 rounded' : 'text-slate-900'
+                            dayHrv !== 'Normal' ? 'text-rose-700 font-bold bg-rose-50 px-1 rounded' : 'text-slate-900'
                           }`}
                         >
                           {record.hrv} ms
@@ -778,7 +781,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-300/60 pb-1.5">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                        Daily Activity
+                        {t('records.activities')}
                       </h3>
                       <button
                         onClick={(e) => {
@@ -789,7 +792,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                         title="Add activity"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Add</span>
+                        <span>{t('records.add')}</span>
                       </button>
                     </div>
 
@@ -830,7 +833,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                   {/* Column 3: Averages & Systemic Conditioning (Daily conditioning at the 3rd) */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300/60 pb-1.5 flex items-center justify-between">
-                      <span>Averages & Conditioning</span>
+                      <span>{t('records.averages')}</span>
                       <Activity className="w-3.5 h-3.5 text-sky-600" />
                     </h3>
 
@@ -853,7 +856,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Moon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                          <span>Avg. Sleep</span>
+                          <span>{t('records.sleep')}</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Pod #04)</span>
                         </span>
                         <span className="font-semibold text-slate-900 tabular-nums shrink-0">
@@ -879,7 +882,7 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Dumbbell className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>Avg. Exercise</span>
+                          <span>{t('records.exercise')}</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(T2/ARED)</span>
                         </span>
                         <span className="font-semibold text-slate-900 tabular-nums shrink-0">
@@ -905,11 +908,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Brain className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                          <span>Avg. Mental</span>
+                          <span>{t('records.mental')}</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(AURA AI)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.mentalStatus}
+                          {statusLabel(lang, record.mentalStatus)}
                         </span>
                       </button>
 
@@ -931,11 +934,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Bone className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>Musculoskeletal</span>
+                          <span>{t('records.msk')}</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Strain/Bio)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.musculoskeletalStatus}
+                          {statusLabel(lang, record.musculoskeletalStatus)}
                         </span>
                       </button>
 
@@ -957,11 +960,11 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       >
                         <span className="flex items-center gap-1.5 truncate mr-1">
                           <Apple className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                          <span>Nutrition</span>
+                          <span>{t('records.nutrition')}</span>
                           <span className="text-[10px] text-slate-400 font-sans hidden xl:inline">(Galley Logs)</span>
                         </span>
                         <span className="font-semibold text-slate-800 shrink-0">
-                          {record.nutritionStatus}
+                          {statusLabel(lang, record.nutritionStatus)}
                         </span>
                       </button>
                     </div>
@@ -974,7 +977,6 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                     <ConditioningDetailCard
                       currentRecord={record}
                       initialCategory={multiDayConditioning.category}
-                      onAskAi={(prompt) => onOpenAiCall(prompt)}
                     />
                   </div>
                 )}
@@ -982,10 +984,10 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                 {/* Footer bar with quick detail-below button */}
                 <div className="mt-4 pt-3 border-t border-slate-200/70 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
-                    <span>24h Vital Points: {record.hourlyTimeline.length}</span>
+                    <span>{t('records.points', { n: record.hourlyTimeline.length })}</span>
                     <span aria-hidden="true">·</span>
-                    <span className={hasElevatedHR ? 'text-rose-600 font-bold' : 'text-emerald-600'}>
-                      {hasElevatedHR ? '⚠ Contains Abnormal Spikes' : '● All Points Nominal'}
+                    <span className={hasCriticalVitals ? 'text-rose-600 font-bold' : 'text-emerald-600'}>
+                      {hasCriticalVitals ? `⚠ ${t('records.spikes')}` : `● ${t('records.pointsOk')}`}
                     </span>
                   </div>
 
@@ -995,14 +997,14 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium text-xs border border-amber-300 transition-all cursor-pointer"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>24h Raw Telemetry Restricted to NASA</span>
+                      <span>{t('records.rawNasa')}</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => setFocusedDate(record.date)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs shadow-2xs transition-all active:scale-98 cursor-pointer"
                     >
-                      <span>View Full 24h Diagrams & Red Highlights</span>
+                      <span>{t('records.viewFull24')}</span>
                       <Maximize2 className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -1013,53 +1015,39 @@ export const DailyRecordsPanel: React.FC<DailyRecordsPanelProps> = ({
         })}
       </div>
 
-      {/* Floating Action Button at Middle Bottom: "Call with AI" */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
-        <button
-          onClick={() => onOpenAiCall()}
-          className="flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#c8f0f8] hover:bg-[#b2eaf5] text-sky-950 font-semibold text-sm shadow-md hover:shadow-lg transition-all border border-sky-300/80 active:scale-97 cursor-pointer group"
-        >
-          <div className="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-2xs">
-            <Mic className="w-3.5 h-3.5" />
-          </div>
-          <span className="tracking-wide">Call with AI</span>
-          <Sparkles className="w-4 h-4 text-sky-600 animate-pulse" />
-        </button>
-      </div>
-
       {/* Commander Clearance Restriction Modal */}
       {showCommanderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/25">
+          <div className="bg-white rounded-[32px] shadow-[var(--sm-shadow)] max-w-md w-full p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                 <Lock className="w-5 h-5 text-amber-700" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">NASA Flight Surgeon Clearance Required</h3>
-                <p className="text-[11px] font-mono text-slate-500 uppercase">Mission Bio-Ethics & Medical Privacy Protocol</p>
+                <h3 className="text-base font-bold text-slate-900">{t('records.lockTitle')}</h3>
+                <p className="text-[11px] font-mono text-slate-500">{t('records.lockSub')}</p>
               </div>
             </div>
             <div className="text-xs text-slate-600 space-y-2.5 leading-relaxed">
               <p>
-                Continuous 24-hour raw physiological diagrams, continuous ECG waveforms, and diagnostic deep-dive telemetry are strictly <strong>restricted to NASA Ground Flight Surgeons</strong> to protect astronaut medical privacy.
+                {t('records.lockBody')}
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-[11px] space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-amber-800">
                   <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  Commander Operational Scope
+                  {t('records.cmdScope')}
                 </div>
                 <p className="text-amber-800">
-                  As <strong>Station Commander</strong>, you have access to daily duty readiness ratings, conditioning aggregates, and mission activity logs for all crew members. Detailed 24h raw telemetry requires logging in as <strong>NASA</strong>.
+                  {t('records.cmdScopeBody')}
                 </p>
               </div>
             </div>
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setShowCommanderModal(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="h-10 px-4 bg-[var(--sm-cobalt)] text-white text-xs font-semibold rounded-full"
               >
-                Acknowledge Access Policy
+                {t('records.ackPolicy')}
               </button>
             </div>
           </div>

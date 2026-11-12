@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig} from 'vitest/config';
 
 export default defineConfig(() => {
   return {
@@ -9,6 +9,19 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+      },
+    },
+    test: {
+      environment: 'node',
+      include: ['src/**/*.test.ts'],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules/phaser') || id.includes('/src/sim/')) return 'sim-engine';
+          },
+        },
       },
     },
     server: {

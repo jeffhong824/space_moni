@@ -1,44 +1,73 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, ArrowRight, Plus, UserRound } from 'lucide-react';
 import { AuthUser, UserRole } from '../types';
-import { PRESET_ACCOUNTS } from '../data/mockData';
-import { Lock, User, Shield, AlertCircle, ArrowRight, Satellite, KeyRound } from 'lucide-react';
+import { LanguageGlobe, IconCircle } from '../ui/chrome';
+import { useI18n } from '../i18n/I18nProvider';
+import {
+  DEMO_PASSWORD,
+  GUEST_ACCOUNT,
+  NASA_ACCOUNT,
+  accountByLogin,
+  allDemoAccounts,
+  loginConfirmVars,
+  parseLoginQuery,
+} from '../world/accounts';
 
 interface LoginPageProps {
   onLogin: (user: AuthUser) => void;
+  onStartTour?: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+function ApolloHero({ compact = false }: { compact?: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <div className={`relative aspect-square ${compact ? 'w-24' : 'w-[min(78vw,420px)]'}`}>
+        <div className="absolute inset-0 rounded-full bg-white/50 shadow-[0_40px_80px_rgba(40,36,28,0.12)]" />
+        <div className={`absolute overflow-hidden shadow-inner ${compact ? 'inset-[4%]' : 'inset-[6%]'} rounded-full`}>
+          <img
+            src="/assets/nasa/as09-20-3064.jpg"
+            alt={t('login.heroAlt')}
+            className="w-full h-full object-cover scale-110"
+          />
+        </div>
+        <div className="absolute inset-0 rounded-full pointer-events-none shadow-[inset_0_0_40px_rgba(255,255,255,0.55)]" />
+      </div>
+      <p className={`text-stone-500 ${compact ? 'mt-2 text-[11px] text-center leading-snug px-2' : 'mt-5 text-[13px]'}`}>
+        {t('login.heroCaptionNasa')}
+      </p>
+    </div>
+  );
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onStartTour }) => {
+  const { t } = useI18n();
   const [role, setRole] = useState<UserRole>('Astronaut');
   const [account, setAccount] = useState<string>('alice_smith');
-  const [password, setPassword] = useState<string>('12345');
+  const [password, setPassword] = useState<string>(DEMO_PASSWORD);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ name: string; roleKey: string; shipNameKey: string } | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validate password (default demo password is 12345)
-    if (password !== '12345') {
-      setError('Invalid password. For demo testing, default password is 12345');
+    if (password !== DEMO_PASSWORD) {
+      setError(t('login.errorPassword'));
       return;
     }
 
     const cleanAccount = account.trim().toLowerCase();
-
-    // Check if account matches preset or custom
-    const matched = PRESET_ACCOUNTS.find(
-      (p) => p.account.toLowerCase() === cleanAccount && p.role === role
-    ) || PRESET_ACCOUNTS.find((p) => p.account.toLowerCase() === cleanAccount);
+    const accounts = allDemoAccounts();
+    const matched =
+      accounts.find((p) => p.account.toLowerCase() === cleanAccount && p.role === role) ||
+      accountByLogin(cleanAccount);
 
     if (matched) {
-      onLogin({
-        ...matched,
-        role, // Allow setting chosen role
-      });
+      onLogin(matched);
       return;
     }
 
-    // Default fallback user creation for custom account name
     const formattedName = cleanAccount
       .split('_')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -48,200 +77,210 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       account: cleanAccount,
       name: formattedName,
       role,
-      title: role === 'Commander' ? 'Station Commander' : role === 'NASA' ? 'NASA Flight Operations' : 'Mission Specialist',
+      title: role === 'Commander' ? t('role.commander') : role === 'NASA' ? t('role.nasa') : t('role.astronaut'),
       astronautId: role === 'Commander' ? 'astro-marcus' : 'astro-alice',
     });
   };
 
-  const handleQuickLogin = (preset: AuthUser) => {
-    setRole(preset.role);
-    setAccount(preset.account);
-    setPassword('12345');
-    onLogin(preset);
+  const pickRole = (newRole: UserRole) => {
+    setRole(newRole);
+    if (newRole === 'Commander') setAccount('marcus_vance');
+    else if (newRole === 'NASA') setAccount('nasa_mission_control');
+    else setAccount('alice_smith');
   };
 
+  useEffect(() => {
+    const parsed = parseLoginQuery(window.location.search);
+    if (!parsed) return;
+    const user = accountByLogin(parsed.account);
+    const vars = loginConfirmVars(parsed.account);
+    setAccount(parsed.account);
+    setPassword(DEMO_PASSWORD);
+    if (user) setRole(user.role);
+    if (vars && parsed.showConfirm) setConfirm(vars);
+  }, []);
+
   return (
-    <div className="h-screen w-screen flex flex-col md:flex-row bg-black text-white font-sans overflow-hidden select-none">
-      {/* LEFT COLUMN: Login Form (Strictly adhering to wireframe Log-in_9d0eec67.png) */}
-      <div className="w-full md:w-1/2 lg:w-2/5 xl:w-[38%] h-full flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10 bg-black overflow-y-auto">
-        {/* Brand Header */}
-        <div className="space-y-1 pt-2">
-          <div className="flex items-center gap-2.5 text-sky-400">
-            <Satellite className="w-5 h-5 text-sky-400" />
-            <span className="text-xl font-bold tracking-tight text-white">SpaceMoni</span>
-          </div>
-          <p className="text-xs font-mono text-neutral-400">
-            Orbital Bio-Telemetry & Station Task Command
-          </p>
+    <div className="h-screen w-screen overflow-hidden relative text-stone-900">
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageGlobe />
+      </div>
+
+      <div className="h-full w-full grid md:grid-cols-2 items-center gap-4 md:gap-8 px-6 sm:px-12 lg:px-16">
+        <div className="hidden md:flex flex-col items-center justify-center">
+          <ApolloHero />
         </div>
 
-        {/* Form Container */}
-        <div className="my-auto py-6 max-w-sm w-full mx-auto space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Field 1: Role (As shown in wireframe) */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white tracking-wide">
-                Role
-              </label>
-              <div className="relative">
-                <select
-                  value={role}
-                  onChange={(e) => {
-                    const newRole = e.target.value as UserRole;
-                    setRole(newRole);
-                    if (newRole === 'Commander') setAccount('marcus_vance');
-                    else if (newRole === 'NASA') setAccount('nasa_mission_control');
-                    else setAccount('alice_smith');
-                  }}
-                  className="w-full h-12 px-4 py-2 bg-white text-black font-semibold text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none cursor-pointer shadow-sm"
-                >
-                  <option value="Astronaut">Astronaut</option>
-                  <option value="Commander">Commander</option>
-                  <option value="NASA">NASA</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-600">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+        <div className="max-w-md w-full mx-auto py-6 md:py-10 max-h-full overflow-y-auto">
+          <div className="flex md:hidden justify-center mb-4">
+            <ApolloHero compact />
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl text-stone-900">{t('login.welcome')}</h1>
+          <p className="mt-2 text-sm text-stone-500">{t('login.subtitle')}</p>
 
-            {/* Field 2: Account (As shown in wireframe) */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white tracking-wide">
-                Account
-              </label>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div className="flex items-start justify-center gap-6" role="radiogroup" aria-label={t('login.role')}>
+              <IconCircle
+                label={t('role.astronaut')}
+                active={role === 'Astronaut'}
+                onClick={() => pickRole('Astronaut')}
+              >
+                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M7 14c0-4 2.2-7 5-7s5 3 5 7" />
+                  <path d="M6 15h12v2.2c0 .6-.5 1.1-1.1 1.3C15.4 19.2 13.8 20 12 20s-3.4-.8-4.9-1.5c-.6-.2-1.1-.7-1.1-1.3V15Z" />
+                  <path d="M8.5 11.5h7" />
+                </svg>
+              </IconCircle>
+              <IconCircle
+                label={t('role.commander')}
+                active={role === 'Commander'}
+                onClick={() => pickRole('Commander')}
+              >
+                <UserRound className="w-6 h-6" />
+              </IconCircle>
+              <IconCircle
+                label={t('ui.flightSurgeon')}
+                active={role === 'NASA'}
+                onClick={() => pickRole('NASA')}
+              >
+                <Plus className="w-6 h-6" strokeWidth={2.4} />
+              </IconCircle>
+            </div>
+            <select id="login-role" className="sr-only" value={role} onChange={(e) => pickRole(e.target.value as UserRole)}>
+              <option value="Astronaut">{t('role.astronaut')}</option>
+              <option value="Commander">{t('role.commander')}</option>
+              <option value="NASA">{t('role.nasa')}</option>
+            </select>
+
+            <label className="block">
+              <span className="sr-only">{t('login.account')}</span>
               <input
+                id="login-account"
                 type="text"
+                autoComplete="username"
                 required
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
-                placeholder="e.g. alice_smith"
-                className="w-full h-12 px-4 py-2 bg-white text-black font-medium text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder-neutral-400 shadow-sm"
+                placeholder={t('login.accountPlaceholder')}
+                className="w-full h-12 px-5 bg-white rounded-full text-sm shadow-[var(--sm-shadow-soft)] placeholder:text-stone-400"
               />
-            </div>
-
-            {/* Field 3: Password (As shown in wireframe, default 12345) */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-white tracking-wide">
-                  Password
-                </label>
-                <span className="text-[11px] font-mono text-neutral-400">
-                  Demo: 12345
-                </span>
-              </div>
+            </label>
+            <label className="block">
+              <span className="sr-only">{t('login.password')}</span>
               <input
+                id="login-password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="12345"
-                className="w-full h-12 px-4 py-2 bg-white text-black font-medium text-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder-neutral-400 shadow-sm font-mono"
+                className="w-full h-12 px-5 bg-white rounded-full text-sm shadow-[var(--sm-shadow-soft)]"
               />
-            </div>
+            </label>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-rose-950/80 border border-rose-700/80 rounded-xl text-rose-200 text-xs">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-rose-50 text-rose-800 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Login Submit Button */}
             <button
               type="submit"
-              className="w-full h-12 mt-2 bg-sky-500 hover:bg-sky-400 text-black font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
+              className="w-full h-12 rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold flex items-center justify-center gap-2"
             >
-              <span>Log In as {role}</span>
+              {t('ui.continue')}
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Quick Demo Credentials for Reviewers */}
-          <div className="pt-4 border-t border-neutral-800 space-y-2.5">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 text-center">
-              One-Click Demo Roles:
-            </div>
-            <div className="grid grid-cols-1 gap-1.5">
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => onLogin(GUEST_ACCOUNT)}
+              className="text-[13px] text-stone-500 hover:text-stone-800"
+            >
+              {t('ui.exploreHq')} →
+            </button>
+            <p className="mt-5 text-[11px] text-stone-400">{t('login.quickRoles')}</p>
+            <div className="mt-2 grid grid-cols-1 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[0])}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(accountByLogin('alice_smith')!)}
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
-                <div>
-                  <span className="font-semibold text-white">Astronaut: alice_smith</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">Personal view · 24h health access</div>
-                </div>
-                <span className="text-[10px] font-mono bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800">
-                  Astronaut
-                </span>
+                {t('login.quickAstronaut')}
               </button>
-
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[1])}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(accountByLogin('marcus_vance')!)}
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
-                <div>
-                  <span className="font-semibold text-white">Commander: marcus_vance</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">All members list · No 24h details</div>
-                </div>
-                <span className="text-[10px] font-mono bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-800">
-                  Commander
-                </span>
+                {t('login.quickCommander')}
               </button>
-
               <button
                 type="button"
-                onClick={() => handleQuickLogin(PRESET_ACCOUNTS[2])}
-                className="w-full text-left px-3 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 rounded-xl text-xs flex items-center justify-between transition-colors"
+                onClick={() => onLogin(NASA_ACCOUNT)}
+                className="h-10 w-full px-4 rounded-full bg-white text-[12px] font-semibold whitespace-nowrap"
               >
-                <div>
-                  <span className="font-semibold text-white">NASA: nasa_mission_control</span>
-                  <div className="text-[10px] text-neutral-400 font-mono">All members list · Full 24h details</div>
-                </div>
-                <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
-                  NASA
-                </span>
+                {t('login.quickNasa')}
               </button>
             </div>
+            <p className="mt-4 text-[11px] text-stone-400">{t('login.footer')}</p>
+            <p className="mt-1 text-[11px] text-amber-900 font-semibold">{t('notice.notDevice')}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (onStartTour) {
+                  onStartTour();
+                  return;
+                }
+                window.history.pushState({}, '', '/tour?tour=1');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              className="mt-3 h-10 w-full rounded-full bg-white text-[12px] font-semibold"
+            >
+              {t('tour.cta')}
+            </button>
+            <p className="mt-1 text-[11px] text-stone-400 font-mono">{t('login.passwordHint')}</p>
           </div>
-        </div>
-
-        {/* Footer info */}
-        <div className="pt-4 text-center text-[11px] font-mono text-neutral-500">
-          ISS Expedition 76 · Secured Flight Telemetry Link
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Photo with Top-Right Caption (Strictly adhering to wireframe) */}
-      <div className="hidden md:block md:w-1/2 lg:w-3/5 xl:w-[62%] h-full relative overflow-hidden bg-neutral-950">
-        <img
-          src="/assets/aistudio/190207123342-xl-nasa-archives-p176_2f1b8d2d.jpg"
-          alt="Astronaut spacewalk over Earth"
-          className="w-full h-full object-cover"
-        />
-
-        {/* Dark subtle gradient overlay to ensure legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none" />
-
-        {/* Caption in Top Right (Strictly matching wireframe) */}
-        <div className="absolute top-6 right-8 text-right font-sans text-xs lg:text-sm text-white/90 drop-shadow-md select-text">
-          <span>NASA's history in pictures - the first 60 years | CNN</span>
-        </div>
-
-        {/* Bottom subtle mission caption */}
-        <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between text-xs font-mono text-white/80">
-          <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>ORBIT: 418 KM · LEO INCLINATION: 51.6°</span>
+      {confirm && (
+        <div className="absolute inset-0 z-[60] bg-stone-900/30 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-[32px] bg-white p-6 space-y-4 shadow-[var(--sm-shadow)]">
+            <p className="font-display text-2xl">
+              {t('login.confirmTitle', { name: confirm.name, role: t(confirm.roleKey), ship: t(confirm.shipNameKey) })}
+            </p>
+            <p className="text-[13px] text-stone-500">{t('login.confirmHint')}</p>
+            <p className="text-[12px] font-mono text-stone-400">
+              {account} · {t('login.passwordHint')}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const user = accountByLogin(account);
+                  setConfirm(null);
+                  if (user) onLogin(user);
+                }}
+                className="flex-1 h-11 rounded-full bg-[var(--sm-cobalt)] text-white text-sm font-semibold"
+              >
+                {t('login.confirm')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirm(null)}
+                className="flex-1 h-11 rounded-full bg-stone-100 text-sm font-semibold"
+              >
+                {t('login.cancel')}
+              </button>
+            </div>
           </div>
-          <div className="bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
-            <span>NASA EXPEDITION 76 SPACE HABITAT</span>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

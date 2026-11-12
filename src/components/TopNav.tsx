@@ -1,150 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, Radio, Satellite, HeartPulse, LogOut, User, Shield, PanelRightClose, PanelRightOpen } from 'lucide-react';
-import { EnvironmentalMetrics, AuthUser } from '../types';
+import React, { useState } from 'react';
+import { AuthUser } from '../types';
+import { useI18n } from '../i18n/I18nProvider';
+import {
+  AppView,
+  AskAuraOrb,
+  AvatarMenu,
+  GlossaryButton,
+  LanguageGlobe,
+  PageWordmark,
+  PillDock,
+  PinnedAlert,
+  SimChip,
+} from '../ui/chrome';
+
+export type { AppView };
 
 interface TopNavProps {
-  envMetrics: EnvironmentalMetrics;
+  envMetrics?: unknown;
   onOpenAiCall: () => void;
   currentUser: AuthUser | null;
   onLogout: () => void;
+  onSwitchUser?: (user: AuthUser) => void;
   isRightPanelCollapsed?: boolean;
   onToggleRightPanel?: () => void;
+  view?: AppView;
+  onChangeView?: (view: AppView) => void;
+  speDemo?: boolean;
+  onToggleSpeDemo?: () => void;
+  wordmark?: string;
+  clockLabel?: string;
+  clockExtra?: React.ReactNode;
+  onGoHome?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
-  envMetrics,
   onOpenAiCall,
   currentUser,
   onLogout,
+  onSwitchUser,
   isRightPanelCollapsed = false,
   onToggleRightPanel,
+  view = 'today',
+  onChangeView,
+  speDemo = false,
+  onToggleSpeDemo,
+  wordmark,
+  clockLabel,
+  clockExtra,
+  onGoHome,
 }) => {
-  const [utcTime, setUtcTime] = useState<string>('');
-  const [metString, setMetString] = useState<string>('T+289D:01H:00M');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setUtcTime(now.toUTCString().slice(17, 25) + ' UTC');
-
-      // Calculate MET from mission launch date 2026/01/21
-      const launch = new Date(Date.UTC(2026, 0, 21, 0, 0, 0));
-      const diffMs = Math.max(0, now.getTime() - launch.getTime());
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-      const hours = String(now.getUTCHours()).padStart(2, '0');
-      const mins = String(now.getUTCMinutes()).padStart(2, '0');
-      setMetString(`T+${days}D:${hours}H:${mins}M`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const getRoleBadge = (role?: string) => {
-    switch (role) {
-      case 'NASA':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-      case 'Commander':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      default:
-        return 'bg-sky-100 text-sky-800 border-sky-300';
-    }
-  };
+  const { t } = useI18n();
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 lg:gap-8 shrink-0 select-none">
-      {/* Zone 1: Single text element wordmark with clean icon */}
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 shadow-2xs">
-          <Satellite className="w-4 h-4" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-base font-bold tracking-tight text-slate-900 leading-tight">
-            SpaceMoni
+    <>
+      <header className="relative shrink-0 px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-3 select-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <PageWordmark title={wordmark} onHome={onGoHome} />
+          <span className="hidden sm:inline-flex">
+            <SimChip />
           </span>
-          <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider hidden sm:inline">
-            ISS Expedition 76 · Astronaut Health & Mission Ops
-          </span>
-        </div>
-      </div>
-
-      {/* Zone 2: Navigation & Telemetry Readouts */}
-      <div className="hidden lg:flex items-center gap-6 text-xs text-slate-600 font-mono">
-        <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200/60 rounded-md">
-          <span className="text-slate-400">MET:</span>
-          <span className="font-semibold text-slate-800 tabular-nums">{metString}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400">STATION CLOCK:</span>
-          <span className="font-semibold text-slate-800 tabular-nums">{utcTime || '07:45:00 UTC'}</span>
-        </div>
-
-        <div className="flex items-center gap-2 text-slate-500">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>ECLSS: NOMINAL</span>
-          <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>ORBIT: 418 KM</span>
-          <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>VELOCITY: 7.66 KM/S</span>
-        </div>
-      </div>
-
-      {/* Zone 3: User Info, Primary Action & Logout */}
-      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-        {currentUser && (
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border uppercase ${getRoleBadge(currentUser.role)}`}>
-              {currentUser.role}
+          {clockLabel && (
+            <span
+              title={t('glossary.met')}
+              className="hidden sm:inline text-[11px] text-stone-500 font-sans tabular-nums tracking-tight truncate max-w-[10rem] xl:max-w-[22rem]"
+            >
+              {clockLabel}
             </span>
-            <span className="font-semibold text-slate-800 max-w-[120px] truncate hidden sm:inline">
-              {currentUser.name}
-            </span>
-          </div>
-        )}
+          )}
+          {clockExtra && <span className="inline-flex items-center gap-1 max-w-[42vw] overflow-x-auto">{clockExtra}</span>}
+        </div>
 
-        {onToggleRightPanel && (
-          <button
-            onClick={onToggleRightPanel}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all shadow-2xs active:scale-98 cursor-pointer ${
-              isRightPanelCollapsed
-                ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-300'
-                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
-            }`}
-            title={isRightPanelCollapsed ? "Show Space Station Objectives panel" : "Hide right panel for better viewing of health & activities"}
-          >
-            {isRightPanelCollapsed ? (
-              <>
-                <PanelRightOpen className="w-3.5 h-3.5 text-sky-600" />
-                <span className="hidden md:inline">Show Objectives</span>
-              </>
-            ) : (
-              <>
-                <PanelRightClose className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden md:inline">Hide Objectives</span>
-              </>
-            )}
-          </button>
-        )}
+        {onChangeView && currentUser && <PillDock role={currentUser.role} view={view} onChangeView={onChangeView} />}
 
-        <button
-          onClick={onOpenAiCall}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-sky-900 bg-sky-100 hover:bg-sky-200 border border-sky-300/80 rounded-lg transition-all shadow-2xs active:scale-98 cursor-pointer"
-          title="Talk with Station AI Flight Doctor"
-        >
-          <Radio className="w-3.5 h-3.5 text-sky-600 animate-pulse" />
-          <span className="hidden sm:inline">AI Flight Surgeon</span>
-        </button>
-
-        <button
-          onClick={onLogout}
-          className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-          title="Log out back to SpaceMoni login screen"
-        >
-          <LogOut className="w-3.5 h-3.5 text-slate-500" />
-          <span className="hidden sm:inline">Log out</span>
-        </button>
-      </div>
-    </header>
+        <div className="flex items-center gap-2 shrink-0">
+          {currentUser?.role === 'Guest' && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-[var(--sm-cobalt)] text-white text-[11px] sm:text-xs font-semibold shrink-0"
+            >
+              {t('nav.signIn')}
+            </button>
+          )}
+          <GlossaryButton open={glossaryOpen} onOpenChange={setGlossaryOpen} />
+          <LanguageGlobe />
+          {currentUser && (
+            <AvatarMenu
+              user={currentUser}
+              onLogout={onLogout}
+              onSwitchUser={onSwitchUser ?? (() => undefined)}
+              speDemo={speDemo}
+              onToggleSpeDemo={currentUser.role === 'Guest' ? undefined : onToggleSpeDemo}
+              isRightPanelCollapsed={isRightPanelCollapsed}
+              onToggleRightPanel={currentUser.role === 'Guest' ? undefined : onToggleRightPanel}
+              onOpenGlossary={() => setGlossaryOpen(true)}
+            />
+          )}
+        </div>
+      </header>
+      {speDemo && currentUser?.role !== 'Guest' && (
+        <PinnedAlert
+          title={t('ui.spePin')}
+          actionLabel={t('ui.review')}
+          onAction={onOpenAiCall}
+        />
+      )}
+      {currentUser && currentUser.role !== 'Guest' && view !== 'sim' && view !== 'science' && (
+        <AskAuraOrb onClick={onOpenAiCall} />
+      )}
+    </>
   );
 };

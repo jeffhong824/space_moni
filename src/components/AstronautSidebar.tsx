@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User, Wind, Gauge, Thermometer, ShieldAlert, Users, ChevronDown, Check, Zap, Eye, ShieldCheck, Heart } from 'lucide-react';
-import { AstronautProfile, EnvironmentalMetrics, UserRole } from '../types';
+import { AstronautProfile, DailyHealthRecord, EnvironmentalMetrics, UserRole } from '../types';
 import { getStationClockDate, calculateMissionDuration } from '../utils/dateUtils';
+import { AvatarBubble } from '../ui/chrome';
+import { interpretRecord } from '../domain/healthThresholds';
+import { useI18n } from '../i18n/I18nProvider';
+import { localizeKey, statusLabel } from '../i18n/index';
+import { SimBadge } from './SimBadge';
 
 interface AstronautSidebarProps {
   currentAstronaut: AstronautProfile;
@@ -10,6 +15,8 @@ interface AstronautSidebarProps {
   envMetrics: EnvironmentalMetrics;
   onUpdateEnvMetrics: (updated: Partial<EnvironmentalMetrics>) => void;
   currentUserRole: UserRole;
+  recordsByAstronaut?: Record<string, DailyHealthRecord[]>;
+  co2Flash?: boolean;
 }
 
 export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
@@ -19,7 +26,10 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
   envMetrics,
   onUpdateEnvMetrics,
   currentUserRole,
+  recordsByAstronaut = {},
+  co2Flash = false,
 }) => {
+  const { t, lang } = useI18n();
   const [showRoster, setShowRoster] = useState(false);
 
   // Synchronize Today with the live station clock (UTC)
@@ -45,22 +55,20 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
   // Helper for member live status preview
   const getMemberLiveStatus = (id: string) => {
-    switch (id) {
-      case 'astro-alice':
-        return { hr: '103 bpm', status: 'Elevated HR', isAlert: true };
-      case 'astro-marcus':
-        return { hr: '74 bpm', status: 'Nominal', isAlert: false };
-      case 'astro-elena':
-        return { hr: '82 bpm', status: 'Nominal', isAlert: false };
-      case 'astro-kenji':
-        return { hr: '70 bpm', status: 'Nominal', isAlert: false };
-      default:
-        return { hr: '75 bpm', status: 'Nominal', isAlert: false };
-    }
+    const records = recordsByAstronaut[id] || [];
+    const today = records.find((r) => r.isToday) || records[0];
+    if (!today) return { hr: '—', status: statusLabel(lang, 'Normal'), isAlert: false };
+    const interp = interpretRecord(today);
+    const hr = interp.metrics.find((m) => m.id === 'restingHR');
+    return {
+      hr: hr?.valueLabel ?? `${today.restingHR} bpm`,
+      status: statusLabel(lang, interp.overall),
+      isAlert: interp.overall !== 'Normal',
+    };
   };
 
   return (
-    <aside className="w-full lg:w-72 xl:w-84 shrink-0 flex flex-col gap-4 p-4 lg:p-5 bg-slate-100/60 border-r border-slate-200/80 overflow-y-auto">
+    <div className="flex flex-col gap-4 p-4 lg:p-5">
       {/* 
         PERSONAL BLOCK
         - If role is Commander or NASA: Shows list of all members, click to check each member's daily status
@@ -71,19 +79,19 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-sky-600" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                Station Crew Roster ({allAstronauts.length})
+              <h3 className="text-xs font-bold tracking-wide text-slate-900">
+                {t('sidebar.roster', { n: allAstronauts.length })}
               </h3>
             </div>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold uppercase ${
               currentUserRole === 'NASA' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
             }`}>
-              {currentUserRole === 'NASA' ? 'NASA Oversight' : 'Commander View'}
+              {currentUserRole === 'NASA' ? t('sidebar.nasaWatch') : t('sidebar.cmdWatch')}
             </span>
           </div>
 
           <p className="text-[11px] text-slate-500 leading-tight">
-            Select any crew member below to inspect their daily situation and telemetry records:
+            {t('sidebar.pick')}
           </p>
 
           {/* Members List */}
@@ -104,11 +112,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center shadow-2xs ${
-                        isSelected ? 'bg-sky-600 text-white' : 'bg-white border border-slate-200 text-slate-700'
-                      }`}>
-                        {astro.avatarSeed}
-                      </div>
+                      <AvatarBubble name={astro.name} seed={astro.avatarSeed} id={astro.id} size={40} />
                       <div>
                         <div className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
                           <span>{astro.name}</span>
@@ -117,7 +121,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                           )}
                         </div>
                         <div className="text-[10px] font-mono text-slate-500">
-                          {astro.role} · {astro.stationModule.split(' ')[0]}
+                          {localizeKey(lang, astro.role)} · {localizeKey(lang, astro.stationModule)}
                         </div>
                       </div>
                     </div>
@@ -139,9 +143,9 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                   {/* Active Indicator details if selected */}
                   {isSelected && (
                     <div className="mt-2.5 pt-2 border-t border-sky-200/60 flex items-center justify-between text-[10px] font-mono text-sky-900">
-                      <span>DURATION: {calculateMissionDuration(astro.missionStartDate, stationDate).durationText}</span>
+                      <span>{t('sidebar.missionLen', { v: calculateMissionDuration(astro.missionStartDate, stationDate).durationText })}</span>
                       <span className="font-semibold text-sky-700 flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> Viewing Records
+                        <Eye className="w-3 h-3" aria-hidden /> {t('sidebar.viewingNow')}
                       </span>
                     </div>
                   )}
@@ -155,46 +159,44 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
         <div className="bg-[#dcf3f8] border border-[#b2e5ef] rounded-2xl p-5 text-slate-800 shadow-xs relative">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/90 border border-sky-300 flex items-center justify-center font-bold text-sky-800 text-lg shadow-2xs">
-                {currentAstronaut.avatarSeed}
-              </div>
+              <AvatarBubble name={currentAstronaut.name} seed={currentAstronaut.avatarSeed} id={currentAstronaut.id} size={48} />
               <div>
                 <h2 className="text-xl font-bold text-slate-900 leading-tight">
                   {currentAstronaut.name}
                 </h2>
                 <p className="text-xs font-medium text-slate-600 mt-0.5">
-                  {currentAstronaut.gender}, {currentAstronaut.age}
+                  {t(`gender.${currentAstronaut.gender.toLowerCase()}`)}, {currentAstronaut.age}
                 </p>
               </div>
             </div>
 
             <div className="px-2 py-0.5 bg-white/80 border border-sky-200 rounded text-[10px] font-mono font-semibold text-sky-900">
-              ASTRONAUT
+              {t('sidebar.astronaut')}
             </div>
           </div>
 
           {/* Specialty Role Badge */}
           <div className="inline-block px-2.5 py-1 bg-white/80 border border-sky-200/90 rounded-md text-xs font-semibold text-sky-900 mb-4">
-            {currentAstronaut.role}
+            {localizeKey(lang, currentAstronaut.role)}
           </div>
 
           {/* Mission Timeline & Dates (Strictly matching wireframe) */}
           <div className="space-y-1.5 text-sm font-mono border-t border-sky-200/60 pt-3">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-600">Start:</span>
+              <span className="text-slate-600">{t('sidebar.start')}：</span>
               <span className="font-semibold text-slate-900 tabular-nums">{currentAstronaut.missionStartDate}</span>
             </div>
             <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md hover:bg-sky-100/50 transition-colors">
               <span className="text-slate-600 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Live Station Clock Sync" />
-                Today:
+                {t('sidebar.today')}：
               </span>
               <span className="font-semibold text-slate-900 tabular-nums bg-white/75 px-2 py-0.5 rounded border border-sky-200/60 shadow-2xs">
                 {stationDate}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs py-0.5 px-1.5 rounded-md bg-white/60 border border-sky-200/70 shadow-2xs">
-              <span className="text-slate-600 font-medium">Duration:</span>
+              <span className="text-slate-600 font-medium">{t('sidebar.duration')}：</span>
               <span className="font-bold text-sky-950 font-mono tracking-tight">
                 {calculatedDuration.durationText}
               </span>
@@ -203,8 +205,8 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
           {/* Additional contextual station telemetry */}
           <div className="mt-3 pt-2.5 border-t border-sky-200/60 flex items-center justify-between text-[11px] text-slate-600 font-mono">
-            <span>BLOOD: {currentAstronaut.bloodType}</span>
-            <span>MOD: {currentAstronaut.stationModule}</span>
+            <span>{t('sidebar.blood', { v: currentAstronaut.bloodType })}</span>
+            <span>{t('sidebar.module', { v: localizeKey(lang, currentAstronaut.stationModule) })}</span>
           </div>
         </div>
       )}
@@ -215,12 +217,12 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <div className="flex items-center gap-2">
               <Wind className="w-4 h-4 text-sky-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                Env. Metrics
+              <h3 className="text-sm font-bold tracking-wide text-slate-900">
+                {t('sidebar.cabin')} <SimBadge />
               </h3>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">
-              ECLSS ACTIVE
+              {t('sidebar.eclssDemo')}
             </span>
           </div>
 
@@ -228,7 +230,7 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             {/* Oxygen % */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <span className="text-xs font-medium text-slate-600">Oxygen %</span>
+                <span className="text-xs font-medium text-slate-600">{t('sidebar.o2')}</span>
                 <span className="text-base font-bold font-mono text-slate-900 tabular-nums">
                   {envMetrics.oxygenPercent.toFixed(1)} %
                 </span>
@@ -240,17 +242,21 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-0.5">
-                <span>Min: 19.5%</span>
-                <span className="text-emerald-600 font-medium">Target: 20.9%</span>
-                <span>Max: 23.5%</span>
+                <span>{t('sidebar.o2Low')}</span>
+                <span className="text-emerald-600 font-medium">{t('sidebar.o2Target')}</span>
+                <span>{t('sidebar.o2High')}</span>
               </div>
             </div>
 
             {/* Carbon Dioxide % */}
             <div>
               <div className="flex justify-between items-baseline mb-1">
-                <span className="text-xs font-medium text-slate-600">Carbon Dioxide %</span>
-                <span className={`text-base font-bold font-mono tabular-nums ${isCO2Elevated ? 'text-amber-600' : 'text-slate-900'}`}>
+                <span className="text-xs font-medium text-slate-600">{t('sidebar.co2')}</span>
+                <span
+                  className={`text-base font-bold font-mono tabular-nums ${isCO2Elevated ? 'text-amber-600' : 'text-slate-900'} ${
+                    co2Flash ? 'sm-flash' : ''
+                  }`}
+                >
                   {envMetrics.carbonDioxidePercent.toFixed(2)} %
                 </span>
               </div>
@@ -261,9 +267,9 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-0.5">
-                <span>Nominal: &lt;0.35%</span>
+                <span>{t('sidebar.co2Nom')}</span>
                 <span className={isCO2Elevated ? 'text-amber-600 font-medium' : 'text-slate-500'}>
-                  Alert: &gt;0.50%
+                  {t('sidebar.co2Alert')}
                 </span>
               </div>
             </div>
@@ -271,19 +277,19 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
             {/* Supplementary station habitat metrics */}
             <div className="pt-3 border-t border-slate-100 grid grid-cols-2 gap-3 text-xs font-mono">
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400 uppercase">Pressure</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.pressure')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.cabinPressureKpa} kPa</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400 uppercase">Temp</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.temp')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.cabinTempCelsius} °C</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400 uppercase">Radiation</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.radiation')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.ambientRadiationMsvDay} mSv/d</div>
               </div>
               <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                <div className="text-[10px] text-slate-400 uppercase">Humidity</div>
+                <div className="text-[10px] text-slate-400">{t('sidebar.humidity')}</div>
                 <div className="font-bold text-slate-800 tabular-nums">{envMetrics.humidityPercent} %</div>
               </div>
             </div>
@@ -292,18 +298,19 @@ export const AstronautSidebar: React.FC<AstronautSidebarProps> = ({
 
         {/* Live Scrubber simulation control */}
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-          <span className="text-slate-500 text-[11px]">CO2 Scrubber:</span>
+          <span className="text-slate-500 text-[11px]">{t('sidebar.scrub')}</span>
           <button
+            type="button"
             onClick={() => {
               const newCO2 = envMetrics.carbonDioxidePercent > 0.32 ? 0.31 : 0.42;
               onUpdateEnvMetrics({ carbonDioxidePercent: newCO2 });
             }}
-            className="px-2.5 py-1 text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors"
+            className="px-2.5 py-1 text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-sky-600"
           >
-            {envMetrics.carbonDioxidePercent > 0.35 ? 'Flush Zeolite Bed' : 'Simulate Spike'}
+            {envMetrics.carbonDioxidePercent > 0.35 ? t('sidebar.flush') : t('sidebar.simSpike')}
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 };
